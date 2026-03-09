@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # The Node.js API application
+  api:
+    build: .
+    container_name: mindcare-api
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongo:27017/mindcare
+      - REDIS_URL=redis://redis:6379
+      # API Keys (Can pass these in from .env or override during runtime)
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_INDEX=${PINECONE_INDEX}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - mindcare-network
+
+  # MongoDB Database
+  mongo:
+    image: mongo:latest
+    container_name: mindcare-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - mindcare-network
+
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: mindcare-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - mindcare-network
+
+volumes:
+  mongo-data:
+  redis-data:
+
+networks:
+  mindcare-network:
+    driver: bridge

@@ -1,0 +1,37 @@
+diff --git a/node_modules/react-native-screens/android/build.gradle b/node_modules/react-native-screens/android/build.gradle
+index 885faa6..eeeae4c 100644
+--- a/node_modules/react-native-screens/android/build.gradle
++++ b/node_modules/react-native-screens/android/build.gradle
+@@ -22,7 +22,7 @@ buildscript {
+     dependencies {
+         classpath('com.android.tools.build:gradle:8.2.1')
+         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${safeExtGet('kotlinVersion', rnsDefaultKotlinVersion)}"
+-        classpath "com.diffplug.spotless:spotless-plugin-gradle:6.25.0"
++        // classpath "com.diffplug.spotless:spotless-plugin-gradle:6.25.0" // Disabled for compatibility
+     }
+ }
+ 
+@@ -86,9 +86,9 @@ def resolveReactNativeDirectory() {
+ }
+ 
+ // spotless is only accessible within react-native-screens repo
+-if (isRunningInContextOfScreensRepo()) {
+-    apply from: 'spotless.gradle'
+-}
++// if (isRunningInContextOfScreensRepo()) {
++//     apply from: 'spotless.gradle'
++// }
+ 
+ if (isNewArchitectureEnabled()) {
+     apply plugin: "com.facebook.react"
+@@ -161,8 +161,8 @@ android {
+         abortOnError false
+     }
+     compileOptions {
+-        sourceCompatibility JavaVersion.VERSION_1_8
+-        targetCompatibility JavaVersion.VERSION_1_8
++        sourceCompatibility JavaVersion.VERSION_21
++        targetCompatibility JavaVersion.VERSION_21
+     }
+     packagingOptions {
+         // For some reason gradle only complains about the duplicated version of libreact_render libraries

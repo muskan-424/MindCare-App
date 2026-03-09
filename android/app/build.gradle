@@ -84,6 +84,8 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        // For react-native-vector-icons
+        vectorDrawables.useSupportLibrary = true
     }
     signingConfigs {
         debug {
@@ -117,3 +119,6 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+// Add vector icons fonts
+apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")

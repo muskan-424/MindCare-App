@@ -1,0 +1,32 @@
+diff --git a/node_modules/react-native-image-overlay/index.js b/node_modules/react-native-image-overlay/index.js
+index bb6cac1..4043d9a 100644
+--- a/node_modules/react-native-image-overlay/index.js
++++ b/node_modules/react-native-image-overlay/index.js
+@@ -6,8 +6,7 @@ import {
+   StyleSheet,
+   Text,
+   View,
+-  Image,
+-  ViewPropTypes
++  Image
+ } from "react-native";
+ 
+ const { width } = Dimensions.get("window");
+@@ -83,14 +82,14 @@ const styles = StyleSheet.create({
+ 
+ ImageOverlay.propTypes = {
+   rounded: PropTypes.number,
+-  source: Image.propTypes.source,
++  source: PropTypes.any,
+   height: PropTypes.number,
+   title: PropTypes.string,
+-  titleStyle: Text.propTypes.style,
++  titleStyle: PropTypes.any,
+   overlayColor: PropTypes.string,
+   overlayAlpha: PropTypes.number,
+   contentPosition: PropTypes.oneOf(["top", "center", "bottom"]),
+-  containerStyle: ViewPropTypes.style,
++  containerStyle: PropTypes.any,
+   blurRadius: PropTypes.number,
+   children: PropTypes.element
+ };
