@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { ChatGoogleGenerativeAI } = require('@langchain/google-genai');
-const { MemoryVectorStore } = require('langchain/vectorstores/memory');
 const { PineconeStore } = require('@langchain/pinecone');
 const { GoogleGenerativeAIEmbeddings } = require('@langchain/google-genai');
 const { TavilySearchResults } = require('@langchain/community/tools/tavily_search');
@@ -27,7 +26,7 @@ App Context or Retrieved Context:
 
 // Helper: Convert frontend history format [{text: "", isUser: true}] to LangChain message format
 const formatHistory = (history) => {
-  return history.map(msg => 
+  return history.map(msg =>
     msg.isUser ? new HumanMessage(msg.text) : new AIMessage(msg.text)
   );
 };
@@ -58,10 +57,10 @@ router.post('/', async (req, res) => {
     // 3. Initialize Pinecone Vector Store (RAG)
     let vectorStore;
     let context = "The MindCare app helps students track their mental health, predict burnout, and maintain a profile of their concerns.";
-    
+
     try {
       const pineconeIndex = initPinecone();
-      vectorStore = await PineconeStore.fromExistingIndex(bindings, {
+      vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
         pineconeIndex,
         textKey: 'text'
       });
@@ -70,7 +69,7 @@ router.post('/', async (req, res) => {
       if (results && results.length > 0) {
         context = results.map(r => r.pageContent).join('\n---\n');
       }
-    } catch(pineconeErr) {
+    } catch (pineconeErr) {
       console.warn("Pinecone not fully configured or failed. Falling back to default app context.", pineconeErr.message);
     }
 
@@ -101,7 +100,7 @@ router.post('/', async (req, res) => {
       // Use AgentExecutor if tools are available
       const agent = await createToolCallingAgent({ llm, tools, prompt });
       const agentExecutor = new AgentExecutor({ agent, tools });
-      
+
       const result = await agentExecutor.invoke({
         input: message,
         chat_history: chatHistory,
