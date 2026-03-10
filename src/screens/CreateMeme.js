@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,9 @@ import {
   ScrollView,
 } from 'react-native';
 import axios from 'axios';
-import {ActivityIndicator} from 'react-native-paper';
-import {colors} from '../constants/theme';
-import {TouchableOpacity} from 'react-native-gesture-handler';
+import { ActivityIndicator } from 'react-native-paper';
+import { colors } from '../constants/theme';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 const CreateMeme = () => {
   const [loading, setLoading] = useState(true);
@@ -32,7 +32,10 @@ const CreateMeme = () => {
         console.log(meme);
       })
       .catch(err => {
-        console.log(err);
+        console.warn('Meme API Error:', err.message);
+        setLoading(false);
+        setMemeArray([{ image: 'https://i.imgflip.com/1g8my4.jpg', name: 'Fallback Meme' }]);
+        setMeme({ image: 'https://i.imgflip.com/1g8my4.jpg', name: 'Fallback Meme' });
       });
   }, []);
 
@@ -48,7 +51,7 @@ const CreateMeme = () => {
           <ActivityIndicator
             size={'large'}
             color={colors.primary}
-            style={{marginTop: 10}}
+            style={{ marginTop: 10 }}
           />
         )}
         {!loading && (
@@ -63,7 +66,7 @@ const CreateMeme = () => {
                   <Text style={styles.memeText}>{bottomText}</Text>
                 </View>
                 <Image
-                  source={{uri: memeArray[randomIndex].image}}
+                  source={{ uri: memeArray[randomIndex].image }}
                   style={{
                     width: Dimensions.get('screen').width - 100,
                     height: Dimensions.get('screen').width - 100,
@@ -73,7 +76,7 @@ const CreateMeme = () => {
                   style={styles.generateAnother1}
                   onPress={generateRandomNumber}>
                   <View style={styles.generateAnother}>
-                    <Text style={{color: colors.secondary}}>
+                    <Text style={{ color: colors.secondary }}>
                       Generate Another Image
                     </Text>
                   </View>

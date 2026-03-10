@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,15 +11,15 @@ import {
   SafeAreaView,
   ScrollView,
 } from 'react-native';
-import {colors} from '../constants/theme';
-import {Button} from 'react-native-elements';
+import { colors } from '../constants/theme';
+import { Button } from 'react-native-elements';
 import BrickList from 'react-native-masonry-brick-list';
 import axios from 'axios';
 import base64 from 'react-native-base64';
-import {connect} from 'react-redux';
-import {updateConcerns} from '../redux/actions/profile';
-import {fetchQuoteOfTheDay} from '../redux/actions/quote';
-import {Avatar, Card, Title, Paragraph} from 'react-native-paper';
+import { connect } from 'react-redux';
+import { updateConcerns } from '../redux/actions/profile';
+import { fetchQuoteOfTheDay } from '../redux/actions/quote';
+import { Avatar, Card, Title, Paragraph } from 'react-native-paper';
 
 const preferences = [
   {
@@ -78,8 +78,8 @@ const HomeScreen = props => {
           'Basic ' +
           base64.encode(
             '85acc1ba7c3a4349b1abca61d53e2b26' +
-              ':' +
-              'ae1de5a2ad0c4ab4983f3d0a3b22ae68',
+            ':' +
+            'ae1de5a2ad0c4ab4983f3d0a3b22ae68',
           ),
       },
       data: 'grant_type=client_credentials',
@@ -96,7 +96,13 @@ const HomeScreen = props => {
       ).then(playlistResponse => {
         //console.log('playlist', playlistResponse.data.playlists.items);
         setPlaylist(playlistResponse.data.playlists.items);
+      }).catch(err => {
+        console.warn('Spotify API Playlist Error:', err.message);
+        setPlaylist([]);
       });
+    }).catch(err => {
+      console.warn('Spotify Token Error:', err.message);
+      setPlaylist([]);
     });
   }, []);
 
@@ -110,7 +116,7 @@ const HomeScreen = props => {
     }
   };
 
-  const renderItem = ({item}) => {
+  const renderItem = ({ item }) => {
     return (
       <TouchableOpacity
         onPress={() => {
@@ -122,7 +128,7 @@ const HomeScreen = props => {
         <View style={styles.track}>
           <View style={styles.trackImage}>
             <Image
-              source={{uri: item.images[0].url}}
+              source={{ uri: item.images[0].url }}
               style={{
                 width: 150,
                 height: 150,
@@ -189,7 +195,7 @@ const HomeScreen = props => {
             <View style={styles.avatar}>
               <Image
                 source={require('../assets/avatar.png')}
-                style={{width: 60, height: 60}}
+                style={{ width: 60, height: 60 }}
               />
             </View>
           </TouchableOpacity>
@@ -198,7 +204,7 @@ const HomeScreen = props => {
           <View style={styles.botContainer}>
             <Image
               source={require('../assets/tink.gif')}
-              style={{width: 180, height: 180}}
+              style={{ width: 180, height: 180 }}
             />
           </View>
           <View></View>
@@ -248,7 +254,7 @@ const HomeScreen = props => {
         <View style={styles.quoteContainer}>
           <Text style={styles.quoteText}>Quote of the day</Text>
           <View style={styles.quote}>
-            <Text style={{fontSize: 17}}>
+            <Text style={{ fontSize: 17 }}>
               Be yourself no matter what they say!
             </Text>
           </View>
@@ -274,7 +280,7 @@ const mapStateToProps = state => ({
   quote: state.quote,
 });
 
-export default connect(mapStateToProps, {updateConcerns, fetchQuoteOfTheDay})(
+export default connect(mapStateToProps, { updateConcerns, fetchQuoteOfTheDay })(
   HomeScreen,
 );
 
@@ -438,7 +444,7 @@ const styles = StyleSheet.create({
     borderColor: colors.tertiary,
     borderWidth: 0,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,
     shadowRadius: 2,
     elevation: 1,

@@ -21,7 +21,7 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, password, age, gender } = req.body;
+    const { name, email, password, age, gender, phone_no } = req.body;
 
     try {
       // Check if user already exists
@@ -51,7 +51,7 @@ router.post(
         email,
         age: age || '',
         gender: gender || '',
-        phone_no: '',
+        phone_no: phone_no || '',
         bio: '',
         concerns: [],
       });

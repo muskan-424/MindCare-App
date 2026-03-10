@@ -27,6 +27,7 @@ const Signup = props => {
     fullName: '',
     email: '',
     age: null,
+    phone_no: '',
     gender: '',
     password: '',
     password2: ''
@@ -42,6 +43,11 @@ const Signup = props => {
 
     if (state.email === '' || !re.test(String(state.email).toLowerCase())) {
       ToastAndroid.show('Email is invalid', ToastAndroid.SHORT);
+      return;
+    }
+
+    if (state.phone_no === '' || state.phone_no.length < 10) {
+      ToastAndroid.show('Please enter a valid phone number', ToastAndroid.SHORT);
       return;
     }
 
@@ -111,6 +117,18 @@ const Signup = props => {
               setState({
                 ...state,
                 email: text
+              });
+            }}
+          />
+          <TextInput
+            style={styles.textInput}
+            placeholder={'Phone Number'}
+            keyboardType='phone-pad'
+            value={state.phone_no}
+            onChangeText={text => {
+              setState({
+                ...state,
+                phone_no: text
               });
             }}
           />
