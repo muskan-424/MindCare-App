@@ -42,16 +42,17 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    // 1. Initialize Gemini Model
+    // 1. Initialize Gemini Model (Safeguard against undefined API keys causing 'replace' crashes)
+    const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "missing_api_key_placeholder";
     const llm = new ChatGoogleGenerativeAI({
       modelName: "gemini-1.5-flash",
       temperature: 0.4,
-      apiKey: process.env.GOOGLE_API_KEY,
+      apiKey: apiKey,
     });
 
     // 2. Initialize Embeddings for Vector Search
     const embeddings = new GoogleGenerativeAIEmbeddings({
-      apiKey: process.env.GOOGLE_API_KEY,
+      apiKey: apiKey,
     });
 
     // 3. Initialize Pinecone Vector Store (RAG)
