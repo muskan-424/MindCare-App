@@ -59,15 +59,17 @@ router.post('/', async (req, res) => {
     let context = "The MindCare app helps students track their mental health, predict burnout, and maintain a profile of their concerns.";
 
     try {
-      const pineconeIndex = initPinecone();
-      vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
-        pineconeIndex,
-        textKey: 'text'
-      });
-      // Retrieve top 2 relevant documents if Pinecone is configured correctly
-      const results = await vectorStore.similaritySearch(message, 2);
-      if (results && results.length > 0) {
-        context = results.map(r => r.pageContent).join('\n---\n');
+      if (process.env.PINECONE_API_KEY && process.env.PINECONE_API_KEY !== 'your_pinecone_api_key_here') {
+        const pineconeIndex = initPinecone();
+        vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
+          pineconeIndex,
+          textKey: 'text'
+        });
+        // Retrieve top 2 relevant documents if Pinecone is configured correctly
+        const results = await vectorStore.similaritySearch(message, 2);
+        if (results && results.length > 0) {
+          context = results.map(r => r.pageContent).join('\n---\n');
+        }
       }
     } catch (pineconeErr) {
       console.warn("Pinecone not fully configured or failed. Falling back to default app context.", pineconeErr.message);
@@ -75,12 +77,16 @@ router.post('/', async (req, res) => {
 
     // 4. Initialize Tools (Tavily)
     let tools = [];
-    if (process.env.TAVILY_API_KEY && process.env.TAVILY_API_KEY !== 'your_tavily_api_key_here') {
-      const searchTool = new TavilySearchResults({
-        maxResults: 2,
-        apiKey: process.env.TAVILY_API_KEY,
-      });
-      tools.push(searchTool);
+    try {
+      if (process.env.TAVILY_API_KEY && process.env.TAVILY_API_KEY !== 'your_tavily_api_key_here') {
+        const searchTool = new TavilySearchResults({
+          maxResults: 2,
+          apiKey: process.env.TAVILY_API_KEY,
+        });
+        tools.push(searchTool);
+      }
+    } catch (tavilyErr) {
+      console.warn("Tavily initialization failed.", tavilyErr.message);
     }
 
     // 5. Create Agent Prompt

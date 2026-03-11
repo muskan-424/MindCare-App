@@ -21,9 +21,7 @@ const FitnessScreen = () => {
   const [categoryData, setCategoryData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
-  const [url, setUrl] = useState(
-    'https://us-central1-mental-health-app-6edbd.cloudfunctions.net/app/api/fitness/categories',
-  );
+  const [url, setUrl] = useState(`${api_route}/api/fitness/categories`);
 
   useEffect(() => {
     const fetchData = async () => {

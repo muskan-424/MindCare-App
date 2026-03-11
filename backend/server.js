@@ -30,6 +30,7 @@ const startServer = async () => {
   app.use('/api/profile', require('./routes/profile'));
   app.use('/api/quotes', require('./routes/quotes'));
   app.use('/api/chat', require('./routes/chat'));
+  app.use('/api/fitness', require('./routes/fitness'));
 
   // Start server
   const PORT = process.env.PORT || 5000;
