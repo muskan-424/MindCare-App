@@ -32,6 +32,11 @@ const startServer = async () => {
   app.use('/api/chat', require('./routes/chat'));
   app.use('/api/fitness', require('./routes/fitness'));
   app.use('/api/content', require('./routes/content'));
+  app.use('/api/blogs', require('./routes/blogs'));
+  app.use('/api/journals', require('./routes/journals'));
+  app.use('/api/therapists', require('./routes/therapists'));
+  app.use('/api/issues', require('./routes/issues'));
+  app.use('/api/mood', require('./routes/mood'));
 
   // Start server
   const PORT = process.env.PORT || 5000;
