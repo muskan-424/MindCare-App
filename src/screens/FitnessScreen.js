@@ -15,6 +15,7 @@ import AnimatedLoader from 'react-native-animated-loader';
 import Grid from 'react-native-grid-component';
 import FitnessCategoryCard from '../components/FitnessCategoryCard';
 import { useNavigation } from '@react-navigation/native';
+import { api_route } from '../utils/route';
 
 const FitnessScreen = () => {
   const [categories, setCategories] = useState([]);

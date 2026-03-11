@@ -34,7 +34,7 @@ const TabNavigation = () => {
             return <Feather name="home" size={size} color={color} />;
           } else if (route.name === 'Story') {
             return <Entypo name="open-book" size={size} color={color} />;
-          } else if (route.name === 'Therapist') {
+          } else if (route.name === 'TherapistTab') {
             return <Fontisto name="doctor" size={size} color={color} />;
           } else if (route.name === 'Fitness') {
             return <Entypo name="check" size={size} color={color} />;
@@ -58,7 +58,7 @@ const TabNavigation = () => {
       })}>
       <Tab.Screen name="HomeTab" component={HomeStackNavigator} />
       <Tab.Screen name="Story" component={StoryScreen} />
-      <Tab.Screen name="Therapist" component={TherapistStackNavigation} />
+      <Tab.Screen name="TherapistTab" component={TherapistStackNavigation} />
       <Tab.Screen name="Fitness" component={FitnessStackNavigator} />
     </Tab.Navigator>
   );
