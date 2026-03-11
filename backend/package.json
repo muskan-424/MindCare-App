@@ -23,7 +23,8 @@
     "express-validator": "^7.2.1",
     "langchain": "^1.2.30",
     "mongoose": "^8.13.1",
-    "redis": "^5.11.0"
+    "redis": "^5.11.0",
+    "yt-search": "^2.13.1"
   },
   "engines": {
     "node": ">=18.0.0"
