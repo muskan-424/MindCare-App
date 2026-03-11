@@ -85,157 +85,165 @@ const Signup = props => {
     //console.log('after-register');
   };
   return (
-    <ScrollView style={{ backgroundColor: colors.white }}>
-      <View style={styles.container}>
-        <View>
-          <Image
-            source={require('../assets/yoga_main.jpg')}
-            style={{
-              width: Dimensions.get('screen').width,
-              height: 160
-            }}
-          />
-        </View>
-        <View style={styles.signUpContainer}>
-          <Text style={styles.headerText}>Signup</Text>
-          <TextInput
-            style={styles.textInput}
-            placeholder={'Full Name'}
-            value={state.fullName}
-            onChangeText={text =>
-              setState({
-                ...state,
-                fullName: text
-              })
-            }
-          />
-          <TextInput
-            style={styles.textInput}
-            placeholder={'Email'}
-            value={state.email}
-            onChangeText={text => {
-              setState({
-                ...state,
-                email: text
-              });
-            }}
-          />
-          <TextInput
-            style={styles.textInput}
-            placeholder={'Phone Number'}
-            keyboardType='phone-pad'
-            value={state.phone_no}
-            onChangeText={text => {
-              setState({
-                ...state,
-                phone_no: text
-              });
-            }}
-          />
-          <TextInput
-            style={styles.textInput}
-            placeholder={'Age'}
-            keyboardType='numeric'
-            value={state.age}
-            onChangeText={text => {
-              setState({
-                ...state,
-                age: text
-              });
-            }}
-          />
-          <View style={styles.radioButton}>
-            <View style={styles.radio}>
-              <Text style={{ color: colors.secondary }}>Male</Text>
-              <RadioButton
-                value='male'
-                color={colors.secondary}
-                status={state.gender === 'male' ? 'checked' : 'unchecked'}
-                onPress={() => {
-                  setState({
-                    ...state,
-                    gender: 'male'
-                  });
-                }}
-              />
-            </View>
-            <View style={styles.radio}>
-              <Text style={{ color: colors.secondary }}>Female</Text>
-              <RadioButton
-                value='female'
-                color={colors.secondary}
-                status={state.gender === 'female' ? 'checked' : 'unchecked'}
-                onPress={() => {
-                  setState({
-                    ...state,
-                    gender: 'female'
-                  });
-                }}
-              />
-            </View>
-            <View style={styles.radio}>
-              <Text style={{ color: colors.secondary }}>Other</Text>
-              <RadioButton
-                color={colors.secondary}
-                value='other'
-                status={state.gender === 'other' ? 'checked' : 'unchecked'}
-                onPress={() => {
-                  setState({
-                    ...state,
-                    gender: 'other'
-                  });
-                }}
-              />
-            </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        style={{ backgroundColor: colors.white }}
+      >
+        <View style={styles.container}>
+          <View>
+            <Image
+              source={require('../assets/yoga_main.jpg')}
+              style={{
+                width: Dimensions.get('screen').width,
+                height: 160
+              }}
+            />
           </View>
-          <TextInput
-            style={styles.textInput}
-            placeholder={'Password'}
-            value={state.password}
-            onChangeText={text => {
-              setState({
-                ...state,
-                password: text
-              });
-            }}
-            secureTextEntry={true}
-          />
-          <TextInput
-            style={styles.textInput}
-            placeholder={'Confirm Password'}
-            value={state.password2}
-            onChangeText={text => {
-              setState({
-                ...state,
-                password2: text
-              });
-            }}
-            secureTextEntry={true}
-          />
-          <TouchableOpacity
-            onPress={() => {
-              props.navigation.navigate('Login');
-            }}
-          >
-            <Text style={styles.already}>Already have an account?</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            // onPress={() => {
-            //   ToastAndroid.show(
-            //     'A pikachu appeared nearby !',
-            //     ToastAndroid.SHORT
-            //   );
-            // }}
-            onPress={handleSignUp}
-          >
-            <View style={styles.submitButton}>
-              <Text style={styles.submitText}>Signup</Text>
+          <View style={styles.signUpContainer}>
+            <Text style={styles.headerText}>Signup</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder={'Full Name'}
+              value={state.fullName}
+              onChangeText={text =>
+                setState({
+                  ...state,
+                  fullName: text
+                })
+              }
+            />
+            <TextInput
+              style={styles.textInput}
+              placeholder={'Email'}
+              value={state.email}
+              onChangeText={text => {
+                setState({
+                  ...state,
+                  email: text
+                });
+              }}
+            />
+            <TextInput
+              style={styles.textInput}
+              placeholder={'Phone Number'}
+              keyboardType='phone-pad'
+              value={state.phone_no}
+              onChangeText={text => {
+                setState({
+                  ...state,
+                  phone_no: text
+                });
+              }}
+            />
+            <TextInput
+              style={styles.textInput}
+              placeholder={'Age'}
+              keyboardType='numeric'
+              value={state.age}
+              onChangeText={text => {
+                setState({
+                  ...state,
+                  age: text
+                });
+              }}
+            />
+            <View style={styles.radioButton}>
+              <View style={styles.radio}>
+                <Text style={{ color: colors.secondary }}>Male</Text>
+                <RadioButton
+                  value='male'
+                  color={colors.secondary}
+                  status={state.gender === 'male' ? 'checked' : 'unchecked'}
+                  onPress={() => {
+                    setState({
+                      ...state,
+                      gender: 'male'
+                    });
+                  }}
+                />
+              </View>
+              <View style={styles.radio}>
+                <Text style={{ color: colors.secondary }}>Female</Text>
+                <RadioButton
+                  value='female'
+                  color={colors.secondary}
+                  status={state.gender === 'female' ? 'checked' : 'unchecked'}
+                  onPress={() => {
+                    setState({
+                      ...state,
+                      gender: 'female'
+                    });
+                  }}
+                />
+              </View>
+              <View style={styles.radio}>
+                <Text style={{ color: colors.secondary }}>Other</Text>
+                <RadioButton
+                  color={colors.secondary}
+                  value='other'
+                  status={state.gender === 'other' ? 'checked' : 'unchecked'}
+                  onPress={() => {
+                    setState({
+                      ...state,
+                      gender: 'other'
+                    });
+                  }}
+                />
+              </View>
             </View>
-          </TouchableOpacity>
-          <View style={{ paddingBottom: Keyboard.height }}></View>
+            <TextInput
+              style={styles.textInput}
+              placeholder={'Password'}
+              value={state.password}
+              onChangeText={text => {
+                setState({
+                  ...state,
+                  password: text
+                });
+              }}
+              secureTextEntry={true}
+            />
+            <TextInput
+              style={styles.textInput}
+              placeholder={'Confirm Password'}
+              value={state.password2}
+              onChangeText={text => {
+                setState({
+                  ...state,
+                  password2: text
+                });
+              }}
+              secureTextEntry={true}
+            />
+            <TouchableOpacity
+              onPress={() => {
+                props.navigation.navigate('Login');
+              }}
+            >
+              <Text style={styles.already}>Already have an account?</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              // onPress={() => {
+              //   ToastAndroid.show(
+              //     'A pikachu appeared nearby !',
+              //     ToastAndroid.SHORT
+              //   );
+              // }}
+              onPress={handleSignUp}
+            >
+              <View style={styles.submitButton}>
+                <Text style={styles.submitText}>Signup</Text>
+              </View>
+            </TouchableOpacity>
+            <View style={{ paddingBottom: Keyboard.height }}></View>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

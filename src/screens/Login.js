@@ -9,7 +9,9 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  ToastAndroid
+  ToastAndroid,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { colors } from '../constants/theme';
 import { connect } from 'react-redux';
@@ -43,53 +45,61 @@ const Login = props => {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.white }}>
-      <View style={styles.container}>
-        <View>
-          <Image
-            source={require('../assets/yoga_main.jpg')}
-            style={{
-              width: Dimensions.get('screen').width,
-              height: Dimensions.get('screen').width
-            }}
-          />
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        style={{ flex: 1, backgroundColor: colors.white }}
+      >
+        <View style={styles.container}>
+          <View>
+            <Image
+              source={require('../assets/yoga_main.jpg')}
+              style={{
+                width: Dimensions.get('screen').width,
+                height: Dimensions.get('screen').width
+              }}
+            />
+          </View>
+          <View style={styles.signUpContainer}>
+            <Text style={styles.headerText}>Login</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder={'Email'}
+              value={state.email}
+              onChangeText={text => {
+                setState({
+                  ...state,
+                  email: text
+                });
+              }}
+            />
+            <TextInput
+              style={styles.textInput}
+              placeholder={'Password'}
+              value={state.password}
+              onChangeText={text => {
+                setState({
+                  ...state,
+                  password: text
+                });
+              }}
+              secureTextEntry={true}
+            />
+            <TouchableOpacity onPress={() => props.navigation.navigate('SignUp')}>
+              <Text style={styles.already}>Don't have an account?</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleLogin}>
+              <View style={styles.submitButton}>
+                <Text style={styles.submitText}>Login</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.signUpContainer}>
-          <Text style={styles.headerText}>Login</Text>
-          <TextInput
-            style={styles.textInput}
-            placeholder={'Email'}
-            value={state.email}
-            onChangeText={text => {
-              setState({
-                ...state,
-                email: text
-              });
-            }}
-          />
-          <TextInput
-            style={styles.textInput}
-            placeholder={'Password'}
-            value={state.password}
-            onChangeText={text => {
-              setState({
-                ...state,
-                password: text
-              });
-            }}
-            secureTextEntry={true}
-          />
-          <TouchableOpacity onPress={() => props.navigation.navigate('SignUp')}>
-            <Text style={styles.already}>Don't have an account?</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleLogin}>
-            <View style={styles.submitButton}>
-              <Text style={styles.submitText}>Login</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

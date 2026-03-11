@@ -7,6 +7,8 @@ import {
   Dimensions,
   TextInput,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import axios from 'axios';
 import { ActivityIndicator } from 'react-native-paper';
@@ -45,79 +47,84 @@ const CreateMeme = () => {
     setMeme(memeArray[rand]);
   };
   return (
-    <ScrollView>
-      <View style={styles.container}>
-        {loading && (
-          <ActivityIndicator
-            size={'large'}
-            color={colors.primary}
-            style={{ marginTop: 10 }}
-          />
-        )}
-        {!loading && (
-          <>
-            <View style={styles.container}>
-              <View style={styles.header}>
-                <Text style={styles.headerText}>Meme Generator</Text>
-              </View>
-              <View style={styles.memeContainer}>
-                <View style={styles.memeTextContainer}>
-                  <Text style={styles.memeText}>{topText}</Text>
-                  <Text style={styles.memeText}>{bottomText}</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <View style={styles.container}>
+          {loading && (
+            <ActivityIndicator
+              size={'large'}
+              color={colors.primary}
+              style={{ marginTop: 10 }}
+            />
+          )}
+          {!loading && (
+            <>
+              <View style={styles.container}>
+                <View style={styles.header}>
+                  <Text style={styles.headerText}>Meme Generator</Text>
                 </View>
-                <Image
-                  source={{ uri: memeArray[randomIndex]?.url || memeArray[randomIndex]?.image }}
-                  style={{
-                    width: Dimensions.get('screen').width - 100,
-                    height: Dimensions.get('screen').width - 100,
-                  }}
-                />
-                <TouchableOpacity
-                  style={styles.generateAnother1}
-                  onPress={generateRandomNumber}>
-                  <View style={styles.generateAnother}>
-                    <Text style={{ color: colors.secondary }}>
-                      Generate Another Image
-                    </Text>
+                <View style={styles.memeContainer}>
+                  <View style={styles.memeTextContainer}>
+                    <Text style={styles.memeText}>{topText}</Text>
+                    <Text style={styles.memeText}>{bottomText}</Text>
                   </View>
-                </TouchableOpacity>
-                <View style={styles.textInputContainer}>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder={'Top Text'}
-                    value={topText}
-                    onChangeText={text => {
-                      setTopText(text);
+                  <Image
+                    source={{ uri: memeArray[randomIndex]?.url || memeArray[randomIndex]?.image }}
+                    style={{
+                      width: Dimensions.get('screen').width - 100,
+                      height: Dimensions.get('screen').width - 100,
                     }}
                   />
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder={'Bottom Text'}
-                    value={bottomText}
-                    onChangeText={text => {
-                      setBottomText(text);
-                    }}
-                  />
-                </View>
-                <TouchableOpacity>
-                  <View style={styles.postButton}>
-                    <Text
-                      style={{
-                        color: colors.white,
-                        textTransform: 'uppercase',
-                        fontWeight: 'bold',
-                        letterSpacing: 1,
-                      }}>
-                      Post
-                    </Text>
+                  <TouchableOpacity
+                    style={styles.generateAnother1}
+                    onPress={generateRandomNumber}>
+                    <View style={styles.generateAnother}>
+                      <Text style={{ color: colors.secondary }}>
+                        Generate Another Image
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  <View style={styles.textInputContainer}>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder={'Top Text'}
+                      value={topText}
+                      onChangeText={text => {
+                        setTopText(text);
+                      }}
+                    />
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder={'Bottom Text'}
+                      value={bottomText}
+                      onChangeText={text => {
+                        setBottomText(text);
+                      }}
+                    />
                   </View>
-                </TouchableOpacity>
+                  <TouchableOpacity>
+                    <View style={styles.postButton}>
+                      <Text
+                        style={{
+                          color: colors.white,
+                          textTransform: 'uppercase',
+                          fontWeight: 'bold',
+                          letterSpacing: 1,
+                        }}>
+                        Post
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          </>
-        )}
-      </View>
-    </ScrollView>
+            </>
+          )}
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
