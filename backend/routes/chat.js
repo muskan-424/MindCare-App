@@ -3,7 +3,7 @@ const router = express.Router();
 const { ChatGoogleGenerativeAI } = require('@langchain/google-genai');
 const { PineconeStore } = require('@langchain/pinecone');
 const { GoogleGenerativeAIEmbeddings } = require('@langchain/google-genai');
-const { TavilySearchResults } = require('@langchain/tavily');
+const { TavilySearch } = require('@langchain/tavily');
 const { createToolCallingAgent, AgentExecutor } = require('@langchain/classic/agents');
 const { ChatPromptTemplate, MessagesPlaceholder } = require('@langchain/core/prompts');
 const { HumanMessage, AIMessage } = require('@langchain/core/messages');
@@ -80,7 +80,7 @@ router.post('/', async (req, res) => {
     let tools = [];
     try {
       if (process.env.TAVILY_API_KEY && process.env.TAVILY_API_KEY !== 'your_tavily_api_key_here') {
-        const searchTool = new TavilySearchResults({
+        const searchTool = new TavilySearch({
           maxResults: 2,
           apiKey: process.env.TAVILY_API_KEY,
         });
