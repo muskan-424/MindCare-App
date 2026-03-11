@@ -44,7 +44,7 @@ router.post('/', async (req, res) => {
   try {
     // 1. Initialize Gemini Model
     const llm = new ChatGoogleGenerativeAI({
-      modelName: "gemini-pro",
+      modelName: "gemini-1.5-flash",
       temperature: 0.4,
       apiKey: process.env.GOOGLE_API_KEY,
     });
@@ -123,7 +123,20 @@ router.post('/', async (req, res) => {
 
   } catch (err) {
     console.error('Chat error:', err.message);
-    res.status(500).json({ errors: [{ msg: 'Failed to process chat message' }] });
+
+    // Check if it's an API Key or Quota issue
+    let errorMsg = "I'm so sorry, my AI brain seems to be offline right now. ";
+    if (err.message.includes('API key not valid') || err.message.includes('403')) {
+      errorMsg += "It looks like my Google API Key isn't configured correctly on the server!";
+    } else if (err.message.includes('quota') || err.message.includes('429')) {
+      errorMsg += "It looks like we've hit our API rate limits for today!";
+    } else {
+      errorMsg += `(Error details: ${err.message})`;
+    }
+
+    // Instead of throwing a 500 (which triggers the frontend 'network down' message),
+    // we return a 200 with the specific error explanation so the user can read it in the chat bubble!
+    res.json({ reply: errorMsg });
   }
 });
 

@@ -23,26 +23,26 @@ const CreateMeme = () => {
 
   useEffect(() => {
     axios
-      .get('http://alpha-meme-maker.herokuapp.com/2')
+      .get('https://api.imgflip.com/get_memes')
       .then(res => {
-        setMemeArray(res.data.data);
-        console.log(res.data.data);
+        const memes = res.data.data.memes;
+        setMemeArray(memes);
         setLoading(false);
-        setMeme(res.data.data[0]);
-        console.log(meme);
+        setMeme(memes[0]);
       })
       .catch(err => {
         console.warn('Meme API Error:', err.message);
         setLoading(false);
-        setMemeArray([{ image: 'https://i.imgflip.com/1g8my4.jpg', name: 'Fallback Meme' }]);
-        setMeme({ image: 'https://i.imgflip.com/1g8my4.jpg', name: 'Fallback Meme' });
+        const fallback = [{ url: 'https://i.imgflip.com/1g8my4.jpg', name: 'Fallback Meme' }];
+        setMemeArray(fallback);
+        setMeme(fallback[0]);
       });
   }, []);
 
   const generateRandomNumber = () => {
     const rand = Math.floor(Math.random() * memeArray.length);
     setRandomIndex(rand);
-    console.log(rand);
+    setMeme(memeArray[rand]);
   };
   return (
     <ScrollView>
@@ -66,7 +66,7 @@ const CreateMeme = () => {
                   <Text style={styles.memeText}>{bottomText}</Text>
                 </View>
                 <Image
-                  source={{ uri: memeArray[randomIndex].image }}
+                  source={{ uri: memeArray[randomIndex]?.url || memeArray[randomIndex]?.image }}
                   style={{
                     width: Dimensions.get('screen').width - 100,
                     height: Dimensions.get('screen').width - 100,

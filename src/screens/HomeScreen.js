@@ -94,16 +94,23 @@ const HomeScreen = props => {
           },
         },
       ).then(playlistResponse => {
-        //console.log('playlist', playlistResponse.data.playlists.items);
         setPlaylist(playlistResponse.data.playlists.items);
       }).catch(err => {
         console.warn('Spotify API Playlist Error:', err.message);
-        setPlaylist([]);
+        fallbackPlaylist();
       });
     }).catch(err => {
       console.warn('Spotify Token Error:', err.message);
-      setPlaylist([]);
+      fallbackPlaylist();
     });
+
+    const fallbackPlaylist = () => {
+      setPlaylist([
+        { id: '1', name: 'Peaceful Piano', images: [{ url: 'https://i.scdn.co/image/ab67706f00000003ca5a7517156021292e5663a6' }] },
+        { id: '2', name: 'Deep Focus', images: [{ url: 'https://i.scdn.co/image/ab67706f000000035551996f500ba872dce08a1a' }] },
+        { id: '3', name: 'Ambient Relaxation', images: [{ url: 'https://i.scdn.co/image/ab67706f00000003b70e0223f544b1faa3e95210' }] }
+      ]);
+    };
   }, []);
 
   const handleConcernSelection = id => {
