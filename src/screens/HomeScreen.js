@@ -20,6 +20,7 @@ import { connect } from 'react-redux';
 import { updateConcerns } from '../redux/actions/profile';
 import { fetchQuoteOfTheDay } from '../redux/actions/quote';
 import { Avatar, Card, Title, Paragraph } from 'react-native-paper';
+import { api_route } from '../utils/route';
 
 const preferences = [
   {
@@ -58,8 +59,17 @@ const preferences = [
 
 const HomeScreen = props => {
   const [modalVisible, setModalVisible] = useState(true);
-  const [playlist, setPlaylist] = useState([]);
+  const [contentFeed, setContentFeed] = useState([]);
   const [selectedConcerns, setSelectedConcerns] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('meditation');
+
+  const contentCategories = [
+    { id: 'meditation', label: 'Meditation' },
+    { id: 'motivation', label: 'Motivation' },
+    { id: 'sleep', label: 'Sleep Stories' },
+    { id: 'relaxing_music', label: 'Relaxing Music' },
+    { id: 'therapy', label: 'Therapy Advice' }
+  ];
 
   useEffect(() => {
     fetchQuoteOfTheDay();
@@ -71,47 +81,17 @@ const HomeScreen = props => {
   });
 
   useEffect(() => {
-    axios('https://accounts.spotify.com/api/token', {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization:
-          'Basic ' +
-          base64.encode(
-            '85acc1ba7c3a4349b1abca61d53e2b26' +
-            ':' +
-            'ae1de5a2ad0c4ab4983f3d0a3b22ae68',
-          ),
-      },
-      data: 'grant_type=client_credentials',
-      method: 'POST',
-    }).then(tokenResponse => {
-      axios(
-        `https://api.spotify.com/v1/browse/categories/${'wellness'}/playlists?limit=10`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: 'Bearer ' + tokenResponse.data.access_token,
-          },
-        },
-      ).then(playlistResponse => {
-        setPlaylist(playlistResponse.data.playlists.items);
-      }).catch(err => {
-        console.warn('Spotify API Playlist Error:', err.message);
-        fallbackPlaylist();
-      });
-    }).catch(err => {
-      console.warn('Spotify Token Error:', err.message);
-      fallbackPlaylist();
-    });
-
-    const fallbackPlaylist = () => {
-      setPlaylist([
-        { id: '1', name: 'Peaceful Piano', images: [{ url: 'https://i.scdn.co/image/ab67706f00000003ca5a7517156021292e5663a6' }] },
-        { id: '2', name: 'Deep Focus', images: [{ url: 'https://i.scdn.co/image/ab67706f000000035551996f500ba872dce08a1a' }] },
-        { id: '3', name: 'Ambient Relaxation', images: [{ url: 'https://i.scdn.co/image/ab67706f00000003b70e0223f544b1faa3e95210' }] }
-      ]);
+    const fetchContent = async () => {
+      try {
+        const result = await axios.get(`${api_route}/api/content/search?category=${selectedCategory}`);
+        setContentFeed(result.data);
+      } catch (err) {
+        console.warn('Mindful Content API Error:', err.message);
+        setContentFeed([]);
+      }
     };
-  }, []);
+    fetchContent();
+  }, [selectedCategory]);
 
   const handleConcernSelection = id => {
     if (selectedConcerns.includes(id)) {
@@ -127,22 +107,23 @@ const HomeScreen = props => {
     return (
       <TouchableOpacity
         onPress={() => {
-          props.navigation.navigate('TrackList', {
-            id: item.id,
-            title: item.name,
+          // Navigating directly to the player since it's a specific video
+          props.navigation.navigate('Track', {
+            videoId: item.videoId,
+            title: item.title,
+            thumbnail: item.thumbnail
           });
         }}>
-        <View style={styles.track}>
-          <View style={styles.trackImage}>
-            <Image
-              source={{ uri: item.images[0].url }}
-              style={{
-                width: 150,
-                height: 150,
-                borderRadius: 10,
-              }}
-            />
-          </View>
+        <View style={styles.contentCard}>
+          <Image
+            source={{ uri: item.thumbnail }}
+            style={{
+              width: 180,
+              height: 120,
+              borderRadius: 10,
+            }}
+          />
+          <Text style={styles.contentTitle} numberOfLines={2}>{item.title}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -266,16 +247,30 @@ const HomeScreen = props => {
             </Text>
           </View>
         </View>
-        <View>
-          <View style={styles.tracksContainer}>
-            <Text style={styles.trackTitle}>Tracks to refresh your mood!</Text>
-            <FlatList
-              renderItem={renderItem}
-              data={playlist}
-              horizontal={true}
-              keyExtractor={item => item.id}
-            />
-          </View>
+        <View style={styles.tracksContainer}>
+          <Text style={styles.trackTitle}>Mindful Content</Text>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipContainer}>
+            {contentCategories.map(cat => (
+              <TouchableOpacity
+                key={cat.id}
+                onPress={() => setSelectedCategory(cat.id)}
+                style={[styles.chip, selectedCategory === cat.id && styles.chipActive]}>
+                <Text style={[styles.chipText, selectedCategory === cat.id && styles.chipTextActive]}>
+                  {cat.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <FlatList
+            renderItem={renderItem}
+            data={contentFeed}
+            horizontal={true}
+            keyExtractor={item => item.videoId}
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: 15 }}
+          />
         </View>
       </View>
     </ScrollView>
@@ -500,4 +495,35 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textTransform: 'uppercase',
   },
+  contentCard: {
+    width: 180,
+    marginRight: 15,
+  },
+  contentTitle: {
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.black,
+  },
+  chipContainer: {
+    marginTop: 10,
+    flexDirection: 'row',
+  },
+  chip: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#EFEFEF',
+    marginRight: 10,
+  },
+  chipActive: {
+    backgroundColor: colors.primary,
+  },
+  chipText: {
+    color: colors.gray1,
+    fontWeight: 'bold',
+  },
+  chipTextActive: {
+    color: colors.white,
+  }
 });

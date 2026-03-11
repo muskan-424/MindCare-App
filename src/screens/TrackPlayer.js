@@ -1,50 +1,21 @@
-import React, {useEffect, Component} from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  Button,
-  Image,
-  TouchableOpacity,
-} from 'react-native';
-import {colors} from '../constants/theme';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import {useState} from 'react';
-import SoundPlayer from 'react-native-sound-player';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { WebView } from 'react-native-webview';
 
 const Track = props => {
-  const [play, setPlay] = useState(false);
-  useEffect(() => {
-    SoundPlayer.loadUrl(props.route.params.audio);
-  }, []);
-  const playSound = async () => {
-    SoundPlayer.play();
-    setPlay(!play);
-  };
-  const pauseSound = async () => {
-    SoundPlayer.pause();
-    setPlay(!play);
-  };
+  const videoId = props.route.params.videoId;
+  const youtubeUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
 
   return (
     <View style={styles.container}>
-      <View>
-        <Image
-          source={{uri: props.route.params.image}}
-          style={{width: 300, height: 300, borderRadius: 10}}
-        />
-      </View>
-      <View style={{flexDirection: 'row', marginTop: 20}}>
-        {play ? (
-          <TouchableOpacity onPress={pauseSound}>
-            <FontAwesome name="pause" size={50} color="black" />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity onPress={playSound}>
-            <FontAwesome name="play" size={50} color="black" />
-          </TouchableOpacity>
-        )}
-      </View>
+      <WebView
+        source={{ uri: youtubeUrl }}
+        style={{ flex: 1, width: '100%', height: '100%' }}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        mediaPlaybackRequiresUserAction={false}
+        allowsInlineMediaPlayback={true}
+      />
     </View>
   );
 };
@@ -53,9 +24,7 @@ export default Track;
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    justifyContent: 'center',
     flex: 1,
-    backgroundColor: colors.gray3,
+    backgroundColor: '#000', // Black background for video player
   },
 });
