@@ -9,12 +9,11 @@ import {
 } from 'react-native';
 import {colors} from '../constants/theme';
 import BrickList from 'react-native-masonry-brick-list';
-import axios from 'axios';
+import api from '../utils/apiClient';
 import base64 from 'react-native-base64';
 import AnimatedLoader from 'react-native-animated-loader';
 import Grid from 'react-native-grid-component';
 import FitnessContentCard from '../components/FitnessContentCard';
-import { api_route } from '../utils/route';
 
 const fallbackContent = {
   Yoga: {
@@ -73,18 +72,15 @@ const FitnessContent = ({route}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [contentList, setList] = useState([]);
-  const [url, setUrl] = useState(
-    `${api_route}/api/fitness/${encodeURIComponent(
-      route.params.category,
-    )}/${encodeURIComponent(route.params.subcategory)}/getContent`,
-  );
 
   useEffect(() => {
     const fetchData = async () => {
       setIsError(false);
       setIsLoading(true);
       try {
-        const result = await axios(url);
+        const result = await api.get(
+          `/api/fitness/${encodeURIComponent(route.params.category)}/${encodeURIComponent(route.params.subcategory)}/getContent`,
+        );
         setContent(result.data);
         setTitle(Object.keys(result.data));
         // setList(convertToArray(content,title))

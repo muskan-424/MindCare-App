@@ -10,27 +10,29 @@ import {
 } from 'react-native';
 import { Searchbar } from 'react-native-paper';
 import TherapistCard from '../components/TherapistCard';
-import axios from 'axios';
+import api from '../utils/apiClient';
+import TrackedTouchable from '../components/TrackedTouchable';
 import localData from '../constants/doctors';
 import { colors, sizes, fonts } from '../constants/theme';
 
-const CATEGORIES = [
-  { id: '1', name: 'Psychologist', emoji: '🧠' },
-  { id: '2', name: 'Psychiatrist', emoji: '💊' },
-  { id: '3', name: 'Counsellor', emoji: '💬' },
-  { id: '4', name: 'Social Worker', emoji: '🤝' },
+const FALLBACK_CATEGORIES = [
+  { id: '1', name: 'Psychologist', icon: 'https://cdn-icons-png.flaticon.com/512/2785/2785819.png' },
+  { id: '2', name: 'Psychiatrist', icon: 'https://cdn-icons-png.flaticon.com/512/3308/3308392.png' },
+  { id: '3', name: 'Counsellor', icon: 'https://cdn-icons-png.flaticon.com/512/2461/2461102.png' },
+  { id: '4', name: 'Social Worker', icon: 'https://cdn-icons-png.flaticon.com/512/3179/3179068.png' },
 ];
 
 const TherapistHomeScreen = (props) => {
   const [query, setQuery] = useState('');
   const [therapists, setTherapists] = useState(localData);
+  const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
   const [loading, setLoading] = useState(false);
 
   React.useEffect(() => {
     const fetchTherapists = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${api_route}/api/therapists`);
+        const res = await api.get('/api/therapists');
         if (Array.isArray(res.data)) {
           setTherapists(res.data);
         } else {
@@ -46,8 +48,21 @@ const TherapistHomeScreen = (props) => {
     fetchTherapists();
   }, []);
 
+  React.useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get('/api/therapists/categories');
+        if (Array.isArray(res.data) && res.data.length > 0) setCategories(res.data);
+      } catch (_) {
+        // keep FALLBACK_CATEGORIES
+      }
+    };
+    fetchCategories();
+  }, []);
+
   const renderCategory = ({ item }) => (
-    <TouchableOpacity
+    <TrackedTouchable
+      eventName={`Therapist_Category_${item.name}`}
       style={styles.catCard}
       onPress={() =>
         props.navigation.navigate('Therapist', {
@@ -56,9 +71,9 @@ const TherapistHomeScreen = (props) => {
         })
       }
       activeOpacity={0.8}>
-      <Text style={styles.catEmoji}>{item.emoji}</Text>
+      <Image source={{ uri: item.icon }} style={styles.catIcon} />
       <Text style={styles.catName}>{item.name}</Text>
-    </TouchableOpacity>
+    </TrackedTouchable>
   );
 
   return (
@@ -80,7 +95,7 @@ const TherapistHomeScreen = (props) => {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>Browse by type</Text>
         <FlatList
-          data={CATEGORIES}
+          data={categories}
           renderItem={renderCategory}
           keyExtractor={(item) => item.id}
           horizontal
@@ -140,7 +155,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 4,
   },
-  catEmoji: { fontSize: 32, marginBottom: 8 },
+  catIcon: {
+    width: 36,
+    height: 36,
+    marginBottom: 8,
+    resizeMode: 'contain',
+  },
   catName: { fontSize: 12, fontWeight: '600', color: colors.secondary, textAlign: 'center' },
   cardList: { paddingHorizontal: 16 },
   cardWrap: { marginBottom: 14 },

@@ -1,6 +1,5 @@
 import { REGISTER_SUCCESS, REGISTER_FAIL } from './type';
-import axios from 'axios';
-import { api_route } from '../../utils/route';
+import api from '../../utils/apiClient';
 import { ToastAndroid } from 'react-native';
 import { fetchQuoteOfTheDay } from './quote';
 
@@ -19,11 +18,8 @@ export const register = ({
   };
 
   const body = JSON.stringify({ name, email, password, age, gender, phone_no });
-  // console.log('action');
-  console.log('axios', api_route + '/api/user');
-  // console.log(body);
   try {
-    const res = await axios.post(`${api_route}/api/user`, body, config);
+    const res = await api.post('/api/user', body, config);
     dispatch({ type: REGISTER_SUCCESS, payload: res.data });
   } catch (err) {
     const message = err.response?.data?.errors?.[0]?.msg || err.message || 'Registration failed. Server may be unreachable.';
@@ -39,7 +35,7 @@ export const login = ({ email, password }) => async dispatch => {
   };
   const body = JSON.stringify({ email, password });
   try {
-    const res = await axios.post(`${api_route}/api/auth`, body, config);
+    const res = await api.post('/api/auth', body, config);
     dispatch({ type: REGISTER_SUCCESS, payload: res.data });
 
     //dispatch(fetchQuoteOfTheDay());

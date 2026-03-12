@@ -1,49 +1,49 @@
 const express = require('express');
 const router = express.Router();
+const JournalEntry = require('../models/JournalEntry');
 
-// Static journal entries for now; can be moved to Mongo later.
-let JOURNALS = [
-  {
-    id: 1,
-    date: '13 November 2020',
-    time: '6:07 AM',
-    content:
-      'I went to office today after 2 weeks. It feels like everyone is ignoring me or what. This all is due to my 2 weeks leave I guess. Or maybe they are not ignoring me and just busy in their work. Damn, this overthinking :( ',
-  },
-  {
-    id: 2,
-    date: '13 November 2020',
-    time: '8:10 AM',
-    content:
-      'Over-thinking. I do it all the time. I’m doing it right now — right now as I write this, having not even been awake for half an hour...',
-  },
-  {
-    id: 3,
-    date: '13 November 2020',
-    time: '10:11 AM',
-    content:
-      'I met a Buddhist today. He is known as Ajahn Brahm. When talking about overthinking, he says he used to do it a lot too...',
-  },
-  {
-    id: 4,
-    date: '13 November 2020',
-    time: '12:07 PM',
-    content:
-      'Over-thinking allows for the creation of baseless or unsubstantiated assumptions. It can turn decision making into an agonizing ordeal.',
-  },
-  {
-    id: 5,
-    date: '14 November 2020',
-    time: '05:17 PM',
-    content:
-      'I am having a good day today. I had the best sleep at night. No one is with me when I put up my views in the office meeting, but now I don’t care...',
-  },
-];
+router.get('/', async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) {
+      return res.json([]);
+    }
+    const entries = await JournalEntry.find({ user: userId })
+      .sort({ date: -1 })
+      .limit(100)
+      .lean();
+    res.json(
+      entries.map((e) => ({
+        id: e._id,
+        date: new Date(e.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+        time: new Date(e.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+        content: e.content,
+      }))
+    );
+  } catch (err) {
+    console.error('Error fetching journals:', err.message);
+    res.status(500).json({ error: 'Failed to load journals' });
+  }
+});
 
-// GET /api/journals
-router.get('/', (_req, res) => {
-  res.json(JOURNALS);
+router.post('/', async (req, res) => {
+  try {
+    const { userId, content } = req.body;
+    if (!userId || !content || typeof content !== 'string') {
+      return res.status(400).json({ error: 'userId and content are required' });
+    }
+    const entry = new JournalEntry({ user: userId, content: content.trim() });
+    await entry.save();
+    res.json({
+      id: entry._id,
+      date: new Date(entry.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+      time: new Date(entry.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+      content: entry.content,
+    });
+  } catch (err) {
+    console.error('Error creating journal:', err.message);
+    res.status(500).json({ error: 'Failed to save journal' });
+  }
 });
 
 module.exports = router;
-

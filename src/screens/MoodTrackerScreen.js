@@ -11,9 +11,8 @@ import {
   Platform,
 } from 'react-native';
 import { connect } from 'react-redux';
-import axios from 'axios';
+import api from '../utils/apiClient';
 import { colors, sizes } from '../constants/theme';
-import { api_route } from '../utils/route';
 
 const MoodTrackerScreen = ({ auth, navigation }) => {
   const [rating, setRating] = useState(5);
@@ -30,7 +29,7 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
         return;
       }
       try {
-        const res = await axios.get(`${api_route}/api/mood/trend?userId=${auth.user._id}&window=7`);
+        const res = await api.get('/api/mood/trend', { params: { userId: auth.user._id, window: 7 } });
         setTrend(res.data.trend || []);
       } catch (e) {
         setTrend([]);
@@ -45,7 +44,7 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
     setLoading(true);
     setSaved(false);
     try {
-      await axios.post(`${api_route}/api/mood`, {
+      await api.post('/api/mood', {
         userId: auth.user._id,
         rating,
         note: note.trim() || undefined,

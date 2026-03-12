@@ -8,21 +8,42 @@ import {
   FlatList,
   TouchableOpacity,
   Modal,
-  SafeAreaView,
   ScrollView,
   ActivityIndicator,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../constants/theme';
 import { Button } from 'react-native-elements';
-import BrickList from 'react-native-masonry-brick-list';
-import axios from 'axios';
-import base64 from 'react-native-base64';
+import api from '../utils/apiClient';
 import { connect } from 'react-redux';
+import TrackedTouchable from '../components/TrackedTouchable';
 import { updateConcerns } from '../redux/actions/profile';
 import { fetchQuoteOfTheDay } from '../redux/actions/quote';
-import { Avatar, Card, Title, Paragraph } from 'react-native-paper';
-import { api_route } from '../utils/route';
+
+const SEVERITY_LABELS = { 1: 'A bit', 2: 'Somewhat', 3: 'Moderate', 4: 'Quite a bit', 5: 'Very much' };
+const MOOD_TAGS = ['calm', 'anxious', 'sad', 'angry', 'tired', 'hopeful', 'overwhelmed', 'okay'];
+const DEFAULT_CATEGORIES = ['academic_stress', 'anxiety', 'relationship', 'family', 'finances', 'health', 'loneliness', 'grief', 'self_esteem', 'sleep', 'work_life_balance', 'other'];
+
+const FALLBACK_SELF_HELP = [
+  { id: 'Breathing', screen: 'Breathing', label: 'Breathing', icon: 'https://cdn-icons-png.flaticon.com/512/4151/4151607.png' },
+  { id: 'Affirmations', screen: 'Affirmations', label: 'Affirmations', icon: 'https://cdn-icons-png.flaticon.com/512/2461/2461102.png' },
+  { id: 'CrisisResources', screen: 'CrisisResources', label: 'Crisis support', icon: 'https://cdn-icons-png.flaticon.com/512/463/463574.png' },
+  { id: 'MoodCheck', screen: 'MoodCheck', label: 'Mood check', icon: 'https://cdn-icons-png.flaticon.com/512/1874/1874325.png' },
+  { id: 'Gratitude', screen: 'Gratitude', label: 'Gratitude', icon: 'https://cdn-icons-png.flaticon.com/512/4207/4207244.png' },
+  { id: 'Grounding', screen: 'Grounding', label: 'Grounding', icon: 'https://cdn-icons-png.flaticon.com/512/609/609803.png' },
+];
+
+const FALLBACK_CONTENT_CATEGORIES = [
+  { id: 'meditation', label: 'Meditation' },
+  { id: 'motivation', label: 'Motivation' },
+  { id: 'sleep', label: 'Sleep Stories' },
+  { id: 'relaxing_music', label: 'Relaxing Music' },
+  { id: 'therapy', label: 'Therapy Advice' },
+];
+const label = (id) => (id || '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
 const fallbackContentByCategory = {
   meditation: [
@@ -67,76 +88,62 @@ const fallbackContentByCategory = {
   ],
 };
 
-const preferences = [
-  {
-    id: '1',
-    name: 'Anger',
-  },
-  {
-    id: '2',
-    name: 'Anxiety and Panic Attacks',
-  },
-  {
-    id: '3',
-    name: 'Depression',
-  },
-  {
-    id: '4',
-    name: 'Eating disorders',
-  },
-  {
-    id: '5',
-    name: 'Self-esteem',
-  },
-  {
-    id: '6',
-    name: 'Self-harm',
-  },
-  {
-    id: '7',
-    name: 'Stress',
-  },
-  {
-    id: '8',
-    name: 'Sleep disorders',
-  },
-];
-
-const selfHelpOptions = [
-  { id: 'Breathing', screen: 'Breathing', label: 'Breathing', emoji: '🌬️' },
-  { id: 'Affirmations', screen: 'Affirmations', label: 'Affirmations', emoji: '💬' },
-  { id: 'CrisisResources', screen: 'CrisisResources', label: 'Crisis support', emoji: '🆘' },
-  { id: 'MoodCheck', screen: 'MoodCheck', label: 'Mood check', emoji: '😊' },
-  { id: 'Gratitude', screen: 'Gratitude', label: 'Gratitude', emoji: '🙏' },
-  { id: 'Grounding', screen: 'Grounding', label: 'Grounding', emoji: '🌿' },
-];
-
 const HomeScreen = props => {
-  const [modalVisible, setModalVisible] = useState(false);
+  const [assessmentModalVisible, setAssessmentModalVisible] = useState(false);
+  const [assessmentStep, setAssessmentStep] = useState(1);
+  const [categories, setCategories] = useState([]);
+  const [category, setCategory] = useState('');
+  const [severity, setSeverity] = useState(3);
+  const [moodTag, setMoodTag] = useState('');
+  const [description, setDescription] = useState('');
+  const [assessmentResult, setAssessmentResult] = useState(null);
+  const [assessmentLoading, setAssessmentLoading] = useState(false);
+  const [assessmentError, setAssessmentError] = useState('');
   const [contentFeed, setContentFeed] = useState([]);
-  const [selectedConcerns, setSelectedConcerns] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('meditation');
   const [loadingContent, setLoadingContent] = useState(false);
   const [contentError, setContentError] = useState(null);
+  const [selfHelpTiles, setSelfHelpTiles] = useState(FALLBACK_SELF_HELP);
+  const [contentCategories, setContentCategories] = useState(FALLBACK_CONTENT_CATEGORIES);
 
   useEffect(() => {
     (async () => {
       try {
-        const seen = await AsyncStorage.getItem('MindCare_hasSeenConcerns');
-        setModalVisible(seen !== 'true');
+        const res = await api
+          .get('/api/issues/categories')
+          .catch(() => ({}));
+        const list = res.data?.categories || DEFAULT_CATEGORIES;
+        setCategories(list);
+        if (list[0]) setCategory(list[0]);
       } catch (e) {
-        setModalVisible(true);
+        setCategories(DEFAULT_CATEGORIES);
+        setCategory('anxiety');
       }
     })();
   }, []);
 
-  const contentCategories = [
-    { id: 'meditation', label: 'Meditation' },
-    { id: 'motivation', label: 'Motivation' },
-    { id: 'sleep', label: 'Sleep Stories' },
-    { id: 'relaxing_music', label: 'Relaxing Music' },
-    { id: 'therapy', label: 'Therapy Advice' }
-  ];
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.get('/api/home').catch(() => ({}));
+        if (res.data?.selfHelpTiles?.length) setSelfHelpTiles(res.data.selfHelpTiles);
+        if (res.data?.contentCategories?.length) setContentCategories(res.data.contentCategories);
+      } catch (_) {
+        // keep fallbacks
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const seen = await AsyncStorage.getItem('MindCare_hasSeenAssessment');
+        setAssessmentModalVisible(seen !== 'true');
+      } catch (e) {
+        setAssessmentModalVisible(true);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     fetchQuoteOfTheDay();
@@ -152,9 +159,9 @@ const HomeScreen = props => {
       try {
         setLoadingContent(true);
         setContentError(null);
-        const result = await axios.get(
-          `${api_route}/api/content/search?category=${selectedCategory}`,
-        );
+        const result = await api.get('/api/content/search', {
+          params: { category: selectedCategory },
+        });
         setContentFeed(result.data);
       } catch (err) {
         console.warn('Mindful Content API Error:', err.message);
@@ -166,14 +173,54 @@ const HomeScreen = props => {
     fetchContent();
   }, [selectedCategory]);
 
-  const handleConcernSelection = id => {
-    if (selectedConcerns.includes(id)) {
-      setSelectedConcerns([
-        ...selectedConcerns.filter(concern => concern !== id),
-      ]);
-    } else {
-      setSelectedConcerns([...selectedConcerns, id]);
+  const runAssessment = async () => {
+    if (!props.auth.user?._id) {
+      setAssessmentError('Please log in to complete check-in.');
+      return;
     }
+    setAssessmentError('');
+    setAssessmentLoading(true);
+    setAssessmentResult(null);
+    try {
+      const res = await api.post('/api/issues/report', {
+        userId: props.auth.user._id,
+        category: category || 'other',
+        severity,
+        description: description.trim(),
+        moodTag: moodTag || undefined,
+      });
+      setAssessmentResult(res.data);
+      if (res.data.safety?.showEmergencyScreen) {
+        setAssessmentModalVisible(false);
+        props.navigation.navigate('Safety', { helplines: res.data.safety.helplines });
+        return;
+      }
+      try {
+        await api.post('/api/mood', {
+          userId: props.auth.user._id,
+          rating: Math.max(1, Math.min(10, 11 - severity * 2)),
+          note: description.trim() || undefined,
+        });
+      } catch (_) {}
+    } catch (e) {
+      setAssessmentError(e.response?.data?.error || e.message || 'Something went wrong.');
+    }
+    setAssessmentLoading(false);
+  };
+
+  const closeAssessment = () => {
+    setAssessmentModalVisible(false);
+    setAssessmentStep(1);
+    setAssessmentResult(null);
+    setAssessmentError('');
+    AsyncStorage.setItem('MindCare_hasSeenAssessment', 'true').catch(() => {});
+  };
+
+  const openAssessment = () => {
+    setAssessmentStep(1);
+    setAssessmentResult(null);
+    setAssessmentError('');
+    setAssessmentModalVisible(true);
   };
 
   const renderItem = ({ item }) => {
@@ -204,45 +251,138 @@ const HomeScreen = props => {
 
   return (
     <ScrollView>
-      <Modal animationType="slide" transparent={true} visible={modalVisible}>
-        <View style={styles.centeredView}>
+      <Modal animationType="slide" transparent visible={assessmentModalVisible}>
+        <KeyboardAvoidingView
+          style={styles.centeredView}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
+        >
           <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>
-              Select issues you are concerned about
-            </Text>
-            <BrickList
-              data={preferences}
-              renderItem={prop => {
-                return (
-                  <TouchableOpacity
-                    onPress={() => handleConcernSelection(prop.id)}>
-                    <View
-                      key={prop.id}
-                      style={
-                        selectedConcerns.includes(prop.id)
-                          ? styles.preferenceItemSelected
-                          : styles.preferencesItem
-                      }>
-                      <Text style={styles.preferenceText}>{prop.name}</Text>
-                    </View>
+            <ScrollView
+              style={{ maxHeight: Dimensions.get('window').height * 0.8 }}
+              contentContainerStyle={{ paddingBottom: 24 }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <Text style={styles.modalTitle}>AI Check-in</Text>
+              <Text style={styles.modalSubtitle}>A quick assessment. Tink will suggest support based on your answers.</Text>
+
+              {assessmentResult ? (
+                <View style={styles.resultBlock}>
+                  <Text style={styles.resultTitle}>Tink suggests</Text>
+                  <Text style={styles.riskText}>Risk: {assessmentResult.riskLevel}</Text>
+                  {assessmentResult.recommendations?.length > 0 &&
+                    assessmentResult.recommendations.map((rec, i) => (
+                      <Text key={i} style={styles.recText}>• {rec}</Text>
+                    ))}
+                  <TouchableOpacity style={styles.talkBtn} onPress={() => { closeAssessment(); props.navigation.navigate('Chat', { name: 'Tink' }); }}>
+                    <Text style={styles.talkBtnText}>Talk to Tink</Text>
                   </TouchableOpacity>
-                );
-              }}
-              columns={3}
-              rowHeight={45}></BrickList>
-            <Button
-              buttonStyle={styles.done_button}
-              raised={true}
-              type="outline"
-              title="Done"
-              titleStyle={styles.done}
-              onPress={() => {
-                props.updateConcerns(selectedConcerns, props.auth.user._id);
-                AsyncStorage.setItem('MindCare_hasSeenConcerns', 'true').catch(() => {});
-                setModalVisible(false);
-              }}></Button>
+                  <Button
+                    buttonStyle={styles.done_button}
+                    title="Done"
+                    titleStyle={styles.done}
+                    onPress={closeAssessment}
+                  />
+                </View>
+              ) : (
+                <>
+                  {assessmentStep === 1 && (
+                    <>
+                      <Text style={styles.stepLabel}>What's on your mind?</Text>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
+                        {categories.map((c) => (
+                          <TouchableOpacity
+                            key={c}
+                            style={[styles.assessmentChip, category === c && styles.assessmentChipActive]}
+                            onPress={() => setCategory(c)}
+                          >
+                            <Text style={[styles.assessmentChipText, category === c && styles.assessmentChipTextActive]}>{label(c)}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </>
+                  )}
+                  {assessmentStep === 2 && (
+                    <>
+                      <Text style={styles.stepLabel}>How much is it affecting you? (1–5)</Text>
+                      <View style={styles.severityRow}>
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <TouchableOpacity
+                            key={n}
+                            style={[styles.sevBtn, severity === n && styles.sevBtnActive]}
+                            onPress={() => setSeverity(n)}
+                          >
+                            <Text style={[styles.sevNum, severity === n && styles.sevNumActive]}>{n}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                      <Text style={styles.sevLabel}>{SEVERITY_LABELS[severity]}</Text>
+                    </>
+                  )}
+                  {assessmentStep === 3 && (
+                    <>
+                      <Text style={styles.stepLabel}>How are you feeling right now?</Text>
+                      <View style={styles.moodRow}>
+                        {MOOD_TAGS.map((m) => (
+                          <TouchableOpacity
+                            key={m}
+                            style={[styles.assessmentChip, moodTag === m && styles.assessmentChipActive]}
+                            onPress={() => setMoodTag(moodTag === m ? '' : m)}
+                          >
+                            <Text style={[styles.assessmentChipText, moodTag === m && styles.assessmentChipTextActive]}>{label(m)}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </>
+                  )}
+                  {assessmentStep === 4 && (
+                    <>
+                      <Text style={styles.stepLabel}>Anything else you'd like to share? (optional)</Text>
+                      <TextInput
+                        style={styles.assessmentInput}
+                        placeholder="Describe how you're doing..."
+                        placeholderTextColor={colors.gray}
+                        value={description}
+                        onChangeText={setDescription}
+                        multiline
+                        numberOfLines={3}
+                      />
+                    </>
+                  )}
+                  {assessmentError ? <Text style={styles.errText}>{assessmentError}</Text> : null}
+                  <View style={styles.modalActions}>
+                    {assessmentStep > 1 && assessmentStep <= 4 && (
+                      <Button
+                        buttonStyle={styles.backAssessmentBtn}
+                        title="Back"
+                        titleStyle={{ color: colors.secondary }}
+                        onPress={() => setAssessmentStep((s) => s - 1)}
+                      />
+                    )}
+                    {assessmentStep < 4 ? (
+                      <Button
+                        buttonStyle={styles.done_button}
+                        title="Next"
+                        titleStyle={styles.done}
+                        onPress={() => setAssessmentStep((s) => s + 1)}
+                      />
+                    ) : (
+                      <Button
+                        buttonStyle={styles.done_button}
+                        title={assessmentLoading ? '' : 'Get AI assessment'}
+                        titleStyle={styles.done}
+                        onPress={runAssessment}
+                        disabled={assessmentLoading}
+                        loading={assessmentLoading}
+                      />
+                    )}
+                  </View>
+                </>
+              )}
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
       <View style={styles.container}>
         <View style={styles.header}>
@@ -256,7 +396,7 @@ const HomeScreen = props => {
             }}>
             <View style={styles.avatar}>
               <Image
-                source={require('../assets/avatar.png')}
+                source={require('../assets/userIcon.png')}
                 style={{ width: 60, height: 60 }}
               />
             </View>
@@ -300,15 +440,8 @@ const HomeScreen = props => {
                 </View>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.feelingCta}
-              onPress={() => props.navigation.navigate('ReportIssue')}>
-              <Text style={styles.feelingCtaText}>How are you feeling?</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.moodCta}
-              onPress={() => props.navigation.navigate('MoodTracker')}>
-              <Text style={styles.moodCtaText}>Log mood</Text>
+            <TouchableOpacity style={styles.feelingCta} onPress={openAssessment}>
+              <Text style={styles.feelingCtaText}>Check in (AI assessment)</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -326,15 +459,16 @@ const HomeScreen = props => {
         <View style={styles.selfHelpContainer}>
           <Text style={styles.selfHelpTitle}>Self-help</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selfHelpScroll}>
-            {selfHelpOptions.map(opt => (
-              <TouchableOpacity
+            {selfHelpTiles.map(opt => (
+              <TrackedTouchable
                 key={opt.id}
+                eventName={`Home_SelfHelp_${opt.id}`}
                 style={styles.selfHelpCard}
                 onPress={() => props.navigation.navigate(opt.screen)}
               >
-                <Text style={styles.selfHelpEmoji}>{opt.emoji}</Text>
+                <Image source={{ uri: opt.icon }} style={styles.selfHelpIcon} />
                 <Text style={styles.selfHelpLabel} numberOfLines={2}>{opt.label}</Text>
-              </TouchableOpacity>
+              </TrackedTouchable>
             ))}
           </ScrollView>
         </View>
@@ -343,7 +477,7 @@ const HomeScreen = props => {
           <Text style={styles.quoteText}>Quote of the day</Text>
           <View style={styles.quote}>
             <Text style={{ fontSize: 17 }}>
-              Be yourself no matter what they say!
+              {props.quote?.quote ?? 'Be yourself no matter what they say!'}
             </Text>
           </View>
         </View>
@@ -504,20 +638,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  moodCta: {
-    marginTop: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: colors.secondary,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  moodCtaText: {
-    color: colors.secondary,
-    fontSize: 13,
-    fontWeight: '600',
-  },
   quoteContainer: {
     padding: 10,
     paddingTop: 0,
@@ -596,6 +716,140 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
   },
+  modalSubtitle: {
+    fontSize: 14,
+    color: colors.gray,
+    marginBottom: 16,
+  },
+  stepLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.secondary,
+    marginBottom: 10,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    flexWrap: 'wrap',
+  },
+  assessmentChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: colors.white,
+    marginRight: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.gray3,
+  },
+  assessmentChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  assessmentChipText: {
+    fontSize: 14,
+    color: colors.secondary,
+  },
+  assessmentChipTextActive: {
+    color: colors.white,
+  },
+  severityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  sevBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.gray3,
+  },
+  sevBtnActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  sevNum: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.secondary,
+  },
+  sevNumActive: {
+    color: colors.white,
+  },
+  sevLabel: {
+    fontSize: 12,
+    color: colors.gray,
+    marginBottom: 16,
+  },
+  moodRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 16,
+  },
+  assessmentInput: {
+    borderWidth: 1,
+    borderColor: colors.gray3,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    marginBottom: 16,
+  },
+  errText: {
+    color: colors.redPink,
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+    marginHorizontal: 8,
+  },
+  backAssessmentBtn: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.secondary,
+    borderRadius: 90,
+    paddingHorizontal: 24,
+    marginRight: 12,
+  },
+  resultBlock: {
+    marginTop: 8,
+  },
+  resultTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.secondary,
+    marginBottom: 8,
+  },
+  riskText: {
+    fontSize: 14,
+    color: colors.gray,
+    marginBottom: 12,
+  },
+  recText: {
+    fontSize: 14,
+    color: colors.secondary,
+    marginBottom: 6,
+  },
+  talkBtn: {
+    marginTop: 12,
+    marginBottom: 16,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  talkBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.primary,
+  },
   preferencesItem: {
     marginHorizontal: 2,
     borderRadius: 12,
@@ -654,14 +908,17 @@ const styles = StyleSheet.create({
     marginRight: 12,
     backgroundColor: colors.accent,
     borderRadius: 14,
-    padding: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
     alignItems: 'center',
     minHeight: 88,
     justifyContent: 'center',
   },
-  selfHelpEmoji: {
-    fontSize: 28,
+  selfHelpIcon: {
+    width: 32,
+    height: 32,
     marginBottom: 6,
+    resizeMode: 'contain',
   },
   selfHelpLabel: {
     fontSize: 12,

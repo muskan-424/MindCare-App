@@ -1,7 +1,6 @@
 import { CONCERN_UPDATE,UPDATE_USER } from './type';
-import axios from 'axios';
+import api from '../../utils/apiClient';
 import { ToastAndroid } from 'react-native';
-import { api_route } from '../../utils/route';
 
 export const updateConcerns = (concerns, uid) => async dispatch => {
   const config = {
@@ -12,8 +11,8 @@ export const updateConcerns = (concerns, uid) => async dispatch => {
 
   const body = JSON.stringify({ concerns, uid });
   try {
-    const res = await axios.post(
-      `${api_route}/api/profile/add-concerns`,
+    const res = await api.post(
+      '/api/profile/add-concerns',
       body,
       config
     );
@@ -36,8 +35,8 @@ export const updateUser=(name,email,phone_no,age,gender,concerns, uid)=> async d
 
   const body = JSON.stringify({ name,email,phone_no,age,gender,concerns, uid });
   try {
-    const res = await axios.post(
-      `${api_route}/api/profile/edit-profile`,
+    const res = await api.post(
+      '/api/profile/edit-profile',
       body,
       config
     );

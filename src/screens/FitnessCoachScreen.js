@@ -13,7 +13,7 @@ import {
 import { connect } from 'react-redux';
 import { colors, sizes } from '../constants/theme';
 import { concerns } from '../constants/concerns';
-import { api_route } from '../utils/route';
+import api from '../utils/apiClient';
 
 const GOALS = [
   'Reduce stress',
@@ -67,17 +67,12 @@ const FitnessCoachScreen = ({ navigation, auth }) => {
         concerns: selectedConcernNames,
         freeText: freeText.trim() || undefined,
       };
-      const res = await fetch(`${api_route}/api/fitness/plan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.msg || 'Failed to load plan');
+      const res = await api.post('/api/fitness/plan', payload);
+      const data = res.data;
       setPlan(data);
       setStep('plan');
     } catch (e) {
-      setError(e.message || 'Could not generate your plan. Please try again.');
+      setError(e.response?.data?.msg || e.message || 'Could not generate your plan. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -11,14 +11,13 @@ import {
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import TouchableScale from 'react-native-touchable-scale';
-import axios from 'axios';
+import api from '../utils/apiClient';
 import {data as localData, popular as localPopular} from '../constants/BlogData';
 import {colors, sizes} from '../constants/theme';
 import OpenBlogScreen from './OpenBlogScreen';
 import {createStackNavigator} from '@react-navigation/stack';
 import {FAB} from 'react-native-paper';
 import AddBlog from './AddBlog';
-import { api_route } from '../utils/route';
 
 const MainScreen = ({navigation}) => {
   const [featured, setFeatured] = React.useState(localData);
@@ -29,7 +28,7 @@ const MainScreen = ({navigation}) => {
     const fetchBlogs = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${api_route}/api/blogs`);
+        const res = await api.get('/api/blogs');
         if (res.data) {
           setFeatured(res.data.featured || localData);
           setPopular(res.data.popular || localPopular);

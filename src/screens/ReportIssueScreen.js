@@ -11,9 +11,8 @@ import {
   Platform,
 } from 'react-native';
 import { connect } from 'react-redux';
-import axios from 'axios';
+import api from '../utils/apiClient';
 import { colors, sizes } from '../constants/theme';
-import { api_route } from '../utils/route';
 
 const SEVERITY_LABELS = { 1: 'A bit', 2: 'Somewhat', 3: 'Moderate', 4: 'Quite a bit', 5: 'Very much' };
 const MOOD_TAGS = ['calm', 'anxious', 'sad', 'angry', 'tired', 'hopeful', 'overwhelmed', 'okay', ''];
@@ -32,7 +31,7 @@ const ReportIssueScreen = ({ navigation, auth }) => {
   useEffect(() => {
     const fetchCat = async () => {
       try {
-        const res = await axios.get(`${api_route}/api/issues/categories`);
+        const res = await api.get('/api/issues/categories');
         setCategories(res.data.categories || []);
         if (res.data.categories && res.data.categories[0]) setCategory(res.data.categories[0]);
       } catch (e) {
@@ -53,7 +52,7 @@ const ReportIssueScreen = ({ navigation, auth }) => {
     setResult(null);
     setLoading(true);
     try {
-      const res = await axios.post(`${api_route}/api/issues/report`, {
+      const res = await api.post('/api/issues/report', {
         userId: auth.user._id,
         category: category || 'other',
         severity,

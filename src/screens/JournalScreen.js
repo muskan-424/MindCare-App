@@ -12,9 +12,9 @@ import { createStackNavigator } from '@react-navigation/stack';
 import TouchableScale from 'react-native-touchable-scale';
 import { colors, sizes } from '../constants/theme';
 import { FAB } from 'react-native-paper';
-import axios from 'axios';
+import api from '../utils/apiClient';
 import { data as localData } from '../constants/JournalsData';
-import { api_route } from '../utils/route';
+import { connect } from 'react-redux';
 import AddJournal from './AddJournal';
 import DisplayJournal from './DisplayJournal';
 
@@ -23,7 +23,7 @@ const monthNames = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-const JournalScreen = ({ navigation }) => {
+const JournalScreen = ({ navigation, auth }) => {
   const [entries, setEntries] = React.useState(localData);
   const [loading, setLoading] = React.useState(false);
 
@@ -34,7 +34,8 @@ const JournalScreen = ({ navigation }) => {
     const fetchJournals = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${api_route}/api/journals`);
+        const userId = auth?.user?._id;
+        const res = await api.get('/api/journals', userId ? { params: { userId } } : {});
         if (Array.isArray(res.data)) {
           setEntries(res.data);
         } else {
@@ -48,7 +49,7 @@ const JournalScreen = ({ navigation }) => {
       }
     };
     fetchJournals();
-  }, []);
+  }, [auth?.user?._id]);
 
   return (
     <View style={styles.container}>
@@ -107,10 +108,13 @@ const JournalScreen = ({ navigation }) => {
   );
 };
 
+const mapStateToProps = (state) => ({ auth: state.auth });
+const JournalScreenConnected = connect(mapStateToProps)(JournalScreen);
+
 const Stack = createStackNavigator();
 const JournalScreenStack = () => (
   <Stack.Navigator initialRouteName="JournalScreen">
-    <Stack.Screen name="JournalScreen" component={JournalScreen} options={{ headerShown: false }} />
+    <Stack.Screen name="JournalScreen" component={JournalScreenConnected} options={{ headerShown: false }} />
     <Stack.Screen name="Add" component={AddJournal} options={{ headerShown: false }} />
     <Stack.Screen name="Display" component={DisplayJournal} options={{ headerShown: false }} />
   </Stack.Navigator>

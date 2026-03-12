@@ -1,6 +1,7 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 const Stack = createStackNavigator();
+import { logScreen } from '../utils/logTouch';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
@@ -22,51 +23,33 @@ import SafetyScreen from '../screens/SafetyScreen';
 
 const HomeStackNavigator = () => {
   return (
-    <Stack.Navigator initialRouteName="Home">
+    <Stack.Navigator
+      initialRouteName="Home"
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        listeners: {
+          focus: () => logScreen(route.name),
+        },
+      })}>
       <Stack.Screen
         name="Home"
         component={HomeScreen}
-        options={{ headerShown: false }}
       />
-      <Stack.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="EditProfile"
-        component={EditProfileScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Chat"
-        component={ChatWithTink}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="CreateMeme"
-        component={CreateMeme}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="TrackList"
-        component={TrackList}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Track"
-        component={TrackPlayer}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen name="Breathing" component={BreathingScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Affirmations" component={AffirmationsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="CrisisResources" component={CrisisResourcesScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MoodCheck" component={MoodCheckScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Gratitude" component={GratitudeScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Grounding" component={GroundingScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ReportIssue" component={ReportIssueScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MoodTracker" component={MoodTrackerScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Safety" component={SafetyScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="Chat" component={ChatWithTink} />
+      <Stack.Screen name="CreateMeme" component={CreateMeme} />
+      <Stack.Screen name="TrackList" component={TrackList} />
+      <Stack.Screen name="Track" component={TrackPlayer} />
+      <Stack.Screen name="Breathing" component={BreathingScreen} />
+      <Stack.Screen name="Affirmations" component={AffirmationsScreen} />
+      <Stack.Screen name="CrisisResources" component={CrisisResourcesScreen} />
+      <Stack.Screen name="MoodCheck" component={MoodCheckScreen} />
+      <Stack.Screen name="Gratitude" component={GratitudeScreen} />
+      <Stack.Screen name="Grounding" component={GroundingScreen} />
+      <Stack.Screen name="ReportIssue" component={ReportIssueScreen} />
+      <Stack.Screen name="MoodTracker" component={MoodTrackerScreen} />
+      <Stack.Screen name="Safety" component={SafetyScreen} />
     </Stack.Navigator>
   );
 };

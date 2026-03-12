@@ -8,12 +8,11 @@ import {
   Image,
 } from 'react-native';
 import {colors} from '../constants/theme';
-import axios from 'axios';
 import base64 from 'react-native-base64';
 import AnimatedLoader from 'react-native-animated-loader';
 import Grid from 'react-native-grid-component';
 import FitnessSubScreenCard from '../components/FitnessSubScreenCard';
-import { api_route } from '../utils/route';
+import api from '../utils/apiClient';
 
 const fallbackSubcategories = {
   Yoga: {
@@ -45,16 +44,12 @@ const FitnessSubScreen = ({route}) => {
   const [title, setTitle] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
-  const [url, setUrl] = useState(
-    `${api_route}/api/fitness/${encodeURIComponent(route.params.category)}`,
-  );
-  // const navigation = useNavigation('');
 
   useEffect(() => {
     const fetchData = async () => {
       setIsError(false);
       try {
-        const result = await axios(url);
+        const result = await api.get(`/api/fitness/${encodeURIComponent(route.params.category)}`);
         setContent(result.data);
         setTitle(Object.keys(result.data));
       } catch (error) {

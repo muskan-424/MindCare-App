@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const { connectRedis } = require('./config/redis');
+const { requestLogger } = require('./middleware/requestLogger');
 
 const app = express();
 
@@ -26,6 +27,7 @@ const startServer = async () => {
   // Middleware
   app.use(cors());
   app.use(express.json());
+  app.use(requestLogger);
 
   // Health check
   app.get('/', (req, res) => {
@@ -41,6 +43,7 @@ const startServer = async () => {
   app.use('/api/fitness', require('./routes/fitness'));
   app.use('/api/content', require('./routes/content'));
   app.use('/api/blogs', require('./routes/blogs'));
+  app.use('/api/home', require('./routes/home'));
   app.use('/api/journals', require('./routes/journals'));
   app.use('/api/therapists', require('./routes/therapists'));
   app.use('/api/issues', require('./routes/issues'));

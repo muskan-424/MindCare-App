@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors } from '../constants/theme';
-import { api_route } from '../utils/route';
+import api from '../utils/apiClient';
 
 const ChatWithTink = props => {
   const userName = props.route.params?.name || 'there';
@@ -65,24 +65,11 @@ const ChatWithTink = props => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${api_route}/api/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage.text,
-          // Exclude the initial greeting from history if you like or format it
-          history: currentHistory.map(msg => ({ text: msg.text, isUser: msg.isUser })),
-        }),
+      const response = await api.post('/api/chat', {
+        message: userMessage.text,
+        history: currentHistory.map(msg => ({ text: msg.text, isUser: msg.isUser })),
       });
-
-      let data = null;
-      try {
-        data = await response.json();
-      } catch (e) {
-        // ignore JSON parse error and fall back
-      }
+      const data = response.data;
 
       const backendReply =
         data && typeof data.reply === 'string' && data.reply.trim().length > 0

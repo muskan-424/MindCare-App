@@ -8,6 +8,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import TherapistStackNavigation from './TherapistStackNavigation';
 // import FitnessScreen from '../screens/FitnessScreen';
 import { colors } from '../constants/theme';
+import { logTab } from '../utils/logTouch';
 import { View, Text } from 'react-native';
 import HomeStackNavigator from './HomeStackNavigation';
 import StoryScreen from '../screens/StoryScreen';
@@ -55,6 +56,9 @@ const TabNavigation = () => {
           margin: 8,
         },
         headerShown: false,
+        listeners: {
+          focus: () => logTab(route.name),
+        },
       })}>
       <Tab.Screen name="HomeTab" component={HomeStackNavigator} />
       <Tab.Screen name="Story" component={StoryScreen} />

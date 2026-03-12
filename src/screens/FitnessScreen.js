@@ -10,11 +10,10 @@ import {
 } from 'react-native';
 import { colors } from '../constants/theme';
 import BrickList from 'react-native-masonry-brick-list';
-import axios from 'axios';
+import api from '../utils/apiClient';
 import AnimatedLoader from 'react-native-animated-loader';
 import FitnessCategoryCard from '../components/FitnessCategoryCard';
 import { useNavigation } from '@react-navigation/native';
-import { api_route } from '../utils/route';
 
 const FitnessScreen = () => {
   const navigation = useNavigation();
@@ -22,13 +21,12 @@ const FitnessScreen = () => {
   const [categoryData, setCategoryData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
-  const [url, setUrl] = useState(`${api_route}/api/fitness/categories`);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsError(false);
       try {
-        const result = await axios(url);
+        const result = await api.get('/api/fitness/categories');
         setCategories(result.data);
         setCategoryData(Object.keys(result.data));
       } catch (error) {
