@@ -23,6 +23,7 @@ import TrackedTouchable from '../components/TrackedTouchable';
 import { updateConcerns } from '../redux/actions/profile';
 import { fetchQuoteOfTheDay } from '../redux/actions/quote';
 import { clearWelcome } from '../redux/actions/auth';
+import { getAvatarForGender } from '../utils/avatar';
 
 const SEVERITY_LABELS = { 1: 'A bit', 2: 'Somewhat', 3: 'Moderate', 4: 'Quite a bit', 5: 'Very much' };
 const MOOD_TAGS = ['calm', 'anxious', 'sad', 'angry', 'tired', 'hopeful', 'overwhelmed', 'okay'];
@@ -423,8 +424,8 @@ const HomeScreen = props => {
             }}>
             <View style={styles.avatar}>
               <Image
-                source={require('../assets/userIcon.png')}
-                style={{ width: 60, height: 60 }}
+                source={getAvatarForGender(props.auth.profile.gender)}
+                style={{ width: 60, height: 60, borderRadius: 30 }}
               />
             </View>
           </TouchableOpacity>

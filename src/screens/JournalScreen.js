@@ -17,6 +17,7 @@ import { data as localData } from '../constants/JournalsData';
 import { connect } from 'react-redux';
 import AddJournal from './AddJournal';
 import DisplayJournal from './DisplayJournal';
+import { getAvatarForGender } from '../utils/avatar';
 
 const monthNames = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -54,7 +55,7 @@ const JournalScreen = ({ navigation, auth }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Image style={styles.headerAvatar} source={require('../assets/userIcon.png')} />
+        <Image style={styles.headerAvatar} source={getAvatarForGender(auth.profile.gender)} />
         <View style={styles.headerTextWrap}>
           <Text style={styles.headerGreeting}>Hi there!</Text>
           <Text style={styles.headerDate}>{dateStr}</Text>

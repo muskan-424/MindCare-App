@@ -12,6 +12,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { colors } from '../constants/theme';
 import { RadioButton } from 'react-native-paper';
 import { register } from '../redux/actions/auth';
@@ -29,6 +30,8 @@ const Signup = props => {
     password2: ''
   });
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSignUp = async () => {
@@ -125,7 +128,7 @@ const Signup = props => {
               }
             />
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, error && styles.inputError]}
               placeholder={'Email'}
               placeholderTextColor={colors.gray}
               value={state.email}
@@ -137,8 +140,8 @@ const Signup = props => {
               keyboardType="email-address"
             />
             <TextInput
-              style={styles.textInput}
-              placeholder={'Phone Number (10 digits)'}
+              style={[styles.textInput, error && styles.inputError]}
+              placeholder={'Phone Number'}
               placeholderTextColor={colors.gray}
               keyboardType="phone-pad"
               maxLength={10}
@@ -149,7 +152,7 @@ const Signup = props => {
               }}
             />
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, error && styles.inputError]}
               placeholder={'Age'}
               keyboardType="numeric"
               value={state.age}
@@ -204,28 +207,52 @@ const Signup = props => {
                 />
               </View>
             </View>
-            <TextInput
-              style={styles.textInput}
-              placeholder={'Password (8+ chars, upper, lower, number, symbol)'}
-              placeholderTextColor={colors.gray}
-              value={state.password}
-              onChangeText={text => {
-                setState({ ...state, password: text });
-                if (error) setError('');
-              }}
-              secureTextEntry={true}
-            />
-            <TextInput
-              style={styles.textInput}
-              placeholder={'Confirm Password'}
-              placeholderTextColor={colors.gray}
-              value={state.password2}
-              onChangeText={text => {
-                setState({ ...state, password2: text });
-                if (error) setError('');
-              }}
-              secureTextEntry={true}
-            />
+            <View style={styles.passwordRow}>
+              <TextInput
+                style={[styles.textInput, styles.passwordInput, error && styles.inputError]}
+                placeholder={'Password'}
+                placeholderTextColor={colors.gray}
+                value={state.password}
+                onChangeText={text => {
+                  setState({ ...state, password: text });
+                  if (error) setError('');
+                }}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() => setShowPassword(prev => !prev)}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color={colors.gray}
+                />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.passwordRow}>
+              <TextInput
+                style={[styles.textInput, styles.passwordInput, error && styles.inputError]}
+                placeholder={'Confirm Password'}
+                placeholderTextColor={colors.gray}
+                value={state.password2}
+                onChangeText={text => {
+                  setState({ ...state, password2: text });
+                  if (error) setError('');
+                }}
+                secureTextEntry={!showPassword2}
+              />
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() => setShowPassword2(prev => !prev)}
+              >
+                <Ionicons
+                  name={showPassword2 ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color={colors.gray}
+                />
+              </TouchableOpacity>
+            </View>
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
             <TouchableOpacity onPress={handleSignUp} disabled={loading}>
               <View style={[styles.submitButton, loading && styles.submitButtonDisabled]}>
@@ -279,6 +306,26 @@ const styles = StyleSheet.create({
     elevation: 1,
     padding: 10,
     color: colors.black
+  },
+  passwordRow: {
+    position: 'relative',
+    marginHorizontal: 10,
+  },
+  passwordInput: {
+    marginHorizontal: 0,
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 18,
+    top: 10,
+    height: 24,
+    width: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  inputError: {
+    borderWidth: 1,
+    borderColor: colors.redPink,
   },
   radioButton: {
     flexDirection: 'row',

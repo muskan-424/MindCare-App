@@ -23,6 +23,7 @@ import pastData from '../constants/pastData';
 import futureData from '../constants/futureData';
 import Appointments from '../components/Appointments';
 import {connect} from 'react-redux';
+import { getAvatarForGender } from '../utils/avatar';
 
 const ProfileScreen = props => {
   // const user=useSelector((state)=>state.user)
@@ -50,8 +51,8 @@ const ProfileScreen = props => {
         </View>
         <View style={styles.dpCover}>
           <Image
-            style={{width: 100, height: 100}}
-            source={require('../assets/userIcon.png')}
+            style={{width: 100, height: 100, borderRadius: 50}}
+            source={getAvatarForGender(props.auth.profile.gender)}
           />
         </View>
       </View>

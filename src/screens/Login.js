@@ -12,6 +12,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { colors } from '../constants/theme';
 import { connect } from 'react-redux';
 import { login } from '../redux/actions/auth';
@@ -23,20 +24,27 @@ const Login = props => {
     password: ''
   });
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     setError('');
+    setEmailError('');
+    setPasswordError('');
 
     const emailCheck = validateEmail(state.email);
     if (!emailCheck.valid) {
-      setError(emailCheck.message);
-      return;
+      setEmailError(emailCheck.message);
     }
 
     const passwordCheck = validatePassword(state.password);
     if (!passwordCheck.valid) {
-      setError(passwordCheck.message);
+      setPasswordError(passwordCheck.message);
+    }
+
+    if (!emailCheck.valid || !passwordCheck.valid) {
       return;
     }
 
@@ -75,29 +83,49 @@ const Login = props => {
           <View style={styles.signUpContainer}>
             <Text style={styles.headerText}>Login</Text>
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, (emailError || error) && styles.inputError]}
               placeholder={'Email'}
               placeholderTextColor={colors.gray}
               value={state.email}
               onChangeText={text => {
                 setState({ ...state, email: text });
-                if (error) setError('');
+                const check = validateEmail(text);
+                setEmailError(check.valid ? '' : check.message);
+                if (check.valid) setError('');
               }}
               autoCapitalize="none"
               keyboardType="email-address"
             />
-            <TextInput
-              style={styles.textInput}
-              placeholder={'Password'}
-              placeholderTextColor={colors.gray}
-              value={state.password}
-              onChangeText={text => {
-                setState({ ...state, password: text });
-                if (error) setError('');
-              }}
-              secureTextEntry={true}
-            />
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+            <View style={styles.passwordRow}>
+              <TextInput
+                style={[styles.textInput, styles.passwordInput, (passwordError || error) && styles.inputError]}
+                placeholder={'Password'}
+                placeholderTextColor={colors.gray}
+                value={state.password}
+                onChangeText={text => {
+                  setState({ ...state, password: text });
+                  const check = validatePassword(text);
+                  setPasswordError(check.valid ? '' : check.message);
+                  if (check.valid) setError('');
+                }}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() => setShowPassword(prev => !prev)}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color={colors.gray}
+                />
+              </TouchableOpacity>
+            </View>
+            {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
+            {error && !emailError && !passwordError ? (
+              <Text style={styles.errorText}>{error}</Text>
+            ) : null}
             <TouchableOpacity onPress={handleLogin} disabled={loading}>
               <View style={[styles.submitButton, loading && styles.submitButtonDisabled]}>
                 {loading ? (
@@ -144,6 +172,26 @@ const styles = StyleSheet.create({
     elevation: 1,
     padding: 10,
     color: colors.black
+  },
+  passwordRow: {
+    position: 'relative',
+    marginHorizontal: 10,
+  },
+  passwordInput: {
+    marginHorizontal: 0,
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 18,
+    top: 10,
+    height: 24,
+    width: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  inputError: {
+    borderWidth: 1,
+    borderColor: colors.redPink,
   },
   radioButton: {
     flexDirection: 'row',

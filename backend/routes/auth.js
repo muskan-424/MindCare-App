@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Profile = require('../models/Profile');
 
@@ -62,8 +63,19 @@ router.post(
         ADMIN_EMAILS.includes((user.email || '').toLowerCase());
       const role = isAdmin ? 'admin' : 'user';
 
-      // Return user + profile (matching frontend expectation)
+      const payload = {
+        user: {
+          id: user._id,
+          role,
+        },
+      };
+      const token = jwt.sign(payload, process.env.JWT_SECRET || 'dev_jwt_secret_change_me', {
+        expiresIn: '7d',
+      });
+
+      // Return user + profile + token (matching frontend expectation)
       res.json({
+        token,
         user: {
           _id: user._id,
           name: user.name,

@@ -25,6 +25,7 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import { concerns } from '../constants/concerns';
 import { updateUser } from '../redux/actions/profile';
 import { connect } from 'react-redux';
+import { getAvatarForGender } from '../utils/avatar';
 
 const Profile = props => {
   const [checked, setChecked] = useState(props.auth.profile.gender);
@@ -105,8 +106,8 @@ const Profile = props => {
           <Text style={styles.profileText}>Edit Profile</Text>
           <View style={styles.dpCover}>
             <Image
-              style={{ width: 90, height: 90 }}
-              source={require('../assets/userIcon.png')}
+              style={{ width: 90, height: 90, borderRadius: 45 }}
+              source={getAvatarForGender(checked)}
             />
           </View>
           <Entypo
