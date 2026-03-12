@@ -13,6 +13,32 @@ import base64 from 'react-native-base64';
 import AnimatedLoader from 'react-native-animated-loader';
 import Grid from 'react-native-grid-component';
 import FitnessSubScreenCard from '../components/FitnessSubScreenCard';
+import { api_route } from '../utils/route';
+
+const fallbackSubcategories = {
+  Yoga: {
+    'Beginner Yoga Flow': { icon: 'https://i.ytimg.com/vi/v7AYKMP6rOE/hqdefault.jpg' },
+    'Yoga for Anxiety Relief': { icon: 'https://i.ytimg.com/vi/inpok4MKVLM/hqdefault.jpg' },
+    'Bedtime Yoga': { icon: 'https://i.ytimg.com/vi/v7AYKMP6rOE/hqdefault.jpg' },
+  },
+  Meditation: {
+    '5-Minute Daily Meditation': { icon: 'https://i.ytimg.com/vi/O-6f5wQXSu8/hqdefault.jpg' },
+    'Sleep Meditation': { icon: 'https://i.ytimg.com/vi/2OEL4P1Rz04/hqdefault.jpg' },
+    'Anxiety-Calming Breath': { icon: 'https://i.ytimg.com/vi/inpok4MKVLM/hqdefault.jpg' },
+  },
+  Cardio: {
+    'Low Impact Cardio': { icon: 'https://i.ytimg.com/vi/ml6cT4AZdqI/hqdefault.jpg' },
+    'Beginner HIIT': { icon: 'https://i.ytimg.com/vi/ml6cT4AZdqI/hqdefault.jpg' },
+  },
+  Stretching: {
+    'Full Body Stretch': { icon: 'https://i.ytimg.com/vi/L_xrDAtykMI/hqdefault.jpg' },
+    'Morning Stretch': { icon: 'https://i.ytimg.com/vi/L_xrDAtykMI/hqdefault.jpg' },
+  },
+  'Healthy Diet': {
+    'Healthy Breakfast Ideas': { icon: 'https://i.ytimg.com/vi/8aV2KYf_MXw/hqdefault.jpg' },
+    'Meal Prep Basics': { icon: 'https://i.ytimg.com/vi/Qe4qU9oxC6o/hqdefault.jpg' },
+  },
+};
 
 const FitnessSubScreen = ({route}) => {
   const [content, setContent] = useState([]);
@@ -20,24 +46,23 @@ const FitnessSubScreen = ({route}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [url, setUrl] = useState(
-    'https://us-central1-mental-health-app-6edbd.cloudfunctions.net/app/api/fitness/' +
-      route.params.category,
+    `${api_route}/api/fitness/${encodeURIComponent(route.params.category)}`,
   );
   // const navigation = useNavigation('');
 
   useEffect(() => {
     const fetchData = async () => {
       setIsError(false);
-      //setIsLoading(true);
       try {
         const result = await axios(url);
-
         setContent(result.data);
         setTitle(Object.keys(result.data));
-        console.log(result.data);
-        //console.log(categoryData[0])
       } catch (error) {
-        setIsError(true);
+        console.warn('Fitness SubScreen API Error:', error.message);
+        const fallback = fallbackSubcategories[route.params.category] || fallbackSubcategories.Yoga || {};
+        setContent(fallback);
+        setTitle(Object.keys(fallback));
+        setIsError(false);
       }
 
       setIsLoading(false);

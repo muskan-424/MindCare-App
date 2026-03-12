@@ -47,10 +47,13 @@ const Login = props => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <ScrollView
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={true}
+        contentContainerStyle={styles.scrollContent}
         style={{ flex: 1, backgroundColor: colors.white }}
       >
         <View style={styles.container}>
@@ -110,6 +113,9 @@ const styles = StyleSheet.create({
     flex: 1,
     zIndex: 100,
     backgroundColor: colors.white
+  },
+  scrollContent: {
+    flexGrow: 1
   },
   signUpContainer: {
     backgroundColor: colors.white,

@@ -9,6 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
+import { colors, sizes } from '../constants/theme';
 
 const OpenBlogScreen = props => {
   const {width, height} = Dimensions.get('window');
@@ -110,7 +111,7 @@ const OpenBlogScreen = props => {
 export default OpenBlogScreen;
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#fff'},
+  container: { flex: 1, backgroundColor: colors.white },
   profilepicstyle: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -125,37 +126,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingRight: 20,
   },
-  authorstyle: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  scrollview: {
-    paddingHorizontal: 10,
-    paddingTop: 14,
-  },
-  text: {
-    fontSize: 14,
-    lineHeight: 28,
-    textAlign: 'justify',
-    opacity: 0.5,
-  },
-  like: {
-    marginVertical: 25,
-    paddingBottom: 20,
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  liketext: {
-    fontWeight: 'normal',
-    textAlign: 'center',
-    marginHorizontal: 10,
-  },
-  backbutton: {
-    position: 'absolute',
-    top: 40,
-    left: 10,
-  },
+  authorstyle: { color: colors.white, fontSize: 16, fontWeight: 'bold' },
+  scrollview: { paddingHorizontal: 16, paddingTop: 14 },
+  text: { fontSize: 15, lineHeight: 26, textAlign: 'justify', color: colors.secondary, opacity: 0.85 },
+  like: { marginVertical: 20, paddingBottom: 20, flexDirection: 'row', alignItems: 'center' },
+  liketext: { marginLeft: 8, fontSize: 14, color: colors.gray },
+  backbutton: { position: 'absolute', top: 44, left: 16 },
 });

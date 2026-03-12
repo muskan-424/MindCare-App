@@ -1,5 +1,5 @@
-# Use official Node.js runtime as a parent image
-FROM node:18-alpine
+# Use official Node.js runtime as a parent image (Node 20+ required for global File/undici)
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /usr/src/app

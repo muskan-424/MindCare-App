@@ -91,10 +91,10 @@ const TherapistProfileScreen = ({route, navigation}) => {
         }}>
         <Button
           mode="contained"
-          color="#face4b"
-          style={{width: '90%', borderRadius: 10, marginTop: 20}}
+          color={colors.secondary}
+          style={{ width: '90%', borderRadius: 12, marginTop: 20 }}
           onPress={() => console.log('Pressed')}>
-          <Text style={{color: colors.white}}>BOOK AN APPOINTMENT</Text>
+          <Text style={{ color: colors.white, fontWeight: '700' }}>Book appointment</Text>
         </Button>
       </View>
     </ScrollView>
@@ -106,7 +106,7 @@ export default TherapistProfileScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffff',
+    backgroundColor: colors.cream,
   },
   background: {
     backgroundColor: colors.primary,

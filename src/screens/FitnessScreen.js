@@ -6,18 +6,18 @@ import {
   SafeAreaView,
   Dimensions,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import { colors } from '../constants/theme';
 import BrickList from 'react-native-masonry-brick-list';
 import axios from 'axios';
-import base64 from 'react-native-base64';
 import AnimatedLoader from 'react-native-animated-loader';
-import Grid from 'react-native-grid-component';
 import FitnessCategoryCard from '../components/FitnessCategoryCard';
 import { useNavigation } from '@react-navigation/native';
 import { api_route } from '../utils/route';
 
 const FitnessScreen = () => {
+  const navigation = useNavigation();
   const [categories, setCategories] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,14 +27,12 @@ const FitnessScreen = () => {
   useEffect(() => {
     const fetchData = async () => {
       setIsError(false);
-      //setIsLoading(true);
       try {
         const result = await axios(url);
         setCategories(result.data);
         setCategoryData(Object.keys(result.data));
       } catch (error) {
         console.warn('Fitness API Error:', error.message);
-        // Fallback to local data so the screen doesn't break
         const fallbackData = {
           "Yoga": { icon: "https://cdn-icons-png.flaticon.com/512/2647/2647625.png" },
           "Meditation": { icon: "https://cdn-icons-png.flaticon.com/512/3663/3663335.png" },
@@ -43,20 +41,13 @@ const FitnessScreen = () => {
         };
         setCategories(fallbackData);
         setCategoryData(Object.keys(fallbackData));
-        setIsError(false); // Don't show error state if we have fallback data
+        setIsError(false);
       }
-
       setIsLoading(false);
     };
-
     fetchData();
   }, []);
-  const _renderItem = (data, i) => (
-    // <TouchableOpacity onPress={() => navigation.navigate('FitnessSubScreen',{category:data})}>
-    <FitnessCategoryCard
-      img_uri={categories[data].icon}
-      category={data}></FitnessCategoryCard>
-  );
+
   return (
     <View style={styles.container}>
       {isLoading ? (
@@ -68,15 +59,30 @@ const FitnessScreen = () => {
           speed={2}
         />
       ) : (
-        <Grid
-          style={styles.list}
-          renderItem={_renderItem}
-          //renderPlaceholder={this._renderPlaceholder}
-          data={categoryData}
-          numColumns={1}
-          contentContainerStyle={styles.innerStyle}
-          showsVerticalScrollIndicator={false}
-          cardWidth={Dimensions.get('window').width}></Grid>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <TouchableOpacity
+            style={styles.coachCard}
+            onPress={() => navigation.navigate('FitnessCoach')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.coachTitle}>Fitness Coach</Text>
+            <Text style={styles.coachSubtitle}>
+              Get a personalized schedule, custom routines, and exercises based on your goals and preferences.
+            </Text>
+            <View style={styles.coachCta}>
+              <Text style={styles.coachCtaText}>Get my routine →</Text>
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.browseLabel}>Or browse by category</Text>
+          {categoryData.map((data) => (
+            <View key={data} style={styles.categoryItem}>
+              <FitnessCategoryCard
+                img_uri={categories[data].icon}
+                category={data}
+              />
+            </View>
+          ))}
+        </ScrollView>
       )}
     </View>
   );
@@ -91,6 +97,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  scroll: { flex: 1, width: '100%' },
+  scrollContent: { paddingBottom: 24 },
+  coachCard: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 20,
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    padding: 20,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  coachTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: colors.white,
+    marginBottom: 8,
+  },
+  coachSubtitle: {
+    fontSize: 14,
+    color: colors.white,
+    opacity: 0.95,
+    lineHeight: 20,
+    marginBottom: 14,
+  },
+  coachCta: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.white,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  coachCtaText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  browseLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.secondary,
+    marginLeft: 16,
+    marginBottom: 12,
+  },
+  categoryItem: { marginBottom: 4 },
   item: {
     flex: 1,
     height: 160,

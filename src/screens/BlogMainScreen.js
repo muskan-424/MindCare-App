@@ -9,205 +9,118 @@ import {
   Button,
   TouchableOpacity,
 } from 'react-native';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Feather from 'react-native-vector-icons/Feather';
-import Entypo from 'react-native-vector-icons/Entypo';
 import TouchableScale from 'react-native-touchable-scale';
-import {data, popular} from '../constants/BlogData';
-import {colors} from '../constants/theme';
+import axios from 'axios';
+import {data as localData, popular as localPopular} from '../constants/BlogData';
+import {colors, sizes} from '../constants/theme';
 import OpenBlogScreen from './OpenBlogScreen';
-import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {FAB} from 'react-native-paper';
 import AddBlog from './AddBlog';
+import { api_route } from '../utils/route';
 
 const MainScreen = ({navigation}) => {
-  const {width, height} = Dimensions.get('window');
+  const [featured, setFeatured] = React.useState(localData);
+  const [popular, setPopular] = React.useState(localPopular);
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    const fetchBlogs = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(`${api_route}/api/blogs`);
+        if (res.data) {
+          setFeatured(res.data.featured || localData);
+          setPopular(res.data.popular || localPopular);
+        }
+      } catch (e) {
+        console.warn('Blogs API error:', e.message);
+        setFeatured(localData);
+        setPopular(localPopular);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBlogs();
+  }, []);
 
   return (
     <View style={styles.container}>
-      <View style={styles.YourDailyRead}>
-        <View>
-          <Text style={styles.YourDailyReadText}>
-            Your Daily Read <Text style={styles.verticalLine}>|</Text>
-          </Text>
-        </View>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Your daily read</Text>
       </View>
 
-      {/* Header End */}
-
-      {/* Your Daily Read */}
-
-      <View>
-        <FlatList
-          showsHorizontalScrollIndicator={false}
-          horizontal
-          data={data}
-          keyExtractor={item => item.id.toString()}
-          style={{paddingHorizontal: 20}}
-          renderItem={({item}) => {
-            return (
-              <View>
-                <View>
-                  <TouchableScale
-                    activeScale={0.9}
-                    tension={50}
-                    friction={7}
-                    useNativeDriver
-                    onPress={() =>
-                      navigation.navigate('OpenBlogScreen', {data: item})
-                    }>
-                    <View>
-                      <Image
-                        source={{uri: item.image}}
-                        style={{
-                          width: width - 100,
-                          height: height - 500,
-                          borderRadius: 14,
-                          marginRight: 30,
-                        }}
-                        resizeMode="cover"
-                      />
-                    </View>
-
-                    <View
-                      style={{
-                        width: width - 90,
-                        position: 'absolute',
-                        bottom: 90,
-                        left: 10,
-                        paddingHorizontal: 10,
-                      }}>
-                      <Text
-                        style={{
-                          color: 'white',
-                          fontSize: 24,
-                          fontWeight: 'bold',
-                          lineHeight: 28,
-                        }}>
-                        {item.title}
-                      </Text>
-                    </View>
-
-                    <View style={styles.profilePic2}>
-                      <View>
-                        <Image
-                          source={{uri: item.profilePic}}
-                          style={styles.profilePicStyle}
-                          resizeMode="cover"
-                        />
-                      </View>
-
-                      <View>
-                        <View>
-                          <Text
-                            style={{
-                              color: 'white',
-                              fontSize: 16,
-                              fontWeight: 'bold',
-                            }}>
-                            {item.author}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                  </TouchableScale>
+      <FlatList
+        showsHorizontalScrollIndicator={false}
+        horizontal
+        data={featured}
+        keyExtractor={item => item.id.toString()}
+        style={styles.horizontalList}
+        contentContainerStyle={styles.horizontalListContent}
+        renderItem={({item}) => (
+          <TouchableScale
+            activeScale={0.96}
+            tension={50}
+            friction={7}
+            useNativeDriver
+            onPress={() => navigation.navigate('OpenBlogScreen', {data: item})}>
+            <View style={styles.featuredCard}>
+              <Image
+                source={{uri: item.image}}
+                style={styles.featuredImage}
+                resizeMode="cover"
+              />
+              <View style={styles.featuredOverlay}>
+                <Text style={styles.featuredTitle} numberOfLines={2}>{item.title}</Text>
+                <View style={styles.featuredAuthorRow}>
+                  <Image source={{uri: item.profilePic}} style={styles.avatarSmall} resizeMode="cover" />
+                  <Text style={styles.featuredAuthor}>{item.author}</Text>
                 </View>
               </View>
-            );
-          }}
-        />
-      </View>
+            </View>
+          </TouchableScale>
+        )}
+      />
 
-      {/* Your Daily Read End */}
-
-      {/* POPULAR START */}
-
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 30,
-          paddingVertical: 15,
-        }}>
-        <Text style={{fontSize: 20, fontWeight: 'bold', marginTop: -5}}>
-          Popular Stories <Text style={styles.verticalLine}>|</Text>
-        </Text>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Popular stories</Text>
       </View>
 
       <FlatList
         data={popular}
         keyExtractor={item => item.id.toString()}
-        renderItem={({item}) => {
-          return (
-            <View>
-              <TouchableScale
-                activeScale={0.9}
-                tension={50}
-                friction={7}
-                useNativeDriver
-                onPress={() =>
-                  navigation.navigate('OpenBlogScreen', {data: item})
-                }>
-                <View style={styles.popularStories}>
-                  <View style={{marginRight: 20}}>
-                    <Image
-                      source={{uri: item.image}}
-                      style={styles.BlogImage}
-                    />
-                  </View>
-
-                  <View style={{width: '60%', marginTop: -10}}>
-                    <Text></Text>
-                    <Text
-                      style={{
-                        fontSize: 15,
-                        fontWeight: '600',
-                        marginBottom: 4,
-                      }}>
-                      {item.title}
-                    </Text>
-
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        opacity: 0.4,
-                      }}>
-                      <View style={{display: 'flex', flexDirection: 'row'}}>
-                        <View>
-                          <Text style={{fontSize: 12}}>{item.author}</Text>
-                        </View>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            marginHorizontal: 40,
-                          }}>
-                          <Feather name="thumbs-up" size={14} color="#000" />
-                          <Text style={{marginHorizontal: 4, fontSize: 12}}>
-                            {item.likes} Likes
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
+        contentContainerStyle={styles.popularList}
+        renderItem={({item}) => (
+          <TouchableScale
+            activeScale={0.98}
+            tension={50}
+            friction={7}
+            useNativeDriver
+            onPress={() => navigation.navigate('OpenBlogScreen', {data: item})}>
+            <View style={styles.popularCard}>
+              <Image source={{uri: item.image}} style={styles.popularImage} resizeMode="cover" />
+              <View style={styles.popularContent}>
+                <Text style={styles.popularTitle} numberOfLines={2}>{item.title}</Text>
+                <View style={styles.popularMeta}>
+                  <Text style={styles.popularAuthor}>{item.author}</Text>
+                  <View style={styles.likesRow}>
+                    <Feather name="thumbs-up" size={14} color={colors.gray} />
+                    <Text style={styles.likesText}>{item.likes} likes</Text>
                   </View>
                 </View>
-              </TouchableScale>
+              </View>
             </View>
-          );
-        }}
+          </TouchableScale>
+        )}
       />
 
       <FAB
-        medium
         icon="plus"
         style={styles.fab}
         onPress={() => navigation.navigate('Add')}
         color={colors.white}
-        backgroundColor={colors.yellow}
+        backgroundColor={colors.secondary}
       />
     </View>
   );
@@ -240,59 +153,81 @@ export default StoryScreenStack;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginLeft: 0,
+    backgroundColor: colors.cream,
   },
-  YourDailyRead: {
-    marginTop: 10,
-    marginBottom: 10,
-    paddingHorizontal: 30,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  sectionHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 12,
   },
-  YourDailyReadText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'black',
+  sectionTitle: {
+    fontSize: sizes.title,
+    fontWeight: '800',
+    color: colors.secondary,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  profilePicStyle: {
-    width: 50,
-    height: 50,
-    borderRadius: 20,
-    marginRight: 14,
+  horizontalList: { flexGrow: 0 },
+  horizontalListContent: { paddingHorizontal: 16, paddingBottom: 8 },
+  featuredCard: {
+    width: Dimensions.get('window').width - 80,
+    height: Dimensions.get('window').height - 420,
+    marginRight: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: colors.gray3,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
   },
-  profilePic2: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  featuredImage: {
+    width: '100%',
+    height: '100%',
+  },
+  featuredOverlay: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  popularStories: {
+  featuredTitle: {
+    color: colors.white,
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 26,
+    marginBottom: 8,
+  },
+  featuredAuthorRow: { flexDirection: 'row', alignItems: 'center' },
+  avatarSmall: { width: 28, height: 28, borderRadius: 14, marginRight: 10 },
+  featuredAuthor: { color: colors.white, fontSize: 14, fontWeight: '600' },
+  popularList: { paddingHorizontal: 20, paddingBottom: 100 },
+  popularCard: {
     flexDirection: 'row',
-    paddingBottom: 30,
-    paddingLeft: 30,
-    alignItems: 'center',
-    marginTop: 0,
+    backgroundColor: colors.white,
+    borderRadius: 14,
+    marginBottom: 14,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
   },
-  BlogImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 10,
-  },
-  verticalLine: {
-    fontWeight: 'bold',
-    color: colors.yellow,
-    fontSize: 30,
-    textShadowRadius: 4,
-    textShadowColor: 'grey',
-  },
+  popularImage: { width: 100, height: 100 },
+  popularContent: { flex: 1, padding: 14, justifyContent: 'center' },
+  popularTitle: { fontSize: 15, fontWeight: '700', color: colors.secondary, marginBottom: 6 },
+  popularMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  popularAuthor: { fontSize: 12, color: colors.gray },
+  likesRow: { flexDirection: 'row', alignItems: 'center' },
+  likesText: { fontSize: 12, color: colors.gray, marginLeft: 4 },
   fab: {
     position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.primary,
+    right: 20,
+    bottom: 24,
+    backgroundColor: colors.secondary,
   },
 });

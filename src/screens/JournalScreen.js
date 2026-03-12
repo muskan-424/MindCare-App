@@ -1,200 +1,159 @@
-import React, { Component } from 'react';
+import React from 'react';
 import {
   StyleSheet,
   Text,
   View,
-  Button,
   Dimensions,
   Image,
   FlatList,
   TouchableOpacity,
 } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import TouchableScale from 'react-native-touchable-scale';
-import { colors } from '../constants/theme';
-import { FloatingAction } from 'react-native-floating-action';
-import { data } from '../constants/JournalsData';
-import { ScrollView } from 'react-native-gesture-handler';
-import AddJournal from './AddJournal';
+import { colors, sizes } from '../constants/theme';
 import { FAB } from 'react-native-paper';
+import axios from 'axios';
+import { data as localData } from '../constants/JournalsData';
+import { api_route } from '../utils/route';
+import AddJournal from './AddJournal';
 import DisplayJournal from './DisplayJournal';
 
-const JournalScreen = ({ navigation }) => {
-  const { width, height } = Dimensions.get('window');
+const monthNames = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
 
-  var date = new Date().getDate();
-  var month = new Date().getMonth() + 1;
-  var year = new Date().getFullYear();
-  const monthArray = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
+const JournalScreen = ({ navigation }) => {
+  const [entries, setEntries] = React.useState(localData);
+  const [loading, setLoading] = React.useState(false);
+
+  const d = new Date();
+  const dateStr = `${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+
+  React.useEffect(() => {
+    const fetchJournals = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(`${api_route}/api/journals`);
+        if (Array.isArray(res.data)) {
+          setEntries(res.data);
+        } else {
+          setEntries(localData);
+        }
+      } catch (e) {
+        console.warn('Journals API error:', e.message);
+        setEntries(localData);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJournals();
+  }, []);
 
   return (
-    <View style={{ display: 'flex', flex: 1 }}>
+    <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.dpCover}>
-          <Image
-            style={{ width: 70, height: 70, left: 4 }}
-            source={require('../assets/userIcon.png')}
-          />
-          <View style={{ flexDirection: 'column', left: 15, width: 160 }}>
-            <Text style={{ fontSize: 25 }}>Hi there!</Text>
-            <Text style={{ fontSize: 18, marginTop: 5 }}>
-              {date} {monthArray[month - 1]} {year}
-            </Text>
-          </View>
+        <Image style={styles.headerAvatar} source={require('../assets/userIcon.png')} />
+        <View style={styles.headerTextWrap}>
+          <Text style={styles.headerGreeting}>Hi there!</Text>
+          <Text style={styles.headerDate}>{dateStr}</Text>
         </View>
       </View>
 
-      <FlatList
-        data={data}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({ item }) => {
-          return (
-            <View>
-              <TouchableScale
-                activeScale={0.9}
-                tension={50}
-                friction={7}
-                useNativeDriver
-                onPress={() => navigation.navigate('Display', { data: item })}>
-                <View style={styles.popularStories}>
-                  <View
-                    style={{ display: 'flex', width: '100%', marginTop: -10 }}>
-                    <View
-                      style={{
-                        borderBottomColor: colors.yellow,
-                        borderBottomWidth: 1.5,
-                        width: 200,
-                        height: 70,
-                      }}>
-                      <Text style={styles.datestyle}>{item.date}</Text>
-                      <Text style={styles.timestyle}>{item.time}</Text>
-                    </View>
-                    <Text style={styles.contentstyle} numberOfLines={2}>
-                      {item.content}
-                    </Text>
-                  </View>
+      {loading ? (
+        <View style={styles.emptyWrap}>
+          <Text style={styles.emptyText}>Loading your journal entries...</Text>
+        </View>
+      ) : !entries || entries.length === 0 ? (
+        <View style={styles.emptyWrap}>
+          <Text style={styles.emptyEmoji}>📔</Text>
+          <Text style={styles.emptyTitle}>No entries yet</Text>
+          <Text style={styles.emptyText}>Tap + to write your first journal entry.</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={entries}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => (
+            <TouchableScale
+              activeScale={0.98}
+              tension={50}
+              friction={7}
+              useNativeDriver
+              onPress={() => navigation.navigate('Display', { data: item })}>
+              <View style={styles.entryCard}>
+                <View style={styles.entryMeta}>
+                  <Text style={styles.entryDate}>{item.date}</Text>
+                  <Text style={styles.entryTime}>{item.time}</Text>
                 </View>
-              </TouchableScale>
-            </View>
-          );
-        }}
-      />
+                <Text style={styles.entryContent} numberOfLines={3}>
+                  {item.content}
+                </Text>
+              </View>
+            </TouchableScale>
+          )}
+        />
+      )}
+
       <FAB
-        medium
         icon="plus"
         style={styles.fab}
         onPress={() => navigation.navigate('Add')}
         color={colors.white}
-        backgroundColor={colors.yellow}
+        backgroundColor={colors.secondary}
       />
     </View>
   );
 };
 
 const Stack = createStackNavigator();
-const JournalScreenStack = () => {
-  return (
-    <Stack.Navigator initialRouteName="JournalScreen">
-      <Stack.Screen
-        name="JournalScreen"
-        component={JournalScreen}
-        options={{ headerShown: false }}
-      />
+const JournalScreenStack = () => (
+  <Stack.Navigator initialRouteName="JournalScreen">
+    <Stack.Screen name="JournalScreen" component={JournalScreen} options={{ headerShown: false }} />
+    <Stack.Screen name="Add" component={AddJournal} options={{ headerShown: false }} />
+    <Stack.Screen name="Display" component={DisplayJournal} options={{ headerShown: false }} />
+  </Stack.Navigator>
+);
 
-      <Stack.Screen
-        name="Add"
-        component={AddJournal}
-        options={{ headerShown: false }}
-      />
-
-      <Stack.Screen
-        name="Display"
-        component={DisplayJournal}
-        options={{ headerShown: false }}
-      />
-    </Stack.Navigator>
-  );
-};
 export default JournalScreenStack;
 
 const styles = StyleSheet.create({
-  dpCover: {
-    width: 80,
-    height: 80,
-    position: 'relative',
-    top: 10,
-    left: 15,
-    borderRadius: 62,
-    flexDirection: 'row',
-    display: 'flex',
-    alignItems: 'center',
-    backgroundColor: 'white',
-  },
-  popularStories: {
-    flexDirection: 'row',
-    display: 'flex',
-    paddingBottom: 30,
-
-    alignItems: 'center',
-    marginTop: 20,
-
-    marginLeft: 10,
-    borderColor: colors.accent,
-    borderRadius: 10,
-    borderWidth: 1,
-    width: '93%',
-    paddingHorizontal: 20,
-    paddingVertical: 0,
-    backgroundColor: colors.accent,
-    zIndex: 0,
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.yellow,
-  },
+  container: { flex: 1, backgroundColor: colors.cream },
   header: {
-    display: 'flex',
-    backgroundColor: colors.yellow,
-    borderBottomRightRadius: 50,
-    width: 360,
-    height: 100,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderBottomRightRadius: 40,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
-  contentstyle: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: -20,
-    marginTop: 15,
+  headerAvatar: { width: 56, height: 56, borderRadius: 28 },
+  headerTextWrap: { marginLeft: 16 },
+  headerGreeting: { fontSize: 22, fontWeight: '800', color: colors.white },
+  headerDate: { fontSize: 14, color: colors.white, opacity: 0.95, marginTop: 4 },
+  listContent: { paddingHorizontal: 16, paddingBottom: 90 },
+  entryCard: {
+    backgroundColor: colors.white,
+    borderRadius: 14,
+    padding: 18,
+    marginBottom: 14,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.secondary,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
   },
-  datestyle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 0,
-    marginTop: 20,
-    color: colors.secondary,
-  },
-  timestyle: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 0,
-    marginTop: 0,
-    color: colors.secondary,
-  },
+  entryMeta: { marginBottom: 8 },
+  entryDate: { fontSize: 15, fontWeight: '700', color: colors.secondary },
+  entryTime: { fontSize: 12, color: colors.gray, marginTop: 2 },
+  entryContent: { fontSize: 14, lineHeight: 22, color: colors.secondary },
+  emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
+  emptyEmoji: { fontSize: 56, marginBottom: 16 },
+  emptyTitle: { fontSize: 20, fontWeight: '700', color: colors.secondary, marginBottom: 8 },
+  emptyText: { fontSize: 15, color: colors.gray, textAlign: 'center' },
+  fab: { position: 'absolute', right: 20, bottom: 24, backgroundColor: colors.secondary },
 });

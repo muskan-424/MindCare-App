@@ -14,15 +14,58 @@ import base64 from 'react-native-base64';
 import AnimatedLoader from 'react-native-animated-loader';
 import Grid from 'react-native-grid-component';
 import FitnessContentCard from '../components/FitnessContentCard';
+import { api_route } from '../utils/route';
 
-function convertToArray(content, title) {
-  var contentlist = [];
-  for (var i = 0; i < title.length; i++) {
-    contentlist.push({uri: content[title[i]], heading: title[i]});
-  }
-  console.log('first' + contentlist[0][heading]);
-  return contentlist;
-}
+const fallbackContent = {
+  Yoga: {
+    'Beginner Yoga Flow': {
+      '10-Minute Beginner Yoga': 'https://i.ytimg.com/vi/v7AYKMP6rOE/hqdefault.jpg',
+      'Gentle Morning Yoga': 'https://i.ytimg.com/vi/KmYdVq47UOU/hqdefault.jpg',
+    },
+    'Yoga for Anxiety Relief': {
+      'Yoga for Anxiety and Stress': 'https://i.ytimg.com/vi/inpok4MKVLM/hqdefault.jpg',
+      'Calming Yoga for Worry': 'https://i.ytimg.com/vi/b1H3xO3x_Js/hqdefault.jpg',
+    },
+    'Bedtime Yoga': {
+      'Bedtime Yoga for Relaxation': 'https://i.ytimg.com/vi/v7AYKMP6rOE/hqdefault.jpg',
+    },
+  },
+  Meditation: {
+    '5-Minute Daily Meditation': {
+      'Quick Reset Meditation': 'https://i.ytimg.com/vi/O-6f5wQXSu8/hqdefault.jpg',
+    },
+    'Sleep Meditation': {
+      'Deep Sleep Talk Down': 'https://i.ytimg.com/vi/2OEL4P1Rz04/hqdefault.jpg',
+    },
+    'Anxiety-Calming Breath': {
+      'Breathing for Anxiety Relief': 'https://i.ytimg.com/vi/inpok4MKVLM/hqdefault.jpg',
+    },
+  },
+  Cardio: {
+    'Low Impact Cardio': {
+      'Low Impact Cardio Workout': 'https://i.ytimg.com/vi/ml6cT4AZdqI/hqdefault.jpg',
+    },
+    'Beginner HIIT': {
+      'Beginner HIIT Session': 'https://i.ytimg.com/vi/ml6cT4AZdqI/hqdefault.jpg',
+    },
+  },
+  Stretching: {
+    'Full Body Stretch': {
+      'Full Body Stretch Routine': 'https://i.ytimg.com/vi/L_xrDAtykMI/hqdefault.jpg',
+    },
+    'Morning Stretch': {
+      '5-Minute Morning Stretch': 'https://i.ytimg.com/vi/L_xrDAtykMI/hqdefault.jpg',
+    },
+  },
+  'Healthy Diet': {
+    'Healthy Breakfast Ideas': {
+      '3 Healthy Breakfast Ideas': 'https://i.ytimg.com/vi/8aV2KYf_MXw/hqdefault.jpg',
+    },
+    'Meal Prep Basics': {
+      'Beginner Meal Prep Guide': 'https://i.ytimg.com/vi/Qe4qU9oxC6o/hqdefault.jpg',
+    },
+  },
+};
 
 const FitnessContent = ({route}) => {
   const [content, setContent] = useState({});
@@ -31,11 +74,9 @@ const FitnessContent = ({route}) => {
   const [isError, setIsError] = useState(false);
   const [contentList, setList] = useState([]);
   const [url, setUrl] = useState(
-    'https://us-central1-mental-health-app-6edbd.cloudfunctions.net/app/api/fitness/' +
-      route.params.category +
-      '/' +
-      route.params.subcategory +
-      '/getContent',
+    `${api_route}/api/fitness/${encodeURIComponent(
+      route.params.category,
+    )}/${encodeURIComponent(route.params.subcategory)}/getContent`,
   );
 
   useEffect(() => {
@@ -55,7 +96,12 @@ const FitnessContent = ({route}) => {
         //   console.log(result.data)
         //console.log(categoryData[0])
       } catch (error) {
-        setIsError(true);
+        console.warn('Fitness Content API Error:', error.message);
+        const byCategory = fallbackContent[route.params.category] || fallbackContent.Yoga || {};
+        const localContent = byCategory[route.params.subcategory] || {};
+        setContent(localContent);
+        setTitle(Object.keys(localContent));
+        setIsError(false);
       }
 
       setIsLoading(false);

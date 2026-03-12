@@ -10,7 +10,9 @@ import {
   Modal,
   SafeAreaView,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../constants/theme';
 import { Button } from 'react-native-elements';
 import BrickList from 'react-native-masonry-brick-list';
@@ -21,6 +23,49 @@ import { updateConcerns } from '../redux/actions/profile';
 import { fetchQuoteOfTheDay } from '../redux/actions/quote';
 import { Avatar, Card, Title, Paragraph } from 'react-native-paper';
 import { api_route } from '../utils/route';
+
+const fallbackContentByCategory = {
+  meditation: [
+    {
+      videoId: 'inpok4MKVLM',
+      title: '10-Minute Guided Meditation for Anxiety',
+      thumbnail: 'https://i.ytimg.com/vi/inpok4MKVLM/hqdefault.jpg',
+    },
+    {
+      videoId: 'O-6f5wQXSu8',
+      title: '5-Minute Meditation You Can Do Anywhere',
+      thumbnail: 'https://i.ytimg.com/vi/O-6f5wQXSu8/hqdefault.jpg',
+    },
+  ],
+  motivation: [
+    {
+      videoId: 'ZXsQAXx_ao0',
+      title: 'Just Do It - Motivational Speech',
+      thumbnail: 'https://i.ytimg.com/vi/ZXsQAXx_ao0/hqdefault.jpg',
+    },
+  ],
+  sleep: [
+    {
+      videoId: '2OEL4P1Rz04',
+      title: 'Deep Sleep Talk Down | Fall Asleep Fast',
+      thumbnail: 'https://i.ytimg.com/vi/2OEL4P1Rz04/hqdefault.jpg',
+    },
+  ],
+  relaxing_music: [
+    {
+      videoId: '2OEL4P1Rz04',
+      title: 'Relaxing Piano & Rain Sounds',
+      thumbnail: 'https://i.ytimg.com/vi/2OEL4P1Rz04/hqdefault.jpg',
+    },
+  ],
+  therapy: [
+    {
+      videoId: 'aodS0mH2gfg',
+      title: 'Therapy Session: Coping With Anxiety',
+      thumbnail: 'https://i.ytimg.com/vi/aodS0mH2gfg/hqdefault.jpg',
+    },
+  ],
+};
 
 const preferences = [
   {
@@ -57,11 +102,33 @@ const preferences = [
   },
 ];
 
+const selfHelpOptions = [
+  { id: 'Breathing', screen: 'Breathing', label: 'Breathing', emoji: '🌬️' },
+  { id: 'Affirmations', screen: 'Affirmations', label: 'Affirmations', emoji: '💬' },
+  { id: 'CrisisResources', screen: 'CrisisResources', label: 'Crisis support', emoji: '🆘' },
+  { id: 'MoodCheck', screen: 'MoodCheck', label: 'Mood check', emoji: '😊' },
+  { id: 'Gratitude', screen: 'Gratitude', label: 'Gratitude', emoji: '🙏' },
+  { id: 'Grounding', screen: 'Grounding', label: 'Grounding', emoji: '🌿' },
+];
+
 const HomeScreen = props => {
-  const [modalVisible, setModalVisible] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
   const [contentFeed, setContentFeed] = useState([]);
   const [selectedConcerns, setSelectedConcerns] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('meditation');
+  const [loadingContent, setLoadingContent] = useState(false);
+  const [contentError, setContentError] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const seen = await AsyncStorage.getItem('MindCare_hasSeenConcerns');
+        setModalVisible(seen !== 'true');
+      } catch (e) {
+        setModalVisible(true);
+      }
+    })();
+  }, []);
 
   const contentCategories = [
     { id: 'meditation', label: 'Meditation' },
@@ -83,12 +150,18 @@ const HomeScreen = props => {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const result = await axios.get(`${api_route}/api/content/search?category=${selectedCategory}`);
+        setLoadingContent(true);
+        setContentError(null);
+        const result = await axios.get(
+          `${api_route}/api/content/search?category=${selectedCategory}`,
+        );
         setContentFeed(result.data);
       } catch (err) {
         console.warn('Mindful Content API Error:', err.message);
-        setContentFeed([]);
+        setContentError('Unable to load mindful content from server.');
+        setContentFeed(fallbackContentByCategory[selectedCategory] || []);
       }
+      setLoadingContent(false);
     };
     fetchContent();
   }, [selectedCategory]);
@@ -165,6 +238,7 @@ const HomeScreen = props => {
               titleStyle={styles.done}
               onPress={() => {
                 props.updateConcerns(selectedConcerns, props.auth.user._id);
+                AsyncStorage.setItem('MindCare_hasSeenConcerns', 'true').catch(() => {});
                 setModalVisible(false);
               }}></Button>
           </View>
@@ -226,6 +300,16 @@ const HomeScreen = props => {
                 </View>
               </View>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.feelingCta}
+              onPress={() => props.navigation.navigate('ReportIssue')}>
+              <Text style={styles.feelingCtaText}>How are you feeling?</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.moodCta}
+              onPress={() => props.navigation.navigate('MoodTracker')}>
+              <Text style={styles.moodCtaText}>Log mood</Text>
+            </TouchableOpacity>
           </View>
         </View>
         <View>
@@ -237,6 +321,22 @@ const HomeScreen = props => {
               <Text style={styles.createMemeText}>Create a Meme</Text>
             </View>
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.selfHelpContainer}>
+          <Text style={styles.selfHelpTitle}>Self-help</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selfHelpScroll}>
+            {selfHelpOptions.map(opt => (
+              <TouchableOpacity
+                key={opt.id}
+                style={styles.selfHelpCard}
+                onPress={() => props.navigation.navigate(opt.screen)}
+              >
+                <Text style={styles.selfHelpEmoji}>{opt.emoji}</Text>
+                <Text style={styles.selfHelpLabel} numberOfLines={2}>{opt.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
         <View style={styles.quoteContainer}>
@@ -263,14 +363,26 @@ const HomeScreen = props => {
             ))}
           </ScrollView>
 
-          <FlatList
-            renderItem={renderItem}
-            data={contentFeed}
-            horizontal={true}
-            keyExtractor={item => item.videoId}
-            showsHorizontalScrollIndicator={false}
-            style={{ marginTop: 15 }}
-          />
+          {loadingContent ? (
+            <View style={{ marginTop: 20 }}>
+              <ActivityIndicator size="small" color={colors.primary} />
+            </View>
+          ) : contentFeed.length === 0 ? (
+            <View style={{ marginTop: 20 }}>
+              <Text style={{ color: colors.gray1 }}>
+                {contentError || 'No content available right now.'}
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              renderItem={renderItem}
+              data={contentFeed}
+              horizontal={true}
+              keyExtractor={item => item.videoId}
+              showsHorizontalScrollIndicator={false}
+              style={{ marginTop: 15 }}
+            />
+          )}
         </View>
       </View>
     </ScrollView>
@@ -378,6 +490,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 6,
+  },
+  feelingCta: {
+    marginTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: colors.secondary,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  feelingCtaText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  moodCta: {
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: colors.secondary,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  moodCtaText: {
+    color: colors.secondary,
+    fontSize: 13,
+    fontWeight: '600',
   },
   quoteContainer: {
     padding: 10,
@@ -494,6 +633,41 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: 'bold',
     textTransform: 'uppercase',
+  },
+  selfHelpContainer: {
+    marginBottom: 16,
+    paddingLeft: 4,
+  },
+  selfHelpTitle: {
+    fontSize: 18,
+    textTransform: 'uppercase',
+    fontWeight: 'bold',
+    color: colors.secondary,
+    marginLeft: 16,
+    marginBottom: 12,
+  },
+  selfHelpScroll: {
+    paddingLeft: 12,
+  },
+  selfHelpCard: {
+    width: 100,
+    marginRight: 12,
+    backgroundColor: colors.accent,
+    borderRadius: 14,
+    padding: 14,
+    alignItems: 'center',
+    minHeight: 88,
+    justifyContent: 'center',
+  },
+  selfHelpEmoji: {
+    fontSize: 28,
+    marginBottom: 6,
+  },
+  selfHelpLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.secondary,
+    textAlign: 'center',
   },
   contentCard: {
     width: 180,

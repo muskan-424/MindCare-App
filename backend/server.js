@@ -11,9 +11,17 @@ const startServer = async () => {
   console.log('🚀 Starting MindCare API Server...');
   console.log('-----------------------------------');
 
-  // Connect to Databases
-  await connectDB();
-  await connectRedis();
+  // Connect to Databases (non-fatal so deploy succeeds even if DB/Redis unavailable)
+  try {
+    await connectDB();
+  } catch (err) {
+    console.error('MongoDB connection failed (server will still start):', err.message);
+  }
+  try {
+    await connectRedis();
+  } catch (err) {
+    console.error('Redis connection failed (server will still start):', err.message);
+  }
 
   // Middleware
   app.use(cors());

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,173 +6,142 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
-import {Searchbar} from 'react-native-paper';
-import {ScrollView} from 'react-native-gesture-handler';
+import { Searchbar } from 'react-native-paper';
 import TherapistCard from '../components/TherapistCard';
-import data from '../constants/doctors';
-import {colors, sizes, fonts} from '../constants/theme';
+import axios from 'axios';
+import localData from '../constants/doctors';
+import { colors, sizes, fonts } from '../constants/theme';
 
-const TherapistScreen = props => {
-  const categories = [
-    {
-      id: '1',
-      name: 'Psychologist',
-      img: 'https://image.flaticon.com/icons/png/512/77/77306.png',
-    },
-    {
-      id: '2',
-      name: 'Psychiatrist',
-      img:
-        'https://icon-library.com/images/psychiatrist-icon/psychiatrist-icon-23.jpg',
-    },
-    {
-      id: '3',
-      name: 'Counsellor',
-      img: 'https://static.thenounproject.com/png/1640081-200.png',
-    },
-    {
-      id: '4',
-      name: 'Social Worker',
-      img: 'https://static.thenounproject.com/png/3216399-200.png',
-    },
-  ];
+const CATEGORIES = [
+  { id: '1', name: 'Psychologist', emoji: '🧠' },
+  { id: '2', name: 'Psychiatrist', emoji: '💊' },
+  { id: '3', name: 'Counsellor', emoji: '💬' },
+  { id: '4', name: 'Social Worker', emoji: '🤝' },
+];
+
+const TherapistHomeScreen = (props) => {
   const [query, setQuery] = useState('');
-  const onChangeSearch = query => setQuery(query);
+  const [therapists, setTherapists] = useState(localData);
+  const [loading, setLoading] = useState(false);
 
-  const renderItem = ({item}) => {
-    return (
-      <TouchableOpacity
-        onPress={() =>
-          props.navigation.navigate('Therapist', {
-            data: data.filter(data => data.specialisation == item.name),
-            category: item.name,
-          })
-        }>
-        <View style={styles.catBox}>
-          <View style={{paddingVertical: 5}}>
-            <Image style={styles.categoryImage} source={{uri: item.img}} />
-          </View>
-          <Text>{item.name}</Text>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  React.useEffect(() => {
+    const fetchTherapists = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(`${api_route}/api/therapists`);
+        if (Array.isArray(res.data)) {
+          setTherapists(res.data);
+        } else {
+          setTherapists(localData);
+        }
+      } catch (e) {
+        console.warn('Therapists API error:', e.message);
+        setTherapists(localData);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTherapists();
+  }, []);
+
+  const renderCategory = ({ item }) => (
+    <TouchableOpacity
+      style={styles.catCard}
+      onPress={() =>
+        props.navigation.navigate('Therapist', {
+          data: therapists.filter((d) => d.specialisation === item.name),
+          category: item.name,
+        })
+      }
+      activeOpacity={0.8}>
+      <Text style={styles.catEmoji}>{item.emoji}</Text>
+      <Text style={styles.catName}>{item.name}</Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>Therapists</Text>
-        <View style={styles.searchContainer}>
+        <Text style={styles.headerTitle}>Consultation</Text>
+        <Text style={styles.headerSubtitle}>Talk to a professional</Text>
+        <View style={styles.searchWrap}>
           <Searchbar
             style={styles.search}
-            placeholder="Search...."
-            onChangeText={onChangeSearch}
+            placeholder="Search by name or specialty..."
+            onChangeText={setQuery}
             value={query}
+            placeholderTextColor={colors.gray}
           />
         </View>
       </View>
-      <ScrollView>
-        <View style={{paddingVertical: 10, paddingHorizontal: 10}}>
-          <Text style={styles.categoryText}>Categories</Text>
-          <View
-            style={{
-              paddingHorizontal: 5,
-              paddingVertical: 10,
-              width: '100%',
-              flexDirection: 'row',
-            }}>
-            <FlatList
-              data={categories}
-              renderItem={renderItem}
-              keyExtractor={item => item.id}
-              horizontal={true}
-              style={{flex: 1}}
-              showsHorizontalScrollIndicator={false}
-            />
-          </View>
-        </View>
 
-        <View>
-          <Text style={{paddingHorizontal: 20, fontSize: fonts.h3.fontSize}}>
-            Top Therapists
-          </Text>
-          <View style={{paddingBottom: 30}}>
-            {data.map(doc => {
-              return (
-                <View key={doc.id} style={styles.docContainer}>
-                  <TherapistCard data={doc} />
-                </View>
-              );
-            })}
-            {/* {
-                    data.map(doc=>{
-                    return <View key={doc.id} style={styles.docContainer}>
-                        <TherapistCard data={doc} />
-                    </View>
-                    })
-                } */}
-          </View>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <Text style={styles.sectionTitle}>Browse by type</Text>
+        <FlatList
+          data={CATEGORIES}
+          renderItem={renderCategory}
+          keyExtractor={(item) => item.id}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.catList}
+        />
+
+        <Text style={styles.sectionTitle}>Top professionals</Text>
+        <View style={styles.cardList}>
+          {therapists.map((doc) => (
+            <View key={doc.id} style={styles.cardWrap}>
+              <TherapistCard data={doc} />
+            </View>
+          ))}
         </View>
       </ScrollView>
     </View>
   );
 };
 
-export default TherapistScreen;
+export default TherapistHomeScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffff',
-  },
+  container: { flex: 1, backgroundColor: colors.cream },
   header: {
-    width: '100%',
-    height: 150,
     backgroundColor: colors.primary,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    // justifyContent:"space-around"
+    borderBottomLeftRadius: 24,
+    paddingTop: 16,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
   },
-  headerText: {
-    color: 'white',
-    fontSize: fonts.h1.fontSize,
-    fontWeight: 'bold',
-    position: 'relative',
-    top: 20,
-  },
-  searchContainer: {
-    position: 'relative',
-    top: 40,
-    width: '80%',
-    height: 20,
-  },
-  search: {
-    height: 38,
-  },
-  categoryImage: {
-    width: 80,
-    height: 80,
-  },
-  categoryText: {
-    fontSize: fonts.h3.fontSize,
-    paddingHorizontal: 10,
-  },
-  catBox: {
-    borderWidth: 2,
-    backgroundColor: colors.accent,
-    borderColor: colors.gray3,
-    borderRadius: 5,
-    margin: 8,
-    padding: 15,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  docContainer: {
+  headerTitle: { fontSize: 26, fontWeight: '800', color: colors.white },
+  headerSubtitle: { fontSize: 14, color: colors.white, opacity: 0.95, marginTop: 4 },
+  searchWrap: { marginTop: 16 },
+  search: { backgroundColor: colors.white, borderRadius: 12, elevation: 0 },
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 24 },
+  sectionTitle: {
+    fontSize: sizes.title,
+    fontWeight: '700',
+    color: colors.secondary,
     marginHorizontal: 20,
-    marginTop: 15,
+    marginTop: 20,
+    marginBottom: 12,
   },
+  catList: { paddingHorizontal: 12, paddingBottom: 8 },
+  catCard: {
+    width: 100,
+    marginHorizontal: 8,
+    backgroundColor: colors.white,
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+  },
+  catEmoji: { fontSize: 32, marginBottom: 8 },
+  catName: { fontSize: 12, fontWeight: '600', color: colors.secondary, textAlign: 'center' },
+  cardList: { paddingHorizontal: 16 },
+  cardWrap: { marginBottom: 14 },
 });

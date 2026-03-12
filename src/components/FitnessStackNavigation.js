@@ -5,6 +5,8 @@ import FitnessScreen from '../screens/FitnessScreen';
 import FitnessSubScreen from '../screens/FitnessSubScreen';
 import FitnessContent from '../screens/FitnessContent';
 import IndividualFitnessContent from '../screens/IndividualFitnessContent';
+import FitnessCoachScreen from '../screens/FitnessCoachScreen';
+import TrackPlayer from '../screens/TrackPlayer';
 
 const FitnessStackNavigator = () => {
   return (
@@ -14,7 +16,11 @@ const FitnessStackNavigator = () => {
         component={FitnessScreen}
         options={{headerShown: false}}
       />
-
+      <Stack.Screen
+        name="FitnessCoach"
+        component={FitnessCoachScreen}
+        options={{headerShown: false}}
+      />
       <Stack.Screen
         name="FitnessSubScreen"
         component={FitnessSubScreen}
@@ -28,6 +34,11 @@ const FitnessStackNavigator = () => {
       <Stack.Screen
         name="IndividualFitnessContent"
         component={IndividualFitnessContent}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Track"
+        component={TrackPlayer}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

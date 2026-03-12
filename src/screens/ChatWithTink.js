@@ -28,6 +28,28 @@ const ChatWithTink = props => {
   const [isLoading, setIsLoading] = useState(false);
   const flatListRef = useRef();
 
+  const buildLocalReply = (text) => {
+    const lower = text.toLowerCase();
+
+    if (lower.includes('anxious') || lower.includes('anxiety') || lower.includes('panic')) {
+      return "It sounds like you're feeling anxious right now. Try taking a few slow breaths in through your nose and out through your mouth. You might also open the Breathing or Grounding tools in the app for a quick reset. If your feelings become overwhelming, please reach out to someone you trust or a professional.";
+    }
+
+    if (lower.includes('sad') || lower.includes('depress') || lower.includes('down')) {
+      return "I'm really glad you reached out. Feeling low or sad can be really heavy. It can help to write down what you're feeling in your journal tab, or message a close friend. If your thoughts turn toward self-harm or you feel unsafe, please contact a local helpline or emergency services right away.";
+    }
+
+    if (lower.includes('sleep') || lower.includes('insomnia') || lower.includes('tired')) {
+      return "Sleep struggles are very common. A gentle routine before bed—like a short breathing exercise, avoiding screens for 30 minutes, and dimming the lights—can help. You can also explore the Sleep content or Meditation tools in the app to wind down.";
+    }
+
+    if (lower.includes('stress') || lower.includes('overwhelmed') || lower.includes('burnout')) {
+      return "When everything feels like too much, breaking your day into small, doable steps can really help. Try to choose one tiny task you can complete next, then take a short break. Our Fitness and Self-help sections also have quick activities for stress release.";
+    }
+
+    return "I'm here with you. I might not always understand everything perfectly, but you can tell me what's on your mind and we can take it one step at a time. You can also combine chatting with me with the Self-help tools (breathing, grounding, gratitude, and more) whenever you like.";
+  };
+
   const handleSend = async () => {
     if (!inputText.trim() || isLoading) return;
 
@@ -55,27 +77,32 @@ const ChatWithTink = props => {
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        const botMessage = {
-          id: (Date.now() + 1).toString(),
-          text: data.reply,
-          isUser: false,
-        };
-        setMessages(prev => [...prev, botMessage]);
-      } else {
-        const errorMsg = {
-          id: (Date.now() + 1).toString(),
-          text: "I'm having a little trouble connecting to my brain right now! Please try again.",
-          isUser: false,
-        };
-        setMessages(prev => [...prev, errorMsg]);
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (e) {
+        // ignore JSON parse error and fall back
       }
+
+      const backendReply =
+        data && typeof data.reply === 'string' && data.reply.trim().length > 0
+          ? data.reply.trim()
+          : null;
+
+      const replyText = backendReply || buildLocalReply(userMessage.text);
+
+      const botMessage = {
+        id: (Date.now() + 1).toString(),
+        text: replyText,
+        isUser: false,
+      };
+      setMessages(prev => [...prev, botMessage]);
     } catch (error) {
       const errorMsg = {
         id: (Date.now() + 1).toString(),
-        text: "My network connection seems to be down! Please try again.",
+        text:
+          "My network connection seems to be down, so I'll answer from my built‑in knowledge instead. " +
+          buildLocalReply(userMessage.text),
         isUser: false,
       };
       setMessages(prev => [...prev, errorMsg]);
@@ -106,8 +133,8 @@ const ChatWithTink = props => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 20}
     >
       <FlatList
         ref={flatListRef}

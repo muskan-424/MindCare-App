@@ -87,10 +87,13 @@ const Signup = props => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <ScrollView
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={true}
+        contentContainerStyle={styles.scrollContent}
         style={{ backgroundColor: colors.white }}
       >
         <View style={styles.container}>
@@ -130,7 +133,7 @@ const Signup = props => {
             <TextInput
               style={styles.textInput}
               placeholder={'Phone Number'}
-              keyboardType='phone-pad'
+              keyboardType="phone-pad"
               value={state.phone_no}
               onChangeText={text => {
                 setState({
@@ -142,7 +145,7 @@ const Signup = props => {
             <TextInput
               style={styles.textInput}
               placeholder={'Age'}
-              keyboardType='numeric'
+              keyboardType="numeric"
               value={state.age}
               onChangeText={text => {
                 setState({
@@ -155,7 +158,7 @@ const Signup = props => {
               <View style={styles.radio}>
                 <Text style={{ color: colors.secondary }}>Male</Text>
                 <RadioButton
-                  value='male'
+                  value="male"
                   color={colors.secondary}
                   status={state.gender === 'male' ? 'checked' : 'unchecked'}
                   onPress={() => {
@@ -169,7 +172,7 @@ const Signup = props => {
               <View style={styles.radio}>
                 <Text style={{ color: colors.secondary }}>Female</Text>
                 <RadioButton
-                  value='female'
+                  value="female"
                   color={colors.secondary}
                   status={state.gender === 'female' ? 'checked' : 'unchecked'}
                   onPress={() => {
@@ -184,7 +187,7 @@ const Signup = props => {
                 <Text style={{ color: colors.secondary }}>Other</Text>
                 <RadioButton
                   color={colors.secondary}
-                  value='other'
+                  value="other"
                   status={state.gender === 'other' ? 'checked' : 'unchecked'}
                   onPress={() => {
                     setState({
@@ -226,20 +229,11 @@ const Signup = props => {
             >
               <Text style={styles.already}>Already have an account?</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              // onPress={() => {
-              //   ToastAndroid.show(
-              //     'A pikachu appeared nearby !',
-              //     ToastAndroid.SHORT
-              //   );
-              // }}
-              onPress={handleSignUp}
-            >
+            <TouchableOpacity onPress={handleSignUp}>
               <View style={styles.submitButton}>
                 <Text style={styles.submitText}>Signup</Text>
               </View>
             </TouchableOpacity>
-            <View style={{ paddingBottom: Keyboard.height }}></View>
           </View>
         </View>
       </ScrollView>
@@ -268,6 +262,9 @@ const styles = StyleSheet.create({
     top: -20,
     zIndex: 200,
     width: '100%'
+  },
+  scrollContent: {
+    flexGrow: 1
   },
   textInput: {
     backgroundColor: colors.accent,

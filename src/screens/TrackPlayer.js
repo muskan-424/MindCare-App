@@ -4,7 +4,7 @@ import { WebView } from 'react-native-webview';
 
 const Track = props => {
   const videoId = props.route.params.videoId;
-  const youtubeUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+  const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}&autoplay=1&rel=0&modestbranding=1`;
 
   return (
     <View style={styles.container}>

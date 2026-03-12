@@ -1,0 +1,16 @@
+# Render Blueprint (optional). Use this if you create the service from the dashboard.
+# For an existing backend service, set these in the Render dashboard:
+# - Root Directory: backend
+# - Build Command: npm install
+# - Start Command: npm start
+# - Environment: MONGODB_URI (required), GOOGLE_API_KEY or GEMINI_API_KEY (optional), REDIS_URL (optional)
+
+services:
+  - type: web
+    name: mindcare-api
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "18"
