@@ -85,7 +85,7 @@ const FITNESS_CONTENT = {
       'Yoga for Anxiety and Stress': 'https://i.ytimg.com/vi/inpok4MKVLM/hqdefault.jpg',
       'Calming Yoga for Worry': 'https://i.ytimg.com/vi/b1H3xO3x_Js/hqdefault.jpg'
     },
-    Bedtime Yoga: {
+    'Bedtime Yoga': {
       'Bedtime Yoga for Relaxation': 'https://i.ytimg.com/vi/v7AYKMP6rOE/hqdefault.jpg'
     }
   },
