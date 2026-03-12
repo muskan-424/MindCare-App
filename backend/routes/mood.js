@@ -55,4 +55,24 @@ router.get('/trend', async (req, res) => {
   }
 });
 
+// GET /api/mood/today?userId=... — whether the user has logged mood today (for daily auto check-in)
+router.get('/today', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const entry = await MoodEntry.findOne({ user: userId, date: { $gte: startOfToday } })
+      .sort({ date: -1 })
+      .lean();
+    res.json({
+      loggedToday: !!entry,
+      entry: entry ? { date: entry.date, rating: entry.rating, note: entry.note } : null,
+    });
+  } catch (err) {
+    console.error('Mood today check error:', err.message);
+    res.status(500).json({ loggedToday: false, entry: null });
+  }
+});
+
 module.exports = router;

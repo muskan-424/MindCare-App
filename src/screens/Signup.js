@@ -1,28 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
   View,
-  Button,
   Image,
   Dimensions,
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
-  Keyboard,
   ScrollView,
-  ToastAndroid
+  ActivityIndicator,
 } from 'react-native';
 import { colors } from '../constants/theme';
 import { RadioButton } from 'react-native-paper';
 import { register } from '../redux/actions/auth';
-import { useDispatch } from 'react-redux';
+import { validateEmail, validatePhone, validatePassword } from '../utils/validation';
 import { connect } from 'react-redux';
 
 const Signup = props => {
-  const dispatch = useDispatch();
   const [state, setState] = useState({
     fullName: '',
     email: '',
@@ -32,57 +28,66 @@ const Signup = props => {
     password: '',
     password2: ''
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSignUp = () => {
-    if (state.fullName === '') {
-      ToastAndroid.show('Full Name is required', ToastAndroid.SHORT);
+  const handleSignUp = async () => {
+    setError('');
+
+    if (!state.fullName || !state.fullName.trim()) {
+      setError('Full name is required');
       return;
     }
 
-    const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-
-    if (state.email === '' || !re.test(String(state.email).toLowerCase())) {
-      ToastAndroid.show('Email is invalid', ToastAndroid.SHORT);
+    const emailCheck = validateEmail(state.email);
+    if (!emailCheck.valid) {
+      setError(emailCheck.message);
       return;
     }
 
-    if (state.phone_no === '' || state.phone_no.length < 10) {
-      ToastAndroid.show('Please enter a valid phone number', ToastAndroid.SHORT);
+    const phoneCheck = validatePhone(state.phone_no);
+    if (!phoneCheck.valid) {
+      setError(phoneCheck.message);
       return;
     }
 
-    if (
-      state.age === null ||
-      state.age === '' ||
-      parseInt(state.age) <= 0 ||
-      parseInt(state.age) >= 201
-    ) {
-      ToastAndroid.show('Age is invalid', ToastAndroid.SHORT);
+    const ageNum = parseInt(state.age, 10);
+    if (isNaN(ageNum) || ageNum <= 0 || ageNum >= 150) {
+      setError('Please enter a valid age (1–150)');
       return;
     }
 
-    if (state.gender === '') {
-      ToastAndroid.show('Please select gender', ToastAndroid.SHORT);
+    if (!state.gender) {
+      setError('Please select gender');
       return;
     }
 
-    if (state.password.length < 6) {
-      ToastAndroid.show(
-        'Password must contain 6 characters',
-        ToastAndroid.SHORT
-      );
+    const passwordCheck = validatePassword(state.password);
+    if (!passwordCheck.valid) {
+      setError(passwordCheck.message);
       return;
     }
 
     if (state.password !== state.password2) {
-      ToastAndroid.show('Password does not match', ToastAndroid.SHORT);
+      setError('Passwords do not match');
       return;
     }
-    console.log('before-register');
 
-    props.register({ name: state.fullName, ...state });
-
-    //console.log('after-register');
+    setLoading(true);
+    try {
+      await props.register({
+        name: state.fullName.trim(),
+        email: state.email.trim(),
+        password: state.password,
+        age: String(ageNum),
+        gender: state.gender,
+        phone_no: state.phone_no.replace(/\D/g, ''),
+      });
+      // Success: auth state updates and user is navigated; confirmation shows on Home
+    } catch (err) {
+      setError(err.message || 'Signup failed. Please try again.');
+    }
+    setLoading(false);
   };
   return (
     <KeyboardAvoidingView
@@ -122,24 +127,25 @@ const Signup = props => {
             <TextInput
               style={styles.textInput}
               placeholder={'Email'}
+              placeholderTextColor={colors.gray}
               value={state.email}
               onChangeText={text => {
-                setState({
-                  ...state,
-                  email: text
-                });
+                setState({ ...state, email: text });
+                if (error) setError('');
               }}
+              autoCapitalize="none"
+              keyboardType="email-address"
             />
             <TextInput
               style={styles.textInput}
-              placeholder={'Phone Number'}
+              placeholder={'Phone Number (10 digits)'}
+              placeholderTextColor={colors.gray}
               keyboardType="phone-pad"
+              maxLength={10}
               value={state.phone_no}
               onChangeText={text => {
-                setState({
-                  ...state,
-                  phone_no: text
-                });
+                setState({ ...state, phone_no: text.replace(/\D/g, '') });
+                if (error) setError('');
               }}
             />
             <TextInput
@@ -200,39 +206,38 @@ const Signup = props => {
             </View>
             <TextInput
               style={styles.textInput}
-              placeholder={'Password'}
+              placeholder={'Password (8+ chars, upper, lower, number, symbol)'}
+              placeholderTextColor={colors.gray}
               value={state.password}
               onChangeText={text => {
-                setState({
-                  ...state,
-                  password: text
-                });
+                setState({ ...state, password: text });
+                if (error) setError('');
               }}
               secureTextEntry={true}
             />
             <TextInput
               style={styles.textInput}
               placeholder={'Confirm Password'}
+              placeholderTextColor={colors.gray}
               value={state.password2}
               onChangeText={text => {
-                setState({
-                  ...state,
-                  password2: text
-                });
+                setState({ ...state, password2: text });
+                if (error) setError('');
               }}
               secureTextEntry={true}
             />
-            <TouchableOpacity
-              onPress={() => {
-                props.navigation.navigate('Login');
-              }}
-            >
-              <Text style={styles.already}>Already have an account?</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleSignUp}>
-              <View style={styles.submitButton}>
-                <Text style={styles.submitText}>Signup</Text>
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            <TouchableOpacity onPress={handleSignUp} disabled={loading}>
+              <View style={[styles.submitButton, loading && styles.submitButtonDisabled]}>
+                {loading ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <Text style={styles.submitText}>Signup</Text>
+                )}
               </View>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => props.navigation.navigate('Login')}>
+              <Text style={styles.already}>Already have an account?</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -307,6 +312,17 @@ const styles = StyleSheet.create({
     padding: 10,
     alignSelf: 'center',
     fontWeight: 'bold'
+  },
+  errorText: {
+    color: colors.redPink || '#c62828',
+    fontSize: 14,
+    textAlign: 'center',
+    marginHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 8
+  },
+  submitButtonDisabled: {
+    opacity: 0.7
   },
   already: {
     alignSelf: 'flex-end',

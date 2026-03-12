@@ -6,9 +6,8 @@ const SEED_SELF_HELP = [
   { id: 'Breathing', screen: 'Breathing', label: 'Breathing', icon: 'https://cdn-icons-png.flaticon.com/512/4151/4151607.png', order: 0, active: true },
   { id: 'Affirmations', screen: 'Affirmations', label: 'Affirmations', icon: 'https://cdn-icons-png.flaticon.com/512/2461/2461102.png', order: 1, active: true },
   { id: 'CrisisResources', screen: 'CrisisResources', label: 'Crisis support', icon: 'https://cdn-icons-png.flaticon.com/512/463/463574.png', order: 2, active: true },
-  { id: 'MoodCheck', screen: 'MoodCheck', label: 'Mood check', icon: 'https://cdn-icons-png.flaticon.com/512/1874/1874325.png', order: 3, active: true },
-  { id: 'Gratitude', screen: 'Gratitude', label: 'Gratitude', icon: 'https://cdn-icons-png.flaticon.com/512/4207/4207244.png', order: 4, active: true },
-  { id: 'Grounding', screen: 'Grounding', label: 'Grounding', icon: 'https://cdn-icons-png.flaticon.com/512/609/609803.png', order: 5, active: true },
+  { id: 'Gratitude', screen: 'Gratitude', label: 'Gratitude', icon: 'https://cdn-icons-png.flaticon.com/512/4207/4207244.png', order: 3, active: true },
+  { id: 'Grounding', screen: 'Grounding', label: 'Grounding', icon: 'https://cdn-icons-png.flaticon.com/512/609/609803.png', order: 4, active: true },
 ];
 
 const SEED_CONTENT_CATEGORIES = [
@@ -40,7 +39,9 @@ router.get('/', async (_req, res) => {
         contentCategories: SEED_CONTENT_CATEGORIES,
       });
     }
-    const selfHelpTiles = (doc.selfHelpTiles || []).filter(t => t.active !== false).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    const selfHelpTiles = (doc.selfHelpTiles || [])
+      .filter(t => t.active !== false && t.id !== 'MoodCheck')
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     const contentCategories = (doc.contentCategories || []).filter(c => c.active !== false).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     res.json({ selfHelpTiles, contentCategories });
   } catch (err) {

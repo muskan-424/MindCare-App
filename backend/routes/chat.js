@@ -25,10 +25,13 @@ App Context or Retrieved Context:
 `;
 
 // Helper: Convert frontend history format [{text: "", isUser: true}] to LangChain message format
+// Guard against undefined msg.text to avoid "Cannot read properties of undefined (reading 'replace')" inside LangChain
 const formatHistory = (history) => {
-  return history.map(msg =>
-    msg.isUser ? new HumanMessage(msg.text) : new AIMessage(msg.text)
-  );
+  if (!Array.isArray(history)) return [];
+  return history.map(msg => {
+    const text = msg && msg.text != null ? String(msg.text) : '';
+    return msg.isUser ? new HumanMessage(text) : new AIMessage(text);
+  });
 };
 
 // @route   POST /api/chat
@@ -37,7 +40,8 @@ const formatHistory = (history) => {
 router.post('/', async (req, res) => {
   const { message, history } = req.body;
 
-  if (!message) {
+  const messageStr = message != null ? String(message).trim() : '';
+  if (!messageStr) {
     return res.status(400).json({ errors: [{ msg: 'Message is required' }] });
   }
 
@@ -67,7 +71,7 @@ router.post('/', async (req, res) => {
           textKey: 'text'
         });
         // Retrieve top 2 relevant documents if Pinecone is configured correctly
-        const results = await vectorStore.similaritySearch(message, 2);
+        const results = await vectorStore.similaritySearch(messageStr, 2);
         if (results && results.length > 0) {
           context = results.map(r => r.pageContent).join('\n---\n');
         }
@@ -109,21 +113,35 @@ router.post('/', async (req, res) => {
       const agentExecutor = new AgentExecutor({ agent, tools });
 
       const result = await agentExecutor.invoke({
-        input: message,
+        input: messageStr,
         chat_history: chatHistory,
         context: context
       });
-      responseText = result.output;
+      // result.output can be undefined or not a string in some cases
+      responseText = (result && result.output != null && typeof result.output === 'string')
+        ? result.output
+        : (result && result.output ? String(result.output) : '');
     } else {
       // Direct LLM invocation if no tools
       const chain = prompt.pipe(llm);
       const result = await chain.invoke({
-        input: message,
+        input: messageStr,
         chat_history: chatHistory,
         context: context
       });
-      responseText = result.content;
+      // result.content can be string or (in edge cases) array of content blocks
+      const content = result && result.content;
+      if (typeof content === 'string') {
+        responseText = content;
+      } else if (Array.isArray(content)) {
+        responseText = content.map(c => c && typeof c === 'object' && c.text != null ? c.text : (typeof c === 'string' ? c : '')).join('');
+      } else {
+        responseText = content != null ? String(content) : '';
+      }
     }
+
+    // Ensure we never send undefined to the client
+    if (typeof responseText !== 'string') responseText = '';
 
     // 7. Return to frontend
     res.json({ reply: responseText });

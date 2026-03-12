@@ -7,6 +7,7 @@ import {
   ImageBackground,
   Image,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import {Chip} from 'react-native-paper';
 //import { AntDesign,MaterialIcons,Feather,FontAwesome5,MaterialCommunityIcons,Ionicons} from '@expo/vector-icons';
@@ -87,6 +88,16 @@ const ProfileScreen = props => {
           <Text style={styles.otherInfo}>{props.auth.user.email}</Text>
         </View>
       </View>
+      <TouchableOpacity
+        style={styles.historyRow}
+        onPress={() => props.navigation.navigate('MoodTracker')}
+        activeOpacity={0.8}>
+        <MaterialCommunityIcons name="chart-line" size={24} color={colors.primary} />
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={styles.historyText}>Mood & check-in history</Text>
+          <Text style={styles.historySubtext}>View your entries for burnout insights</Text>
+        </View>
+      </TouchableOpacity>
       <View style={styles.concernContainer}>
         <Text style={styles.concernTitle}>My Concerns:</Text>
         <View style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap'}}>
@@ -181,6 +192,27 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
     paddingLeft: 5,
     // fontStyle:'italic'
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: colors.accent,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+  },
+  historyText: {
+    fontSize: sizes.header,
+    fontWeight: '600',
+    color: colors.secondary,
+  },
+  historySubtext: {
+    fontSize: 12,
+    color: colors.gray,
+    marginTop: 2,
   },
   concernContainer: {
     margin: 10,

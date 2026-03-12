@@ -22,6 +22,7 @@ import { connect } from 'react-redux';
 import TrackedTouchable from '../components/TrackedTouchable';
 import { updateConcerns } from '../redux/actions/profile';
 import { fetchQuoteOfTheDay } from '../redux/actions/quote';
+import { clearWelcome } from '../redux/actions/auth';
 
 const SEVERITY_LABELS = { 1: 'A bit', 2: 'Somewhat', 3: 'Moderate', 4: 'Quite a bit', 5: 'Very much' };
 const MOOD_TAGS = ['calm', 'anxious', 'sad', 'angry', 'tired', 'hopeful', 'overwhelmed', 'okay'];
@@ -31,7 +32,6 @@ const FALLBACK_SELF_HELP = [
   { id: 'Breathing', screen: 'Breathing', label: 'Breathing', icon: 'https://cdn-icons-png.flaticon.com/512/4151/4151607.png' },
   { id: 'Affirmations', screen: 'Affirmations', label: 'Affirmations', icon: 'https://cdn-icons-png.flaticon.com/512/2461/2461102.png' },
   { id: 'CrisisResources', screen: 'CrisisResources', label: 'Crisis support', icon: 'https://cdn-icons-png.flaticon.com/512/463/463574.png' },
-  { id: 'MoodCheck', screen: 'MoodCheck', label: 'Mood check', icon: 'https://cdn-icons-png.flaticon.com/512/1874/1874325.png' },
   { id: 'Gratitude', screen: 'Gratitude', label: 'Gratitude', icon: 'https://cdn-icons-png.flaticon.com/512/4207/4207244.png' },
   { id: 'Grounding', screen: 'Grounding', label: 'Grounding', icon: 'https://cdn-icons-png.flaticon.com/512/609/609803.png' },
 ];
@@ -134,25 +134,30 @@ const HomeScreen = props => {
     })();
   }, []);
 
+  // Daily check-in: show assessment when user is logged in and has not logged mood today (for burnout prediction history)
   useEffect(() => {
-    (async () => {
+    const userId = props.auth.user?._id;
+    if (!userId) return;
+
+    const checkDailyMood = async () => {
       try {
-        const seen = await AsyncStorage.getItem('MindCare_hasSeenAssessment');
-        setAssessmentModalVisible(seen !== 'true');
-      } catch (e) {
-        setAssessmentModalVisible(true);
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const dismissed = await AsyncStorage.getItem('MindCare_dismissedCheckInDate');
+        if (dismissed === todayStr) return; // User dismissed prompt today, don't show again until tomorrow
+
+        const res = await api.get('/api/mood/today', { params: { userId } }).catch(() => ({}));
+        const loggedToday = res.data?.loggedToday === true;
+        if (!loggedToday) setAssessmentModalVisible(true);
+      } catch (_) {
+        // on error don't force modal
       }
-    })();
-  }, []);
+    };
+    checkDailyMood();
+  }, [props.auth.user?._id]);
 
   useEffect(() => {
     fetchQuoteOfTheDay();
   }, []);
-
-  useEffect(() => {
-    // console.log(selectedConcerns);
-    console.log(props.auth.profile);
-  });
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -172,6 +177,12 @@ const HomeScreen = props => {
     };
     fetchContent();
   }, [selectedCategory]);
+
+  useEffect(() => {
+    if (!props.auth.welcomeMessage) return;
+    const t = setTimeout(() => props.clearWelcome(), 4000);
+    return () => clearTimeout(t);
+  }, [props.auth.welcomeMessage]);
 
   const runAssessment = async () => {
     if (!props.auth.user?._id) {
@@ -213,7 +224,8 @@ const HomeScreen = props => {
     setAssessmentStep(1);
     setAssessmentResult(null);
     setAssessmentError('');
-    AsyncStorage.setItem('MindCare_hasSeenAssessment', 'true').catch(() => {});
+    const todayStr = new Date().toISOString().slice(0, 10);
+    AsyncStorage.setItem('MindCare_dismissedCheckInDate', todayStr).catch(() => {});
   };
 
   const openAssessment = () => {
@@ -385,6 +397,16 @@ const HomeScreen = props => {
         </KeyboardAvoidingView>
       </Modal>
       <View style={styles.container}>
+        {props.auth.welcomeMessage === 'login' && (
+          <View style={styles.welcomeBanner}>
+            <Text style={styles.welcomeText}>✓ Login successful! Welcome back.</Text>
+          </View>
+        )}
+        {props.auth.welcomeMessage === 'signup' && (
+          <View style={styles.welcomeBanner}>
+            <Text style={styles.welcomeText}>✓ Account created successfully! Welcome to MindCare.</Text>
+          </View>
+        )}
         <View style={styles.header}>
           <View>
             <Text style={styles.helloText}>Hello !</Text>
@@ -528,7 +550,7 @@ const mapStateToProps = state => ({
   quote: state.quote,
 });
 
-export default connect(mapStateToProps, { updateConcerns, fetchQuoteOfTheDay })(
+export default connect(mapStateToProps, { updateConcerns, fetchQuoteOfTheDay, clearWelcome })(
   HomeScreen,
 );
 
@@ -536,6 +558,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffff',
+  },
+  welcomeBanner: {
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  welcomeText: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',

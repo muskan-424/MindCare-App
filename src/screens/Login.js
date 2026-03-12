@@ -3,45 +3,51 @@ import {
   StyleSheet,
   Text,
   View,
-  Button,
   Image,
   Dimensions,
   TextInput,
   TouchableOpacity,
   ScrollView,
-  ToastAndroid,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { colors } from '../constants/theme';
 import { connect } from 'react-redux';
 import { login } from '../redux/actions/auth';
+import { validateEmail, validatePassword } from '../utils/validation';
 
 const Login = props => {
   const [state, setState] = useState({
     email: '',
     password: ''
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  const handleLogin = async () => {
+    setError('');
 
-    if (state.email === '' || !re.test(String(state.email).toLowerCase())) {
-      ToastAndroid.show('Email is invalid', ToastAndroid.SHORT);
+    const emailCheck = validateEmail(state.email);
+    if (!emailCheck.valid) {
+      setError(emailCheck.message);
       return;
     }
 
-    if (state.password.length < 6) {
-      ToastAndroid.show(
-        'Password must contain 6 characters',
-        ToastAndroid.SHORT
-      );
+    const passwordCheck = validatePassword(state.password);
+    if (!passwordCheck.valid) {
+      setError(passwordCheck.message);
       return;
     }
 
-    props.login({ ...state });
-
-    //console.log('after-register');
+    setLoading(true);
+    try {
+      await props.login({ email: state.email.trim(), password: state.password });
+      // Success: auth state updates and user is navigated to app; confirmation shows on Home
+    } catch (err) {
+      setError(err.message || 'Login failed. Please try again.');
+    }
+    setLoading(false);
   };
 
   return (
@@ -71,33 +77,38 @@ const Login = props => {
             <TextInput
               style={styles.textInput}
               placeholder={'Email'}
+              placeholderTextColor={colors.gray}
               value={state.email}
               onChangeText={text => {
-                setState({
-                  ...state,
-                  email: text
-                });
+                setState({ ...state, email: text });
+                if (error) setError('');
               }}
+              autoCapitalize="none"
+              keyboardType="email-address"
             />
             <TextInput
               style={styles.textInput}
               placeholder={'Password'}
+              placeholderTextColor={colors.gray}
               value={state.password}
               onChangeText={text => {
-                setState({
-                  ...state,
-                  password: text
-                });
+                setState({ ...state, password: text });
+                if (error) setError('');
               }}
               secureTextEntry={true}
             />
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            <TouchableOpacity onPress={handleLogin} disabled={loading}>
+              <View style={[styles.submitButton, loading && styles.submitButtonDisabled]}>
+                {loading ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <Text style={styles.submitText}>Login</Text>
+                )}
+              </View>
+            </TouchableOpacity>
             <TouchableOpacity onPress={() => props.navigation.navigate('SignUp')}>
               <Text style={styles.already}>Don't have an account?</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleLogin}>
-              <View style={styles.submitButton}>
-                <Text style={styles.submitText}>Login</Text>
-              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -165,6 +176,17 @@ const styles = StyleSheet.create({
     padding: 10,
     alignSelf: 'center',
     fontWeight: 'bold'
+  },
+  errorText: {
+    color: colors.redPink || '#c62828',
+    fontSize: 14,
+    textAlign: 'center',
+    marginHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 8
+  },
+  submitButtonDisabled: {
+    opacity: 0.7
   },
   already: {
     alignSelf: 'flex-end',
