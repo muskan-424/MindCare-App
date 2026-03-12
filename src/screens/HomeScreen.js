@@ -276,7 +276,12 @@ const HomeScreen = props => {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.modalTitle}>AI Check-in</Text>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>AI Check-in</Text>
+                <TouchableOpacity onPress={closeAssessment} style={styles.modalClose}>
+                  <Text style={styles.modalCloseText}>×</Text>
+                </TouchableOpacity>
+              </View>
               <Text style={styles.modalSubtitle}>A quick assessment. Tink will suggest support based on your answers.</Text>
 
               {assessmentResult ? (
@@ -462,9 +467,6 @@ const HomeScreen = props => {
                 </View>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.feelingCta} onPress={openAssessment}>
-              <Text style={styles.feelingCtaText}>Check in (AI assessment)</Text>
-            </TouchableOpacity>
           </View>
         </View>
         <View>
@@ -603,7 +605,12 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     width: Dimensions.get('window').width - 20,
   },
-
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
   helloText: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -749,6 +756,15 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 10,
+  },
+  modalClose: {
+    marginLeft: 12,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  modalCloseText: {
+    fontSize: 22,
+    color: colors.gray,
   },
   modalSubtitle: {
     fontSize: 14,

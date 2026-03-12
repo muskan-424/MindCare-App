@@ -5,6 +5,11 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Profile = require('../models/Profile');
 
+const ADMIN_EMAILS = [
+  process.env.ADMIN_EMAIL_1 && process.env.ADMIN_EMAIL_1.toLowerCase(),
+  process.env.ADMIN_EMAIL_2 && process.env.ADMIN_EMAIL_2.toLowerCase(),
+].filter(Boolean);
+
 // @route   POST /api/auth
 // @desc    Login user
 // @access  Public
@@ -52,6 +57,11 @@ router.post(
         await profile.save();
       }
 
+      const isAdmin =
+        ADMIN_EMAILS.length > 0 &&
+        ADMIN_EMAILS.includes((user.email || '').toLowerCase());
+      const role = isAdmin ? 'admin' : 'user';
+
       // Return user + profile (matching frontend expectation)
       res.json({
         user: {
@@ -60,6 +70,7 @@ router.post(
           email: user.email,
           age: user.age,
           gender: user.gender,
+          role,
         },
         profile: {
           _id: profile._id,

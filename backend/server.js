@@ -48,6 +48,7 @@ const startServer = async () => {
   app.use('/api/therapists', require('./routes/therapists'));
   app.use('/api/issues', require('./routes/issues'));
   app.use('/api/mood', require('./routes/mood'));
+  app.use('/api/admin', require('./routes/admin'));
 
   // Start server
   const PORT = process.env.PORT || 5000;
@@ -62,3 +63,4 @@ const startServer = async () => {
 startServer().catch(err => {
   console.error("Critical Unhandled Server Error:", err);
 });
+
