@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -13,22 +13,20 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors } from '../constants/theme';
-import api from '../utils/apiClient';
+import { sendMessageToGemini } from '../utils/geminiService';
 
 const ChatWithTink = props => {
   const userName = props.route.params?.name || 'there';
   const [messages, setMessages] = useState([
     {
-      id: "1",
-      text: `Hey, ${userName}! I'm Tink, your MindCare assistant.\n\nI can help you analyze your feelings, tell you about the app, or search the web for mental health resources! How can I support you today?`,
+      id: '1',
+      text: `Hey, ${userName}! I'm Tink, your MindCare assistant.\n\nI can help you with your feelings, mental health questions, or just have a supportive conversation. How can I help you today?`,
       isUser: false,
-    }
+    },
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState('Thinking...');
   const flatListRef = useRef();
-  const loadingTimerRef = useRef(null);
 
   const handleSend = async () => {
     if (!inputText.trim() || isLoading) return;
@@ -43,50 +41,28 @@ const ChatWithTink = props => {
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
-    setLoadingText('Thinking...');
-
-    // If server takes >5s (Render cold start), show a hint to the user
-    loadingTimerRef.current = setTimeout(() => {
-      setLoadingText('Waking up server... (~30s on first message)');
-    }, 5000);
 
     try {
-      clearTimeout(loadingTimerRef.current);
-      const response = await api.post('/api/chat', {
-        message: userMessage.text,
-        history: currentHistory.map(msg => ({ text: msg.text, isUser: msg.isUser })),
-      });
-      const data = response.data;
+      const reply = await sendMessageToGemini(
+        userMessage.text,
+        currentHistory.map(m => ({ text: m.text, isUser: m.isUser })),
+      );
 
-      const backendReply =
-        data && typeof data.reply === 'string' && data.reply.trim().length > 0
-          ? data.reply.trim()
-          : null;
-
-      const replyText = backendReply || "I'm here with you. How can I help?";
-
-      const botMessage = {
-        id: (Date.now() + 1).toString(),
-        text: replyText,
-        isUser: false,
-      };
-      setMessages(prev => [...prev, botMessage]);
+      setMessages(prev => [
+        ...prev,
+        { id: (Date.now() + 1).toString(), text: reply, isUser: false },
+      ]);
     } catch (error) {
-      clearTimeout(loadingTimerRef.current);
-      const isTimeout =
-        error?.code === 'ECONNABORTED' || (error?.message || '').includes('timeout');
-      const errorMsg = {
-        id: (Date.now() + 1).toString(),
-        text: isTimeout
-          ? 'The server is waking up (it sleeps when inactive). Please wait a moment and tap Send again \u2014 it should connect within 30 seconds! \uD83D\uDD04'
-          : "I couldn't reach the server. Please check your internet and try again.",
-        isUser: false,
-      };
-      setMessages(prev => [...prev, errorMsg]);
+      const errText =
+        (error?.message || '').toLowerCase().includes('api key')
+          ? 'There was an issue with the API key. Please contact support.'
+          : "Sorry, I couldn't get a response right now. Please check your internet and try again.";
+      setMessages(prev => [
+        ...prev,
+        { id: (Date.now() + 1).toString(), text: errText, isUser: false },
+      ]);
     } finally {
-      clearTimeout(loadingTimerRef.current);
       setIsLoading(false);
-      setLoadingText('Thinking...');
     }
   };
 
@@ -101,9 +77,7 @@ const ChatWithTink = props => {
           />
         )}
         <View style={isUser ? styles.userTextContainer : styles.botTextContainer}>
-          <Text style={isUser ? styles.userText : styles.botText}>
-            {item.text}
-          </Text>
+          <Text style={isUser ? styles.userText : styles.botText}>{item.text}</Text>
         </View>
       </View>
     );
@@ -124,13 +98,6 @@ const ChatWithTink = props => {
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
       />
-
-      {isLoading && (
-        <View style={styles.loadingBanner}>
-          <ActivityIndicator color={colors.accent} size="small" style={{ marginRight: 8 }} />
-          <Text style={styles.loadingBannerText}>{loadingText}</Text>
-        </View>
-      )}
 
       <View style={styles.inputContainer}>
         <TextInput
@@ -168,20 +135,6 @@ const styles = StyleSheet.create({
   chatContainer: {
     padding: 16,
     paddingBottom: 20,
-  },
-  loadingBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF8E7',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderColor: '#FFE0A0',
-  },
-  loadingBannerText: {
-    fontSize: 13,
-    color: '#8B6914',
-    flexShrink: 1,
   },
   messageBubble: {
     flexDirection: 'row',
