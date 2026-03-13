@@ -1,11 +1,12 @@
 /**
  * geminiService.js
- * Calls the Gemini 2.5 Flash REST API directly from the frontend.
- * No backend / Render dependency for chat.
+ * Calls the Gemini API directly from the frontend.
  */
 
 const GEMINI_API_KEY = 'AIzaSyDB8q0IBcOheShgfE0VqfcGgGdaeuHZU6o';
-const MODEL = 'gemini-2.5-flash';
+// Use gemini-1.5-flash for maximum stability, or gemini-2.0-flash if needed.
+// 'gemini-2.5-flash' does not exist.
+const MODEL = 'gemini-1.5-flash';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 const SYSTEM_PROMPT = `You are "Tink", an empathetic, supportive, and knowledgeable AI mental health assistant for the MindCare app.
@@ -19,21 +20,30 @@ INSTRUCTIONS:
 
 /**
  * Convert frontend message history to Gemini's "contents" format.
+ * Gemini REQUIREMENT: The first message in the list must be from the 'user' role.
  * @param {Array<{text: string, isUser: boolean}>} history
+ * @param {string} newMessage
  * @returns {Array}
  */
 function buildContents(history, newMessage) {
   const contents = [];
 
-  // Add history (skip the very first bot greeting to avoid empty turns)
-  history.forEach(msg => {
-    if (msg.text && msg.text.trim()) {
-      contents.push({
-        role: msg.isUser ? 'user' : 'model',
-        parts: [{ text: msg.text }],
-      });
-    }
-  });
+  // Find the index of the first user message.
+  // Gemini requires the conversation history to start with a 'user' turn.
+  const firstUserIndex = history.findIndex(msg => msg.isUser);
+
+  // If we found a user message, start from there.
+  if (firstUserIndex !== -1) {
+    const relevantHistory = history.slice(firstUserIndex);
+    relevantHistory.forEach(msg => {
+      if (msg.text && msg.text.trim()) {
+        contents.push({
+          role: msg.isUser ? 'user' : 'model',
+          parts: [{ text: msg.text }],
+        });
+      }
+    });
+  }
 
   // Add the new user message
   contents.push({
@@ -46,9 +56,6 @@ function buildContents(history, newMessage) {
 
 /**
  * Send a message to Gemini and get a reply.
- * @param {string} message - the user's new message
- * @param {Array} history - previous messages [{text, isUser}]
- * @returns {Promise<string>} - Tink's reply
  */
 export async function sendMessageToGemini(message, history = []) {
   const contents = buildContents(history, message);
@@ -73,6 +80,8 @@ export async function sendMessageToGemini(message, history = []) {
   const data = await response.json();
 
   if (!response.ok) {
+    // Log the full error to help debugging
+    console.error('Gemini API Error:', JSON.stringify(data, null, 2));
     const errMsg = data?.error?.message || `HTTP ${response.status}`;
     throw new Error(errMsg);
   }
