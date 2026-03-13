@@ -72,7 +72,7 @@ router.post('/', async (req, res) => {
     // 1. Initialize Gemini Model (Safeguard against undefined API keys causing 'replace' crashes)
     const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "missing_api_key_placeholder";
     const llm = new ChatGoogleGenerativeAI({
-      modelName: "gemini-2.5-flash",
+      model: "gemini-2.5-flash",
       temperature: 0.4,
       apiKey: apiKey,
     });
