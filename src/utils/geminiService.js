@@ -6,9 +6,12 @@
 
 import { GOOGLE_API_KEY } from '@env';
 
-// Using gemini-2.5-flash as requested (Note: ensure this version is active for your region)
+// Using gemini-2.5-flash as requested
 const MODEL = 'gemini-2.5-flash';
-const KEY = GOOGLE_API_KEY;
+
+// Clean the key (remove quotes if they were included from .env)
+const KEY = (GOOGLE_API_KEY || '').replace(/^["']|["']$/g, '');
+
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${KEY}`;
 
 const SYSTEM_PROMPT = `You are "Tink", an empathetic, supportive, and knowledgeable AI mental health assistant for the MindCare app.
