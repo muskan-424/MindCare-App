@@ -502,7 +502,7 @@ const HomeScreen = props => {
           <Text style={styles.quoteText}>Quote of the day</Text>
           <View style={styles.quote}>
             <Text style={{ fontSize: 17 }}>
-              {props.quote?.quote ?? 'Be yourself no matter what they say!'}
+              {props.quote?.quote?.trim() || 'Be yourself no matter what they say!'}
             </Text>
           </View>
         </View>
