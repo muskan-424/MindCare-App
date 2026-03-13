@@ -3,10 +3,13 @@
  * Calls the Gemini API directly from the frontend.
  */
 
-const GEMINI_API_KEY = 'AIzaSyDB8q0IBcOheShgfE0VqfcGgGdaeuHZU6o';
-// Use gemini-1.5-flash for maximum stability, or gemini-2.0-flash if needed.
-// 'gemini-2.5-flash' does not exist.
-const MODEL = 'gemini-1.5-flash';
+// IMPORTANT: Never hardcode your API key and commit it to Git.
+// Your previous key was flagged as leaked and disabled by Google.
+// Please get a new key from https://aistudio.google.com/apikey 
+// and set it in your local environment or prompt for it.
+const GEMINI_API_KEY = 'PASTE_YOUR_NEW_API_KEY_HERE';
+// Using gemini-2.0-flash as requested (v2.x series)
+const MODEL = 'gemini-2.0-flash';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 const SYSTEM_PROMPT = `You are "Tink", an empathetic, supportive, and knowledgeable AI mental health assistant for the MindCare app.
