@@ -44,7 +44,7 @@ async function analyzeWithAI(category, severity, description, moodTag) {
 
   try {
     const llm = new ChatGoogleGenerativeAI({
-      modelName: 'gemini-1.5-flash',
+      modelName: 'gemini-2.5-flash',
       temperature: 0.2,
       apiKey,
     });

@@ -24,15 +24,39 @@ App Context or Retrieved Context:
 {context}
 `;
 
-// Helper: Convert frontend history format [{text: "", isUser: true}] to LangChain message format
-// Guard against undefined msg.text to avoid "Cannot read properties of undefined (reading 'replace')" inside LangChain
+// Helper: Convert frontend history format [{text: "", isUser: true}] to LangChain message format (ensure no undefined)
 const formatHistory = (history) => {
-  if (!Array.isArray(history)) return [];
-  return history.map(msg => {
-    const text = msg && msg.text != null ? String(msg.text) : '';
-    return msg.isUser ? new HumanMessage(text) : new AIMessage(text);
+  return (history || []).map(msg => {
+    const text = (msg && msg.text != null) ? String(msg.text) : '';
+    return msg && msg.isUser ? new HumanMessage(text) : new AIMessage(text);
   });
 };
+
+// Fallback: call Gemini REST API directly when LangChain throws (e.g. "reading 'replace'" bug)
+async function fallbackGeminiDirect(apiKey, userMessage) {
+  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  for (const model of models) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          role: 'user',
+          parts: [{ text: `You are Tink, a supportive mental health assistant for MindCare. Be brief and kind. User said: ${userMessage}` }],
+        }],
+        generationConfig: { maxOutputTokens: 512, temperature: 0.4 },
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      return data.candidates[0].content.parts[0].text.trim();
+    }
+    if (res.status === 404) continue;
+    return null;
+  }
+  return null;
+}
 
 // @route   POST /api/chat
 // @desc    Process a chat message using Gemini pro, LangChain, Pinecone, and Tavily
@@ -40,8 +64,7 @@ const formatHistory = (history) => {
 router.post('/', async (req, res) => {
   const { message, history } = req.body;
 
-  const messageStr = message != null ? String(message).trim() : '';
-  if (!messageStr) {
+  if (!message) {
     return res.status(400).json({ errors: [{ msg: 'Message is required' }] });
   }
 
@@ -49,7 +72,7 @@ router.post('/', async (req, res) => {
     // 1. Initialize Gemini Model (Safeguard against undefined API keys causing 'replace' crashes)
     const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "missing_api_key_placeholder";
     const llm = new ChatGoogleGenerativeAI({
-      modelName: "gemini-1.5-flash",
+      modelName: "gemini-2.5-flash",
       temperature: 0.4,
       apiKey: apiKey,
     });
@@ -71,7 +94,7 @@ router.post('/', async (req, res) => {
           textKey: 'text'
         });
         // Retrieve top 2 relevant documents if Pinecone is configured correctly
-        const results = await vectorStore.similaritySearch(messageStr, 2);
+        const results = await vectorStore.similaritySearch(message, 2);
         if (results && results.length > 0) {
           context = results.map(r => r.pageContent).join('\n---\n');
         }
@@ -101,55 +124,59 @@ router.post('/', async (req, res) => {
       ["human", "{input}"],
     ]);
 
-    // Format chat history
+    // Format chat history (safe strings only)
     const chatHistory = formatHistory(history || []);
+    const safeContext = (context != null && typeof context === 'string') ? context : '';
+    const safeInput = (message != null && typeof message === 'string') ? message : String(message || '');
 
     // 6. Execute Chain/Agent
-    let responseText = "";
+    let responseText = '';
 
     if (tools.length > 0) {
-      // Use AgentExecutor if tools are available
       const agent = await createToolCallingAgent({ llm, tools, prompt });
       const agentExecutor = new AgentExecutor({ agent, tools });
-
       const result = await agentExecutor.invoke({
-        input: messageStr,
+        input: safeInput,
         chat_history: chatHistory,
-        context: context
+        context: safeContext,
       });
-      // result.output can be undefined or not a string in some cases
-      responseText = (result && result.output != null && typeof result.output === 'string')
-        ? result.output
-        : (result && result.output ? String(result.output) : '');
+      responseText = (result && (typeof result.output === 'string' ? result.output : result.output?.trim?.())) || '';
     } else {
-      // Direct LLM invocation if no tools
       const chain = prompt.pipe(llm);
       const result = await chain.invoke({
-        input: messageStr,
+        input: safeInput,
         chat_history: chatHistory,
-        context: context
+        context: safeContext,
       });
-      // result.content can be string or (in edge cases) array of content blocks
-      const content = result && result.content;
-      if (typeof content === 'string') {
-        responseText = content;
-      } else if (Array.isArray(content)) {
-        responseText = content.map(c => c && typeof c === 'object' && c.text != null ? c.text : (typeof c === 'string' ? c : '')).join('');
-      } else {
-        responseText = content != null ? String(content) : '';
-      }
+      const content = result?.content;
+      responseText = typeof content === 'string' ? content : (Array.isArray(content) ? content.map(c => typeof c === 'string' ? c : (c && c.text) || '').join('') : '');
     }
 
-    // Ensure we never send undefined to the client
-    if (typeof responseText !== 'string') responseText = '';
+    if (!responseText.trim()) {
+      responseText = await fallbackGeminiDirect(apiKey, safeInput) || "I'm here, but I couldn't generate a reply right now. Try again in a moment.";
+    }
 
     // 7. Return to frontend
-    res.json({ reply: responseText });
+    res.json({ reply: responseText.trim() || "I'm here with you. How can I help?" });
 
   } catch (err) {
     console.error('Chat error:', err.message);
 
-    // Check if it's an API Key or Quota issue
+    const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+    const isLangChainBug = err.message && (err.message.includes("reading 'replace'") || err.message.includes('undefined'));
+
+    // When LangChain throws (e.g. .replace on undefined), try direct Gemini REST so chat still works
+    if (isLangChainBug && apiKey && apiKey !== 'missing_api_key_placeholder') {
+      try {
+        const fallbackReply = await fallbackGeminiDirect(apiKey, (req.body && req.body.message) || 'Hello');
+        if (fallbackReply) {
+          return res.json({ reply: fallbackReply });
+        }
+      } catch (fallbackErr) {
+        console.warn('Chat fallback failed:', fallbackErr.message);
+      }
+    }
+
     let errorMsg = "I'm so sorry, my AI brain seems to be offline right now. ";
     if (err.message.includes('API key not valid') || err.message.includes('403')) {
       errorMsg += "It looks like my Google API Key isn't configured correctly on the server!";
@@ -158,9 +185,6 @@ router.post('/', async (req, res) => {
     } else {
       errorMsg += `(Error details: ${err.message})`;
     }
-
-    // Instead of throwing a 500 (which triggers the frontend 'network down' message),
-    // we return a 200 with the specific error explanation so the user can read it in the chat bubble!
     res.json({ reply: errorMsg });
   }
 });
