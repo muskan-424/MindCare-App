@@ -5,7 +5,7 @@ import { api_route } from './route';
 // every request/response in Metro / devtools.
 const api = axios.create({
   baseURL: api_route,
-  timeout: 15000,
+  timeout: 60000, // 60s — allows time for Render cold start (free tier can take 30-60s to wake)
 });
 
 api.interceptors.request.use(

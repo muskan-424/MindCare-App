@@ -26,29 +26,9 @@ const ChatWithTink = props => {
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState('Thinking...');
   const flatListRef = useRef();
-
-  const buildLocalReply = (text) => {
-    const lower = text.toLowerCase();
-
-    if (lower.includes('anxious') || lower.includes('anxiety') || lower.includes('panic')) {
-      return "It sounds like you're feeling anxious right now. Try taking a few slow breaths in through your nose and out through your mouth. You might also open the Breathing or Grounding tools in the app for a quick reset. If your feelings become overwhelming, please reach out to someone you trust or a professional.";
-    }
-
-    if (lower.includes('sad') || lower.includes('depress') || lower.includes('down')) {
-      return "I'm really glad you reached out. Feeling low or sad can be really heavy. It can help to write down what you're feeling in your journal tab, or message a close friend. If your thoughts turn toward self-harm or you feel unsafe, please contact a local helpline or emergency services right away.";
-    }
-
-    if (lower.includes('sleep') || lower.includes('insomnia') || lower.includes('tired')) {
-      return "Sleep struggles are very common. A gentle routine before bed—like a short breathing exercise, avoiding screens for 30 minutes, and dimming the lights—can help. You can also explore the Sleep content or Meditation tools in the app to wind down.";
-    }
-
-    if (lower.includes('stress') || lower.includes('overwhelmed') || lower.includes('burnout')) {
-      return "When everything feels like too much, breaking your day into small, doable steps can really help. Try to choose one tiny task you can complete next, then take a short break. Our Fitness and Self-help sections also have quick activities for stress release.";
-    }
-
-    return "I'm here with you. I might not always understand everything perfectly, but you can tell me what's on your mind and we can take it one step at a time. You can also combine chatting with me with the Self-help tools (breathing, grounding, gratitude, and more) whenever you like.";
-  };
+  const loadingTimerRef = useRef(null);
 
   const handleSend = async () => {
     if (!inputText.trim() || isLoading) return;
@@ -63,8 +43,15 @@ const ChatWithTink = props => {
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
+    setLoadingText('Thinking...');
+
+    // If server takes >5s (Render cold start), show a hint to the user
+    loadingTimerRef.current = setTimeout(() => {
+      setLoadingText('Waking up server... (~30s on first message)');
+    }, 5000);
 
     try {
+      clearTimeout(loadingTimerRef.current);
       const response = await api.post('/api/chat', {
         message: userMessage.text,
         history: currentHistory.map(msg => ({ text: msg.text, isUser: msg.isUser })),
@@ -76,7 +63,7 @@ const ChatWithTink = props => {
           ? data.reply.trim()
           : null;
 
-      const replyText = backendReply || buildLocalReply(userMessage.text);
+      const replyText = backendReply || "I'm here with you. How can I help?";
 
       const botMessage = {
         id: (Date.now() + 1).toString(),
@@ -85,16 +72,21 @@ const ChatWithTink = props => {
       };
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
+      clearTimeout(loadingTimerRef.current);
+      const isTimeout =
+        error?.code === 'ECONNABORTED' || (error?.message || '').includes('timeout');
       const errorMsg = {
         id: (Date.now() + 1).toString(),
-        text:
-          "My network connection seems to be down, so I'll answer from my built‑in knowledge instead. " +
-          buildLocalReply(userMessage.text),
+        text: isTimeout
+          ? 'The server is waking up (it sleeps when inactive). Please wait a moment and tap Send again \u2014 it should connect within 30 seconds! \uD83D\uDD04'
+          : "I couldn't reach the server. Please check your internet and try again.",
         isUser: false,
       };
       setMessages(prev => [...prev, errorMsg]);
     } finally {
+      clearTimeout(loadingTimerRef.current);
       setIsLoading(false);
+      setLoadingText('Thinking...');
     }
   };
 
@@ -133,6 +125,13 @@ const ChatWithTink = props => {
         onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
       />
 
+      {isLoading && (
+        <View style={styles.loadingBanner}>
+          <ActivityIndicator color={colors.accent} size="small" style={{ marginRight: 8 }} />
+          <Text style={styles.loadingBannerText}>{loadingText}</Text>
+        </View>
+      )}
+
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.textInput}
@@ -164,11 +163,25 @@ export default ChatWithTink;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAF9F6', // Off-white, soft background
+    backgroundColor: '#FAF9F6',
   },
   chatContainer: {
     padding: 16,
     paddingBottom: 20,
+  },
+  loadingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF8E7',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderColor: '#FFE0A0',
+  },
+  loadingBannerText: {
+    fontSize: 13,
+    color: '#8B6914',
+    flexShrink: 1,
   },
   messageBubble: {
     flexDirection: 'row',
