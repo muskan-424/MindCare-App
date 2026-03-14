@@ -34,7 +34,7 @@ const formatHistory = (history) => {
 
 // Fallback: call Gemini REST API directly when LangChain throws (e.g. "reading 'replace'" bug)
 async function fallbackGeminiDirect(apiKey, userMessage) {
-  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  const models = ['gemini-2.5-flash'];
   for (const model of models) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const res = await fetch(url, {

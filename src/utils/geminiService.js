@@ -1,18 +1,15 @@
 /**
  * geminiService.js
  * Calls the Gemini API directly from the frontend.
- * The API key is loaded from the root .env file via react-native-dotenv.
  */
 
 import { GOOGLE_API_KEY } from '@env';
-
-// Using gemini-2.5-flash as requested
+const GEMINI_API_KEY = GOOGLE_API_KEY;
+// Use gemini-1.5-flash for maximum stability, or gemini-2.5-flash if needed.
+// 'gemini-2.5-flash' does not exist.
+// Using gemini-2.5-flash as requested (v2.x series)
 const MODEL = 'gemini-2.5-flash';
-
-// Clean the key (remove quotes if they were included from .env)
-const KEY = (GOOGLE_API_KEY || '').replace(/^["']|["']$/g, '');
-
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${KEY}`;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 const SYSTEM_PROMPT = `You are "Tink", an empathetic, supportive, and knowledgeable AI mental health assistant for the MindCare app.
 Your goal is to provide emotional support, listen to the user, and answer questions about mental health.
