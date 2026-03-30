@@ -8,7 +8,12 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  Modal,
+  TextInput,
+  ActivityIndicator,
+  Alert
 } from 'react-native';
+import api from '../utils/apiClient';
 import {Chip} from 'react-native-paper';
 //import { AntDesign,MaterialIcons,Feather,FontAwesome5,MaterialCommunityIcons,Ionicons} from '@expo/vector-icons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -26,10 +31,27 @@ import {connect} from 'react-redux';
 import { getAvatarForGender } from '../utils/avatar';
 
 const ProfileScreen = props => {
-  // const user=useSelector((state)=>state.user)
-  const [selectedConcerns, setSelectedConcerns] = useState(
-    props.auth.profile.concerns,
-  );
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const requestDeletion = async () => {
+    if (!deleteReason.trim()) {
+      return Alert.alert('Required', 'Please let us know why you are leaving.');
+    }
+    setDeleteLoading(true);
+    try {
+      await api.post('/api/profile/delete-request', {
+        uid: props.auth.user._id,
+        reason: deleteReason.trim()
+      });
+      Alert.alert('Request Submitted', 'Your account deletion request is now pending admin review for data purge.');
+      setDeleteModalVisible(false);
+    } catch (err) {
+      Alert.alert('Error', 'Failed to submit request.');
+    }
+    setDeleteLoading(false);
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -99,24 +121,70 @@ const ProfileScreen = props => {
           <Text style={styles.historySubtext}>View your entries for burnout insights</Text>
         </View>
       </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.historyRow, { marginTop: 10, borderLeftColor: '#C62828' }]}
+        onPress={() => props.navigation.navigate('EmergencyContact')}
+        activeOpacity={0.8}>
+        <MaterialCommunityIcons name="phone-alert" size={24} color="#C62828" />
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={styles.historyText}>Emergency Contact</Text>
+          <Text style={styles.historySubtext}>Add a trusted contact for extreme emergencies</Text>
+        </View>
+        <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.historyRow, { marginTop: 10, borderLeftColor: '#81C784' }]}
+        onPress={() => props.navigation.navigate('AssignedResources')}
+        activeOpacity={0.8}>
+        <MaterialCommunityIcons name="star-shooting" size={24} color="#81C784" />
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={styles.historyText}>Curated Resources</Text>
+          <Text style={styles.historySubtext}>View resources assigned to you by your care team</Text>
+        </View>
+        <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.historyRow, { marginTop: 10, borderLeftColor: '#4FC3F7' }]}
+        onPress={() => props.navigation.navigate('GroupSessions')}
+        activeOpacity={0.8}>
+        <MaterialCommunityIcons name="account-group" size={24} color="#4FC3F7" />
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={styles.historyText}>Group Sessions</Text>
+          <Text style={styles.historySubtext}>Join your upcoming therapeutic group sessions</Text>
+        </View>
+        <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.historyRow, { marginTop: 10, borderLeftColor: '#7C4DFF' }]}
+        onPress={() => props.navigation.navigate('GoalTracking')}
+        activeOpacity={0.8}>
+        <MaterialCommunityIcons name="target" size={24} color="#7C4DFF" />
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={styles.historyText}>Goal Tracker</Text>
+          <Text style={styles.historySubtext}>Track your personal milestones and progress</Text>
+        </View>
+        <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
+      </TouchableOpacity>
       <View style={styles.concernContainer}>
         <Text style={styles.concernTitle}>My Concerns:</Text>
         <View style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap'}}>
-          {concerns.map(chip => {
-            return (
-              <Chip
-                key={chip.id}
-                icon={
-                  selectedConcerns.includes(chip.id)
-                    ? 'check-circle-outline'
-                    : 'close-circle-outline'
-                }
-                disabled={selectedConcerns.includes(chip.id) ? false : true}
-                style={styles.chip}>
-                {chip.name}
-              </Chip>
-            );
-          })}
+          {concerns
+            .filter(chip => (props.auth.profile.concerns || []).includes(chip.id))
+            .map(chip => {
+              return (
+                <Chip
+                  key={chip.id}
+                  icon="check-circle-outline"
+                  style={styles.chip}>
+                  {chip.name}
+                </Chip>
+              );
+            })}
+          {(!props.auth.profile.concerns || props.auth.profile.concerns.length === 0) && (
+            <Text style={{ textAlign: 'center', width: '100%', color: colors.gray, marginTop: 10 }}>
+              No concerns added yet.
+            </Text>
+          )}
         </View>
       </View>
       <View style={{position: 'relative', top: 60}}>
@@ -125,6 +193,51 @@ const ProfileScreen = props => {
       <View style={{position: 'relative', top: 60, marginBottom: 70}}>
         <Appointments data={pastData} type="Past" />
       </View>
+
+      <View style={{position: 'relative', top: 50, marginBottom: 80}}>
+        <TouchableOpacity
+          style={styles.deleteBtn}
+          onPress={() => setDeleteModalVisible(true)}>
+          <Text style={styles.deleteBtnText}>Delete Account (GDPR)</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Modal visible={deleteModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Request Account Deletion</Text>
+            <Text style={styles.modalText}>
+              In compliance with GDPR, your request will be reviewed. Once approved, all your personal data including risk reports, mood entries, and wellness plans will be permanently purged from our servers.
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Why are you leaving? (Required)"
+              placeholderTextColor={colors.gray}
+              value={deleteReason}
+              onChangeText={setDeleteReason}
+              multiline
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.gray3 }]}
+                onPress={() => setDeleteModalVisible(false)}
+                disabled={deleteLoading}>
+                <Text style={styles.modalBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: '#E57373' }]}
+                onPress={requestDeletion}
+                disabled={deleteLoading}>
+                {deleteLoading ? (
+                  <ActivityIndicator color={colors.white} />
+                ) : (
+                  <Text style={styles.modalBtnText}>Submit</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -235,4 +348,67 @@ const styles = StyleSheet.create({
     margin: 5,
     backgroundColor: colors.accent,
   },
+  deleteBtn: {
+    marginHorizontal: 30,
+    marginTop: 20,
+    paddingVertical: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E57373',
+    alignItems: 'center'
+  },
+  deleteBtnText: {
+    color: '#E57373',
+    fontWeight: '700',
+    fontSize: 16
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    padding: 20,
+    borderRadius: 16,
+    elevation: 5
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#D32F2F',
+    marginBottom: 12
+  },
+  modalText: {
+    fontSize: 14,
+    color: colors.secondary,
+    lineHeight: 20,
+    marginBottom: 16
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: colors.gray3,
+    borderRadius: 8,
+    padding: 12,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    marginBottom: 16,
+    color: colors.secondary
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12
+  },
+  modalBtn: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center'
+  },
+  modalBtnText: {
+    color: colors.white,
+    fontWeight: 'bold',
+    fontSize: 16
+  }
 });

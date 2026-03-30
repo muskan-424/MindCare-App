@@ -9,10 +9,11 @@ import {
 const initialState = {
   isLogin: false,
   user: null,
+  token: null,
   profile: {
     name: 'Ritika Tomar',
   },
-  welcomeMessage: null, // 'login' | 'signup' | null for on-screen confirmation
+  welcomeMessage: null,
 };
 
 export default function(state = initialState, action) {
@@ -22,6 +23,7 @@ export default function(state = initialState, action) {
         ...state,
         user: action.payload.user,
         profile: action.payload.profile,
+        token: action.payload.token || state.token,
         isLogin: true,
         welcomeMessage: action.meta?.from || 'signed_in',
       };
@@ -29,6 +31,7 @@ export default function(state = initialState, action) {
       return {
         ...state,
         user: null,
+        token: null,
         profile: null,
         isLogin: false,
         welcomeMessage: null,

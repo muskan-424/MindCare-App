@@ -14,6 +14,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../constants/theme';
 import { Button } from 'react-native-elements';
@@ -144,14 +145,12 @@ const HomeScreen = props => {
       try {
         const todayStr = new Date().toISOString().slice(0, 10);
         const dismissed = await AsyncStorage.getItem('MindCare_dismissedCheckInDate');
-        if (dismissed === todayStr) return; // User dismissed prompt today, don't show again until tomorrow
+        if (dismissed === todayStr) return;
 
-        const res = await api.get('/api/mood/today', { params: { userId } }).catch(() => ({}));
+        const res = await api.get('/api/mood/today').catch(() => ({}));
         const loggedToday = res.data?.loggedToday === true;
         if (!loggedToday) setAssessmentModalVisible(true);
-      } catch (_) {
-        // on error don't force modal
-      }
+      } catch (_) {}
     };
     checkDailyMood();
   }, [props.auth.user?._id]);
@@ -181,8 +180,14 @@ const HomeScreen = props => {
 
   useEffect(() => {
     if (!props.auth.welcomeMessage) return;
-    const t = setTimeout(() => props.clearWelcome(), 4000);
+    
+    // Trigger assessment automatically on login/signup
+    openAssessment();
+
+    const { clearWelcome } = props;
+    const t = setTimeout(() => clearWelcome(), 4000);
     return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.auth.welcomeMessage]);
 
   const runAssessment = async () => {
@@ -209,7 +214,6 @@ const HomeScreen = props => {
       }
       try {
         await api.post('/api/mood', {
-          userId: props.auth.user._id,
           rating: Math.max(1, Math.min(10, 11 - severity * 2)),
           note: description.trim() || undefined,
         });
@@ -470,6 +474,15 @@ const HomeScreen = props => {
             </TouchableOpacity>
           </View>
         </View>
+
+        <TouchableOpacity onPress={() => props.navigation.navigate('WellnessPlan')} style={styles.wellnessPlanCard}>
+          <View style={styles.wellnessPlanContent}>
+            <Text style={styles.wellnessPlanTitle}>🧘 My Wellness Plan</Text>
+            <Text style={styles.wellnessPlanSubtitle}>Get a custom 30-day routine curated by a professional.</Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={28} color={colors.white} />
+        </TouchableOpacity>
+
         <View>
           <TouchableOpacity
             onPress={() => {
@@ -1007,5 +1020,36 @@ const styles = StyleSheet.create({
   },
   chipTextActive: {
     color: colors.white,
+  },
+  wellnessPlanCard: {
+    backgroundColor: '#81C784',
+    marginHorizontal: 16,
+    marginBottom: 20,
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  wellnessPlanContent: {
+    flex: 1,
+    flexDirection: 'column',
+    paddingRight: 10,
+  },
+  wellnessPlanTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.white,
+    marginBottom: 4,
+  },
+  wellnessPlanSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.95)',
+    fontWeight: '500',
   }
 });

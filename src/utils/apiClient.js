@@ -10,18 +10,24 @@ const api = axios.create({
 
 api.interceptors.request.use(
   config => {
+    // Auto-inject JWT token from Redux store into every request
     try {
-      const { method, url, baseURL, params, data, headers } = config;
+      const store = require('../redux/store').default;
+      const token = store.getState()?.auth?.token;
+      if (token) {
+        config.headers = config.headers || {};
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
+    } catch (e) { /* ignore store errors */ }
+
+    try {
+      const { method, url, baseURL, params, data } = config;
       console.log(
         '[API REQUEST]',
         (method || 'GET').toUpperCase(),
         `${baseURL || ''}${url || ''}`,
-        '\n  params:',
-        params || null,
-        '\n  data:',
-        data || null,
-        '\n  headers:',
-        headers || null,
+        '\n  params:', params || null,
+        '\n  data:', data || null,
       );
     } catch (e) {
       console.log('[API REQUEST LOG ERROR]', e.message);

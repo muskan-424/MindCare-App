@@ -24,6 +24,8 @@ const monthNames = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
+const RISK_BG = { MEDIUM: '#FFB74D', HIGH: '#E57373', CRITICAL: '#C62828' };
+
 const JournalScreen = ({ navigation, auth }) => {
   const [entries, setEntries] = React.useState(localData);
   const [loading, setLoading] = React.useState(false);
@@ -31,26 +33,30 @@ const JournalScreen = ({ navigation, auth }) => {
   const d = new Date();
   const dateStr = `${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
 
-  React.useEffect(() => {
-    const fetchJournals = async () => {
-      setLoading(true);
-      try {
-        const userId = auth?.user?._id;
-        const res = await api.get('/api/journals', userId ? { params: { userId } } : {});
-        if (Array.isArray(res.data)) {
-          setEntries(res.data);
-        } else {
-          setEntries(localData);
-        }
-      } catch (e) {
-        console.warn('Journals API error:', e.message);
+  const fetchJournals = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/api/journals');
+      if (Array.isArray(res.data)) {
+        setEntries(res.data);
+      } else {
         setEntries(localData);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (e) {
+      console.warn('Journals API error:', e.message);
+      setEntries(localData);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
     fetchJournals();
-  }, [auth?.user?._id]);
+  }, [fetchJournals]);
+
+  const handleDelete = (id) => {
+    setEntries(prev => prev.filter(e => String(e.id) !== String(id)));
+  };
 
   return (
     <View style={styles.container}>
@@ -83,15 +89,21 @@ const JournalScreen = ({ navigation, auth }) => {
               tension={50}
               friction={7}
               useNativeDriver
-              onPress={() => navigation.navigate('Display', { data: item })}>
+              onPress={() => navigation.navigate('Display', { data: item, onDelete: handleDelete })}>
               <View style={styles.entryCard}>
                 <View style={styles.entryMeta}>
                   <Text style={styles.entryDate}>{item.date}</Text>
                   <Text style={styles.entryTime}>{item.time}</Text>
+                  {item.riskLevel && item.riskLevel !== 'LOW' ? (
+                    <View style={[styles.riskDot, { backgroundColor: RISK_BG[item.riskLevel] }]}>
+                      <Text style={styles.riskDotText}>{item.riskLevel}</Text>
+                    </View>
+                  ) : null}
                 </View>
-                <Text style={styles.entryContent} numberOfLines={3}>
-                  {item.content}
-                </Text>
+                {item.emotionTags?.length > 0 ? (
+                  <Text style={styles.emotionLine}>{item.emotionTags.join(' · ')}</Text>
+                ) : null}
+                <Text style={styles.entryContent} numberOfLines={2}>{item.content}</Text>
               </View>
             </TouchableScale>
           )}
@@ -156,6 +168,9 @@ const styles = StyleSheet.create({
   entryDate: { fontSize: 15, fontWeight: '700', color: colors.secondary },
   entryTime: { fontSize: 12, color: colors.gray, marginTop: 2 },
   entryContent: { fontSize: 14, lineHeight: 22, color: colors.secondary },
+  emotionLine: { fontSize: 11, color: colors.gray, marginBottom: 6, textTransform: 'capitalize' },
+  riskDot: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 12, marginTop: 4 },
+  riskDotText: { color: colors.white, fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
   emptyEmoji: { fontSize: 56, marginBottom: 16 },
   emptyTitle: { fontSize: 20, fontWeight: '700', color: colors.secondary, marginBottom: 8 },

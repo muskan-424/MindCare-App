@@ -49,6 +49,12 @@ const startServer = async () => {
   app.use('/api/issues', require('./routes/issues'));
   app.use('/api/mood', require('./routes/mood'));
   app.use('/api/admin', require('./routes/admin'));
+  app.use('/api/appointments', require('./routes/appointments'));
+  app.use('/api/emergency-contact', require('./routes/emergencyContact'));
+  app.use('/api/wellness', require('./routes/wellness'));
+  app.use('/api/resources', require('./routes/resources'));
+  app.use('/api/groups', require('./routes/groups'));
+  app.use('/api/goals', require('./routes/goals'));
 
   // Start server
   const PORT = process.env.PORT || 5000;
@@ -56,6 +62,10 @@ const startServer = async () => {
     console.log(`\n===================================`);
     console.log(`✅ MindCare API running on port ${PORT}`);
     console.log(`===================================\n`);
+
+    // Start background SLA monitor for crisis escalation
+    const { startSLAMonitor } = require('./services/slaMonitor');
+    startSLAMonitor();
   });
 };
 

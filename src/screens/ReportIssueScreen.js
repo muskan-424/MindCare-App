@@ -44,16 +44,11 @@ const ReportIssueScreen = ({ navigation, auth }) => {
   }, []);
 
   const submit = async () => {
-    if (!auth.user || !auth.user._id) {
-      setError('Please log in to report.');
-      return;
-    }
     setError('');
     setResult(null);
     setLoading(true);
     try {
       const res = await api.post('/api/issues/report', {
-        userId: auth.user._id,
         category: category || 'other',
         severity,
         description: description.trim(),

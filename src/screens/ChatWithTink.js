@@ -37,7 +37,7 @@ const ChatWithTink = props => {
       isUser: true,
     };
 
-    const currentHistory = [...messages];
+    const currentHistory = messages.filter(m => !m.isError);
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
@@ -59,7 +59,7 @@ const ChatWithTink = props => {
           : "Sorry, I couldn't get a response right now. Please check your internet and try again.";
       setMessages(prev => [
         ...prev,
-        { id: (Date.now() + 1).toString(), text: errText, isUser: false },
+        { id: (Date.now() + 1).toString(), text: errText, isUser: false, isError: true },
       ]);
     } finally {
       setIsLoading(false);
