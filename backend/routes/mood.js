@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const MoodEntry = require('../models/MoodEntry');
+const { auth } = require('../middleware/auth');
 
-router.post('/', async (req, res) => {
+// POST /api/mood — log a mood entry
+router.post('/', auth, async (req, res) => {
   try {
-    const { userId, rating, note } = req.body;
-    if (!userId || rating == null) {
-      return res.status(400).json({ error: 'userId and rating are required' });
-    }
+    const { rating, note } = req.body;
+    const userId = req.user.id; // from JWT
+    if (rating == null) return res.status(400).json({ error: 'rating is required' });
     const r = Math.max(1, Math.min(10, Number(rating)));
     const entry = new MoodEntry({ user: userId, rating: r, note: note || '' });
     await entry.save();
@@ -18,11 +19,11 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.get('/trend', async (req, res) => {
+// GET /api/mood/trend?window=7|30 — mood trend for charts
+router.get('/trend', auth, async (req, res) => {
   try {
-    const { userId, window } = req.query;
-    if (!userId) return res.status(400).json({ error: 'userId required' });
-    const days = window === '30' ? 30 : 7;
+    const userId = req.user.id;
+    const days = req.query.window === '30' ? 30 : 7;
     const start = new Date();
     start.setDate(start.getDate() - days);
     start.setHours(0, 0, 0, 0);
@@ -55,11 +56,10 @@ router.get('/trend', async (req, res) => {
   }
 });
 
-// GET /api/mood/today?userId=... — whether the user has logged mood today (for daily auto check-in)
-router.get('/today', async (req, res) => {
+// GET /api/mood/today — whether user has logged mood today
+router.get('/today', auth, async (req, res) => {
   try {
-    const { userId } = req.query;
-    if (!userId) return res.status(400).json({ error: 'userId required' });
+    const userId = req.user.id;
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const entry = await MoodEntry.findOne({ user: userId, date: { $gte: startOfToday } })
@@ -72,6 +72,66 @@ router.get('/today', async (req, res) => {
   } catch (err) {
     console.error('Mood today check error:', err.message);
     res.status(500).json({ loggedToday: false, entry: null });
+  }
+});
+
+// GET /api/mood/stats — summary stats (average, streak, best/worst day)
+router.get('/stats', auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+    const entries = await MoodEntry.find({ user: userId, date: { $gte: thirtyDaysAgo } })
+      .sort({ date: -1 })
+      .lean();
+
+    if (!entries.length) {
+      return res.json({ average: null, streak: 0, bestDay: null, worstDay: null, totalEntries: 0 });
+    }
+
+    const ratings = entries.map(e => e.rating);
+    const average = (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
+
+    const best = entries.reduce((a, b) => a.rating >= b.rating ? a : b);
+    const worst = entries.reduce((a, b) => a.rating <= b.rating ? a : b);
+
+    // Calculate current streak (consecutive days with at least 1 entry)
+    let streak = 0;
+    const today = new Date();
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const logged = entries.some(e => new Date(e.date).toISOString().slice(0, 10) === key);
+      if (logged) streak++;
+      else break;
+    }
+
+    res.json({
+      average: Number(average),
+      streak,
+      bestDay: { date: best.date, rating: best.rating, note: best.note },
+      worstDay: { date: worst.date, rating: worst.rating, note: worst.note },
+      totalEntries: entries.length,
+    });
+  } catch (err) {
+    console.error('Mood stats error:', err.message);
+    res.status(500).json({ error: 'Failed to get stats' });
+  }
+});
+
+// DELETE /api/mood/:id — delete a mood entry (user can only delete own entries)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const entry = await MoodEntry.findOne({ _id: req.params.id, user: req.user.id });
+    if (!entry) return res.status(404).json({ error: 'Entry not found' });
+    await entry.deleteOne();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Mood delete error:', err.message);
+    res.status(500).json({ error: 'Failed to delete mood' });
   }
 });
 

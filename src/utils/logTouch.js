@@ -1,22 +1,37 @@
 /**
- * Central logging for app events so every touch/screen change is visible in Metro terminal.
- * Use logTouch() for button/card presses, and navigation listeners for screen/tab focus.
+ * Central logging for app events. Forwards UI actions directly to the Admin Telemetry backend.
  */
+import store from '../redux/store';
+import api from './apiClient';
+
 const PREFIX = '[APP]';
 
+async function sendTelemetry(action, metadata) {
+  console.log(PREFIX, action, metadata);
+  try {
+    const state = store.getState();
+    const userId = state.auth?.user?._id;
+    if (!userId) return; 
+    
+    // Fire and forget, don't block the UI
+    api.post('/api/admin/log', {
+      userId,
+      action,
+      metadata
+    }).catch(() => {});
+  } catch(e) { /* ignore */ }
+}
+
 export function logTouch(eventName, extra = null) {
-  const payload = extra != null ? { eventName, ...extra } : { eventName };
-  console.log(PREFIX, 'TOUCH', payload);
+  const metadata = extra != null ? { ...extra } : {};
+  sendTelemetry(eventName, metadata);
 }
 
 export function logScreen(screenName, params = null) {
-  if (params && Object.keys(params).length > 0) {
-    console.log(PREFIX, 'SCREEN', screenName, params);
-  } else {
-    console.log(PREFIX, 'SCREEN', screenName);
-  }
+  const metadata = params && Object.keys(params).length > 0 ? params : {};
+  sendTelemetry(`Opened_Screen_${screenName}`, metadata);
 }
 
 export function logTab(tabName) {
-  console.log(PREFIX, 'TAB', tabName);
+  sendTelemetry(`Switched_Tab_${tabName}`, {});
 }

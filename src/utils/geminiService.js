@@ -5,9 +5,6 @@
 
 import { GOOGLE_API_KEY } from '@env';
 const GEMINI_API_KEY = GOOGLE_API_KEY;
-// Use gemini-1.5-flash for maximum stability, or gemini-2.5-flash if needed.
-// 'gemini-2.5-flash' does not exist.
-// Using gemini-2.5-flash as requested (v2.x series)
 const MODEL = 'gemini-2.5-flash';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 

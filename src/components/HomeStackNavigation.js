@@ -17,7 +17,11 @@ import GratitudeScreen from '../screens/GratitudeScreen';
 import GroundingScreen from '../screens/GroundingScreen';
 import ReportIssueScreen from '../screens/ReportIssueScreen';
 import MoodTrackerScreen from '../screens/MoodTrackerScreen';
-import SafetyScreen from '../screens/SafetyScreen';
+import EmergencyContactScreen from '../screens/EmergencyContactScreen';
+import WellnessPlanScreen from '../screens/WellnessPlanScreen';
+import AssignedResourcesScreen from '../screens/AssignedResourcesScreen';
+import GroupSessionsScreen from '../screens/GroupSessionsScreen';
+import GoalTrackingScreen from '../screens/GoalTrackingScreen';
 // import BubbleWrapGame from '../screens/BubbleWrapGame';
 // import PunchGame from '../screens/PunchGame';
 
@@ -50,6 +54,11 @@ const HomeStackNavigator = () => {
       <Stack.Screen name="ReportIssue" component={ReportIssueScreen} />
       <Stack.Screen name="MoodTracker" component={MoodTrackerScreen} />
       <Stack.Screen name="Safety" component={SafetyScreen} />
+      <Stack.Screen name="EmergencyContact" component={EmergencyContactScreen} />
+      <Stack.Screen name="WellnessPlan" component={WellnessPlanScreen} />
+      <Stack.Screen name="AssignedResources" component={AssignedResourcesScreen} />
+      <Stack.Screen name="GroupSessions" component={GroupSessionsScreen} />
+      <Stack.Screen name="GoalTracking" component={GoalTrackingScreen} />
     </Stack.Navigator>
   );
 };

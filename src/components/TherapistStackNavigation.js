@@ -5,6 +5,8 @@ import { logScreen } from '../utils/logTouch';
 import TherapistScreen from '../screens/TherapistScreen';
 import TherapistProfileScreen from '../screens/TherapistProfileScreen';
 import TherapistHomeScreen from '../screens/TherapistHomeScreen';
+import BookAppointmentScreen from '../screens/BookAppointmentScreen';
+import AppointmentsScreen from '../screens/AppointmentsScreen';
 
 const TherapistStackNavigation = () => {
   return (
@@ -17,8 +19,11 @@ const TherapistStackNavigation = () => {
       <Stack.Screen name="TherapistHome" component={TherapistHomeScreen} />
       <Stack.Screen name="Therapist" component={TherapistScreen} />
       <Stack.Screen name="TherapistProfile" component={TherapistProfileScreen} />
+      <Stack.Screen name="BookAppointment" component={BookAppointmentScreen} />
+      <Stack.Screen name="Appointments" component={AppointmentsScreen} />
     </Stack.Navigator>
   );
 };
 
 export default TherapistStackNavigation;
+

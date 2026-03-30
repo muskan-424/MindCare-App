@@ -7,7 +7,7 @@ import Feather from 'react-native-vector-icons/Feather';
 
 import {Button} from 'react-native-paper';
 
-const TherapistProfileScreen = ({route, navigation}) => {
+const TherapistProfileScreen = ({ route, navigation }) => {
   const {therapist} = route.params;
   var starsCount = [];
 
@@ -83,18 +83,22 @@ const TherapistProfileScreen = ({route, navigation}) => {
           />
         </View>
       </View>
-      <View
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'center',
-        }}>
+      <View style={{ paddingHorizontal: 20, paddingBottom: 30, gap: 12 }}>
         <Button
           mode="contained"
           color={colors.secondary}
-          style={{ width: '90%', borderRadius: 12, marginTop: 20 }}
-          onPress={() => console.log('Pressed')}>
-          <Text style={{ color: colors.white, fontWeight: '700' }}>Book appointment</Text>
+          style={{ borderRadius: 12 }}
+          onPress={() => navigation.navigate('BookAppointment', { therapist })}
+        >
+          <Text style={{ color: colors.white, fontWeight: '700' }}>Book Appointment</Text>
+        </Button>
+        <Button
+          mode="outlined"
+          color={colors.secondary}
+          style={{ borderRadius: 12 }}
+          onPress={() => navigation.navigate('Appointments')}
+        >
+          <Text style={{ color: colors.secondary, fontWeight: '600' }}>My Appointments</Text>
         </Button>
       </View>
     </ScrollView>

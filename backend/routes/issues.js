@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { ChatGoogleGenerativeAI } = require('@langchain/google-genai');
 const IssueReport = require('../models/IssueReport');
+const { auth } = require('../middleware/auth');
 
 const CATEGORIES = [
   'academic_stress',
@@ -82,11 +83,12 @@ router.get('/categories', (_req, res) => {
   res.json({ categories: CATEGORIES });
 });
 
-router.post('/report', async (req, res) => {
+router.post('/report', auth, async (req, res) => {
   try {
-    const { userId, category, severity, description, moodTag } = req.body;
-    if (!userId || !category || severity == null) {
-      return res.status(400).json({ error: 'userId, category, and severity are required' });
+    const userId = req.user.id;
+    const { category, severity, description, moodTag } = req.body;
+    if (!category || severity == null) {
+      return res.status(400).json({ error: 'category and severity are required' });
     }
     const sev = Math.max(1, Math.min(5, Number(severity)));
     const keyword = keywordRisk(description || '');
