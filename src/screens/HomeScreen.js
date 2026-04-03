@@ -39,6 +39,7 @@ const FALLBACK_SELF_HELP = [
 ];
 
 const FALLBACK_CONTENT_CATEGORIES = [
+  { id: 'recommended', label: '⭐ Recommended' },
   { id: 'meditation', label: 'Meditation' },
   { id: 'motivation', label: 'Motivation' },
   { id: 'sleep', label: 'Sleep Stories' },
@@ -48,6 +49,13 @@ const FALLBACK_CONTENT_CATEGORIES = [
 const label = (id) => (id || '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
 const fallbackContentByCategory = {
+  recommended: [
+    {
+      videoId: 'inpok4MKVLM',
+      title: 'Top Pick: Guided Meditation for Stress',
+      thumbnail: 'https://i.ytimg.com/vi/inpok4MKVLM/hqdefault.jpg',
+    },
+  ],
   meditation: [
     {
       videoId: 'inpok4MKVLM',
@@ -91,45 +99,28 @@ const fallbackContentByCategory = {
 };
 
 const HomeScreen = props => {
-  const [assessmentModalVisible, setAssessmentModalVisible] = useState(false);
-  const [assessmentStep, setAssessmentStep] = useState(1);
-  const [categories, setCategories] = useState([]);
-  const [category, setCategory] = useState('');
-  const [severity, setSeverity] = useState(3);
-  const [moodTag, setMoodTag] = useState('');
-  const [description, setDescription] = useState('');
-  const [assessmentResult, setAssessmentResult] = useState(null);
-  const [assessmentLoading, setAssessmentLoading] = useState(false);
-  const [assessmentError, setAssessmentError] = useState('');
+  const welcomeMessage = props.auth.welcomeMessage;
+  const clearWelcomeMessage = props.clearWelcome;
   const [contentFeed, setContentFeed] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('meditation');
+  const [selectedCategory, setSelectedCategory] = useState('recommended');
   const [loadingContent, setLoadingContent] = useState(false);
   const [contentError, setContentError] = useState(null);
   const [selfHelpTiles, setSelfHelpTiles] = useState(FALLBACK_SELF_HELP);
   const [contentCategories, setContentCategories] = useState(FALLBACK_CONTENT_CATEGORIES);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await api
-          .get('/api/issues/categories')
-          .catch(() => ({}));
-        const list = res.data?.categories || DEFAULT_CATEGORIES;
-        setCategories(list);
-        if (list[0]) setCategory(list[0]);
-      } catch (e) {
-        setCategories(DEFAULT_CATEGORIES);
-        setCategory('anxiety');
-      }
-    })();
-  }, []);
+  const [burnoutAlert, setBurnoutAlert] = useState(null);
 
   useEffect(() => {
     (async () => {
       try {
         const res = await api.get('/api/home').catch(() => ({}));
         if (res.data?.selfHelpTiles?.length) setSelfHelpTiles(res.data.selfHelpTiles);
-        if (res.data?.contentCategories?.length) setContentCategories(res.data.contentCategories);
+        if (res.data?.contentCategories?.length) {
+            const serverCats = res.data.contentCategories;
+            const hasRec = serverCats.find(c => c.id === 'recommended');
+            setContentCategories(hasRec ? serverCats : [{ id: 'recommended', label: '⭐ Recommended' }, ...serverCats]);
+        }
+        const alertRes = await api.get('/api/issues/burnout-alert').catch(() => ({}));
+        if (alertRes.data?.active) setBurnoutAlert(alertRes.data.alert);
       } catch (_) {
         // keep fallbacks
       }
@@ -149,7 +140,7 @@ const HomeScreen = props => {
 
         const res = await api.get('/api/mood/today').catch(() => ({}));
         const loggedToday = res.data?.loggedToday === true;
-        if (!loggedToday) setAssessmentModalVisible(true);
+        if (!loggedToday) props.navigation.navigate('MultidimensionalIntake');
       } catch (_) {}
     };
     checkDailyMood();
@@ -179,66 +170,14 @@ const HomeScreen = props => {
   }, [selectedCategory]);
 
   useEffect(() => {
-    if (!props.auth.welcomeMessage) return;
+    if (!welcomeMessage) return;
     
     // Trigger assessment automatically on login/signup
-    openAssessment();
+    props.navigation.navigate('MultidimensionalIntake');
 
-    const { clearWelcome } = props;
-    const t = setTimeout(() => clearWelcome(), 4000);
+    const t = setTimeout(() => clearWelcomeMessage(), 4000);
     return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.auth.welcomeMessage]);
-
-  const runAssessment = async () => {
-    if (!props.auth.user?._id) {
-      setAssessmentError('Please log in to complete check-in.');
-      return;
-    }
-    setAssessmentError('');
-    setAssessmentLoading(true);
-    setAssessmentResult(null);
-    try {
-      const res = await api.post('/api/issues/report', {
-        userId: props.auth.user._id,
-        category: category || 'other',
-        severity,
-        description: description.trim(),
-        moodTag: moodTag || undefined,
-      });
-      setAssessmentResult(res.data);
-      if (res.data.safety?.showEmergencyScreen) {
-        setAssessmentModalVisible(false);
-        props.navigation.navigate('Safety', { helplines: res.data.safety.helplines });
-        return;
-      }
-      try {
-        await api.post('/api/mood', {
-          rating: Math.max(1, Math.min(10, 11 - severity * 2)),
-          note: description.trim() || undefined,
-        });
-      } catch (_) {}
-    } catch (e) {
-      setAssessmentError(e.response?.data?.error || e.message || 'Something went wrong.');
-    }
-    setAssessmentLoading(false);
-  };
-
-  const closeAssessment = () => {
-    setAssessmentModalVisible(false);
-    setAssessmentStep(1);
-    setAssessmentResult(null);
-    setAssessmentError('');
-    const todayStr = new Date().toISOString().slice(0, 10);
-    AsyncStorage.setItem('MindCare_dismissedCheckInDate', todayStr).catch(() => {});
-  };
-
-  const openAssessment = () => {
-    setAssessmentStep(1);
-    setAssessmentResult(null);
-    setAssessmentError('');
-    setAssessmentModalVisible(true);
-  };
+  }, [welcomeMessage, clearWelcomeMessage, props.navigation]);
 
   const renderItem = ({ item }) => {
     return (
@@ -268,144 +207,6 @@ const HomeScreen = props => {
 
   return (
     <ScrollView>
-      <Modal animationType="slide" transparent visible={assessmentModalVisible}>
-        <KeyboardAvoidingView
-          style={styles.centeredView}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
-        >
-          <View style={styles.modalView}>
-            <ScrollView
-              style={{ maxHeight: Dimensions.get('window').height * 0.8 }}
-              contentContainerStyle={{ paddingBottom: 24 }}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>AI Check-in</Text>
-                <TouchableOpacity onPress={closeAssessment} style={styles.modalClose}>
-                  <Text style={styles.modalCloseText}>×</Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.modalSubtitle}>A quick assessment. Tink will suggest support based on your answers.</Text>
-
-              {assessmentResult ? (
-                <View style={styles.resultBlock}>
-                  <Text style={styles.resultTitle}>Tink suggests</Text>
-                  <Text style={styles.riskText}>Risk: {assessmentResult.riskLevel}</Text>
-                  {assessmentResult.recommendations?.length > 0 &&
-                    assessmentResult.recommendations.map((rec, i) => (
-                      <Text key={i} style={styles.recText}>• {rec}</Text>
-                    ))}
-                  <TouchableOpacity style={styles.talkBtn} onPress={() => { closeAssessment(); props.navigation.navigate('Chat', { name: 'Tink' }); }}>
-                    <Text style={styles.talkBtnText}>Talk to Tink</Text>
-                  </TouchableOpacity>
-                  <Button
-                    buttonStyle={styles.done_button}
-                    title="Done"
-                    titleStyle={styles.done}
-                    onPress={closeAssessment}
-                  />
-                </View>
-              ) : (
-                <>
-                  {assessmentStep === 1 && (
-                    <>
-                      <Text style={styles.stepLabel}>What's on your mind?</Text>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-                        {categories.map((c) => (
-                          <TouchableOpacity
-                            key={c}
-                            style={[styles.assessmentChip, category === c && styles.assessmentChipActive]}
-                            onPress={() => setCategory(c)}
-                          >
-                            <Text style={[styles.assessmentChipText, category === c && styles.assessmentChipTextActive]}>{label(c)}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    </>
-                  )}
-                  {assessmentStep === 2 && (
-                    <>
-                      <Text style={styles.stepLabel}>How much is it affecting you? (1–5)</Text>
-                      <View style={styles.severityRow}>
-                        {[1, 2, 3, 4, 5].map((n) => (
-                          <TouchableOpacity
-                            key={n}
-                            style={[styles.sevBtn, severity === n && styles.sevBtnActive]}
-                            onPress={() => setSeverity(n)}
-                          >
-                            <Text style={[styles.sevNum, severity === n && styles.sevNumActive]}>{n}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                      <Text style={styles.sevLabel}>{SEVERITY_LABELS[severity]}</Text>
-                    </>
-                  )}
-                  {assessmentStep === 3 && (
-                    <>
-                      <Text style={styles.stepLabel}>How are you feeling right now?</Text>
-                      <View style={styles.moodRow}>
-                        {MOOD_TAGS.map((m) => (
-                          <TouchableOpacity
-                            key={m}
-                            style={[styles.assessmentChip, moodTag === m && styles.assessmentChipActive]}
-                            onPress={() => setMoodTag(moodTag === m ? '' : m)}
-                          >
-                            <Text style={[styles.assessmentChipText, moodTag === m && styles.assessmentChipTextActive]}>{label(m)}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    </>
-                  )}
-                  {assessmentStep === 4 && (
-                    <>
-                      <Text style={styles.stepLabel}>Anything else you'd like to share? (optional)</Text>
-                      <TextInput
-                        style={styles.assessmentInput}
-                        placeholder="Describe how you're doing..."
-                        placeholderTextColor={colors.gray}
-                        value={description}
-                        onChangeText={setDescription}
-                        multiline
-                        numberOfLines={3}
-                      />
-                    </>
-                  )}
-                  {assessmentError ? <Text style={styles.errText}>{assessmentError}</Text> : null}
-                  <View style={styles.modalActions}>
-                    {assessmentStep > 1 && assessmentStep <= 4 && (
-                      <Button
-                        buttonStyle={styles.backAssessmentBtn}
-                        title="Back"
-                        titleStyle={{ color: colors.secondary }}
-                        onPress={() => setAssessmentStep((s) => s - 1)}
-                      />
-                    )}
-                    {assessmentStep < 4 ? (
-                      <Button
-                        buttonStyle={styles.done_button}
-                        title="Next"
-                        titleStyle={styles.done}
-                        onPress={() => setAssessmentStep((s) => s + 1)}
-                      />
-                    ) : (
-                      <Button
-                        buttonStyle={styles.done_button}
-                        title={assessmentLoading ? '' : 'Get AI assessment'}
-                        titleStyle={styles.done}
-                        onPress={runAssessment}
-                        disabled={assessmentLoading}
-                        loading={assessmentLoading}
-                      />
-                    )}
-                  </View>
-                </>
-              )}
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
       <View style={styles.container}>
         {props.auth.welcomeMessage === 'login' && (
           <View style={styles.welcomeBanner}>
@@ -434,6 +235,17 @@ const HomeScreen = props => {
             </View>
           </TouchableOpacity>
         </View>
+
+        {burnoutAlert && (
+          <View style={styles.burnoutBanner}>
+            <MaterialCommunityIcons name="alert" size={24} color={colors.white} />
+            <View style={styles.burnoutTextCont}>
+              <Text style={styles.burnoutTitle}>Burnout Risk Detected</Text>
+              <Text style={styles.burnoutText}>{burnoutAlert.description}</Text>
+            </View>
+          </View>
+        )}
+
         <View style={styles.chatbotContainer}>
           <View style={styles.botContainer}>
             <Image
@@ -441,7 +253,7 @@ const HomeScreen = props => {
               style={{ width: 180, height: 180 }}
             />
           </View>
-          <View></View>
+          <View />
           <View style={styles.botContent}>
             <Text
               style={{
@@ -1051,5 +863,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255,255,255,0.95)',
     fontWeight: '500',
-  }
+  },
+  burnoutBanner: { backgroundColor: '#E53935', borderRadius: 12, padding: 16, flexDirection: 'row', alignItems: 'center', marginHorizontal: 20, marginBottom: 20 },
+  burnoutTextCont: { marginLeft: 12, flex: 1 },
+  burnoutTitle: { color: colors.white, fontWeight: 'bold', fontSize: 16, marginBottom: 4 },
+  burnoutText: { color: colors.white, fontSize: 13, lineHeight: 18 },
 });

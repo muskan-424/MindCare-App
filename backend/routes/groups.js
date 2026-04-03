@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const GroupSession = require('../models/GroupSession');
-const User = require('../models/User');
 const { auth } = require('../middleware/auth');
 
 // Note: Admin authentication middleware (you'd typically import this)

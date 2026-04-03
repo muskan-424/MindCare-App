@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const MoodEntry = require('../models/MoodEntry');
 const { auth } = require('../middleware/auth');
+const { evaluateBurnoutRisk } = require('../services/burnoutPredictionService');
 
 // POST /api/mood — log a mood entry
 router.post('/', auth, async (req, res) => {
@@ -12,6 +13,10 @@ router.post('/', auth, async (req, res) => {
     const r = Math.max(1, Math.min(10, Number(rating)));
     const entry = new MoodEntry({ user: userId, rating: r, note: note || '' });
     await entry.save();
+
+    // Asynchronously trigger advanced burnout prediction logic
+    evaluateBurnoutRisk(userId).catch(e => console.error('Burnout Trigger Error:', e.message));
+
     res.json({ id: entry._id, date: entry.date, rating: entry.rating });
   } catch (err) {
     console.error('Mood log error:', err.message);
@@ -19,11 +24,13 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// GET /api/mood/trend?window=7|30 — mood trend for charts
+// GET /api/mood/trend?window=7|30|90 — mood trend for charts
 router.get('/trend', auth, async (req, res) => {
   try {
     const userId = req.user.id;
-    const days = req.query.window === '30' ? 30 : 7;
+    let days = 7;
+    if (req.query.window === '30') days = 30;
+    if (req.query.window === '90') days = 90;
     const start = new Date();
     start.setDate(start.getDate() - days);
     start.setHours(0, 0, 0, 0);

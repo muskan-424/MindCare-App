@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
  * Attaches req.user = { id, role } on success.
  */
 function auth(req, res, next) {
-  const header = req.headers['authorization'];
+  const header = req.headers.authorization;
   const token = header && header.startsWith('Bearer ') ? header.slice(7) : null;
 
   if (!token) {

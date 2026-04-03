@@ -9,7 +9,7 @@ import {
   ScrollView,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
-import { colors, sizes } from '../constants/theme';
+import { colors } from '../constants/theme';
 
 const OpenBlogScreen = props => {
   const {width, height} = Dimensions.get('window');

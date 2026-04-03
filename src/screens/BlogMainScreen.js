@@ -6,8 +6,6 @@ import {
   FlatList,
   Dimensions,
   StyleSheet,
-  Button,
-  TouchableOpacity,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import TouchableScale from 'react-native-touchable-scale';
@@ -22,11 +20,9 @@ import AddBlog from './AddBlog';
 const MainScreen = ({navigation}) => {
   const [featured, setFeatured] = React.useState(localData);
   const [popular, setPopular] = React.useState(localPopular);
-  const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
     const fetchBlogs = async () => {
-      setLoading(true);
       try {
         const res = await api.get('/api/blogs');
         if (res.data) {
@@ -37,8 +33,6 @@ const MainScreen = ({navigation}) => {
         console.warn('Blogs API error:', e.message);
         setFeatured(localData);
         setPopular(localPopular);
-      } finally {
-        setLoading(false);
       }
     };
     fetchBlogs();

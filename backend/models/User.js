@@ -28,6 +28,11 @@ const UserSchema = new mongoose.Schema(
       enum: ['male', 'female', 'other', ''],
       default: '',
     },
+    institutionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Institution',
+      default: null,
+    },
   },
   { timestamps: true }
 );

@@ -105,5 +105,83 @@ router.get('/categories', async (_req, res) => {
   }
 });
 
+const TherapistNote = require('../models/TherapistNote');
+const { auth } = require('../middleware/auth');
+
+// Seed data ... (already exists)
+
+// ... existing routes ...
+
+// ── GET /api/therapists/notes/:userId ───────────────────────────────────────
+// Fetch all session notes for a specific patient (Therapist only)
+router.get('/notes/:userId', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'therapist') {
+      return res.status(403).json({ error: 'Access denied: Therapist only' });
+    }
+
+    const notes = await TherapistNote.find({
+      patient: req.params.userId,
+      therapist: req.user.id
+    })
+    .sort({ sessionDate: -1 })
+    .lean();
+
+    res.json(notes);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch notes' });
+  }
+});
+
+// ── POST /api/therapists/notes ──────────────────────────────────────────────
+// Save a new session note
+router.post('/notes', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'therapist') {
+      return res.status(403).json({ error: 'Access denied: Therapist only' });
+    }
+
+    const { patientId, sessionDate, content, category, confidentialityLevel } = req.body;
+    if (!patientId || !content) {
+      return res.status(400).json({ error: 'patientId and content are required' });
+    }
+
+    const note = new TherapistNote({
+      patient: patientId,
+      therapist: req.user.id,
+      sessionDate: sessionDate || new Date(),
+      content,
+      category: category || 'Progress',
+      confidentialityLevel: confidentialityLevel || 1
+    });
+
+    await note.save();
+    res.status(201).json(note);
+  } catch (err) {
+    console.error('Note creation error:', err.message);
+    res.status(500).json({ error: 'Failed to save note' });
+  }
+});
+
+// ── DELETE /api/therapists/notes/:id ────────────────────────────────────────
+// Remove a note (only by the therapist who wrote it)
+router.delete('/notes/:id', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'therapist') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const note = await TherapistNote.findOneAndDelete({
+      _id: req.params.id,
+      therapist: req.user.id
+    });
+
+    if (!note) return res.status(404).json({ error: 'Note not found or unauthorized' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete note' });
+  }
+});
+
 module.exports = router;
 

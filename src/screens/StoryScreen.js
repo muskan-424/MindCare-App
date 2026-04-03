@@ -7,36 +7,34 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import BlogMainScreen from './BlogMainScreen';
 import JournalScreen from './JournalScreen';
 
-function BlogsTab() {
-  return <BlogMainScreen />;
-}
-
-function JournalsTab() {
-  return <JournalScreen />;
-}
-
 const Tab = createMaterialTopTabNavigator();
 
+const BlogsTabIcon = ({ color }) => <Feather name="book-open" size={20} color={color} />;
+const JournalsTabIcon = ({ color }) => <Entypo name="book" size={20} color={color} />;
+
 function StoryScreen() {
+  const commonTabOptions = {
+    tabBarActiveTintColor: colors.white,
+    tabBarInactiveTintColor: colors.white2,
+    tabBarLabelStyle: styles.tabLabel,
+    tabBarStyle: styles.tabBar,
+    tabBarIndicatorStyle: styles.indicator,
+    tabBarShowIcon: true,
+  };
+
   return (
     <View style={styles.container}>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarIcon: ({ focused, color }) => {
-            if (route.name === 'Blogs') {
-              return <Feather name="book-open" size={20} color={color} />;
-            }
-            return <Entypo name="book" size={20} color={color} />;
-          },
-          tabBarActiveTintColor: colors.white,
-          tabBarInactiveTintColor: colors.white2,
-          tabBarLabelStyle: styles.tabLabel,
-          tabBarStyle: styles.tabBar,
-          tabBarIndicatorStyle: styles.indicator,
-          tabBarShowIcon: true,
-        })}>
-        <Tab.Screen name="Blogs" component={BlogsTab} options={{ tabBarLabel: 'Blogs' }} />
-        <Tab.Screen name="Journals" component={JournalsTab} options={{ tabBarLabel: 'My Journals' }} />
+      <Tab.Navigator screenOptions={commonTabOptions}>
+        <Tab.Screen
+          name="Blogs"
+          component={BlogMainScreen}
+          options={{ tabBarLabel: 'Blogs', tabBarIcon: BlogsTabIcon }}
+        />
+        <Tab.Screen
+          name="Journals"
+          component={JournalScreen}
+          options={{ tabBarLabel: 'My Journals', tabBarIcon: JournalsTabIcon }}
+        />
       </Tab.Navigator>
     </View>
   );

@@ -1,11 +1,12 @@
-import React, {useEffect, Component, useState} from 'react';
-import {StyleSheet, Text, View, Button, Image, ScrollView} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {StyleSheet, Text, View, Image, ScrollView} from 'react-native';
 import axios from 'axios';
 import base64 from 'react-native-base64';
-import {FlatList, TouchableOpacity} from 'react-native-gesture-handler';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 import {colors} from '../constants/theme';
 
 const TrackList = props => {
+  const { id: playlistId, title } = props.route.params;
   const [tracks, setTracks] = useState([]);
   useEffect(() => {
     //console.log(props.route.params.id);
@@ -24,7 +25,7 @@ const TrackList = props => {
       method: 'POST',
     }).then(tokenResponse => {
       axios(
-        `https://api.spotify.com/v1/playlists/${props.route.params.id}/tracks?limit=10`,
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=10`,
         {
           method: 'GET',
           headers: {
@@ -35,12 +36,11 @@ const TrackList = props => {
         setTracks(tracksResponse.data.items);
       });
     });
-    console.log(props.route.params.title);
-  }, [props.route.params.id]);
+  }, [playlistId]);
   return (
     <ScrollView>
       <View style={styles.container}>
-        <Text style={styles.title}>{props.route.params.title}</Text>
+        <Text style={styles.title}>{title}</Text>
         {tracks.map(item => {
           return (
             item.track.preview_url && (

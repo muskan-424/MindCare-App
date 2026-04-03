@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Searchbar } from 'react-native-paper';
 import TherapistCard from '../components/TherapistCard';
-import { colors, sizes, fonts } from '../constants/theme';
+import { colors } from '../constants/theme';
 
 const TherapistScreen = (props) => {
   const [query, setQuery] = useState('');

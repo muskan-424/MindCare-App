@@ -10,7 +10,7 @@ const Track = props => {
     <View style={styles.container}>
       <WebView
         source={{ uri: youtubeUrl }}
-        style={{ flex: 1, width: '100%', height: '100%' }}
+        style={styles.webview}
         javaScriptEnabled={true}
         domStorageEnabled={true}
         mediaPlaybackRequiresUserAction={false}
@@ -26,5 +26,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000', // Black background for video player
+  },
+  webview: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
   },
 });

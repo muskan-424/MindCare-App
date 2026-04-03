@@ -16,7 +16,7 @@ api.interceptors.request.use(
       const token = store.getState()?.auth?.token;
       if (token) {
         config.headers = config.headers || {};
-        config.headers['Authorization'] = `Bearer ${token}`;
+        config.headers.Authorization = `Bearer ${token}`;
       }
     } catch (e) { /* ignore store errors */ }
 

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Alert,
+  TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Dimensions
 } from 'react-native';
 import { connect } from 'react-redux';
 import api from '../utils/apiClient';
 import { colors, sizes } from '../constants/theme';
+import { LineChart, ContributionGraph } from 'react-native-chart-kit';
 
 const RATING_LABELS = { 1: 'Terrible', 2: 'Very Low', 3: 'Low', 4: 'Below Okay', 5: 'Okay', 6: 'Decent', 7: 'Good', 8: 'Great', 9: 'Very Good', 10: 'Excellent' };
 const RATING_COLORS = { low: '#E57373', mid: '#FFB74D', high: '#81C784' };
@@ -50,23 +51,6 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
       Alert.alert('Error', 'Failed to save mood. Please try again.');
     }
     setLoading(false);
-  };
-
-  const deleteMood = async (id) => {
-    Alert.alert('Delete Entry', 'Remove this mood entry?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete', style: 'destructive', onPress: async () => {
-          try {
-            await api.delete(`/api/mood/${id}`);
-            setTrend(prev => prev.filter(d => d.id !== id));
-            fetchData();
-          } catch (e) {
-            Alert.alert('Error', 'Could not delete entry.');
-          }
-        },
-      },
-    ]);
   };
 
   const getRatingColor = (r) => r <= 3 ? RATING_COLORS.low : r <= 6 ? RATING_COLORS.mid : RATING_COLORS.high;
@@ -135,7 +119,7 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
         <View style={styles.trendHeader}>
           <Text style={styles.trendTitle}>Mood trend</Text>
           <View style={styles.windowBtns}>
-            {[7, 30].map(w => (
+            {[7, 30, 90].map(w => (
               <TouchableOpacity key={w} style={[styles.windowBtn, window === w && styles.windowBtnActive]} onPress={() => setWindow(w)}>
                 <Text style={[styles.windowBtnText, window === w && styles.windowBtnTextActive]}>{w}d</Text>
               </TouchableOpacity>
@@ -147,19 +131,47 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
           <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 16 }} />
         ) : trend.filter(d => d.rating != null).length === 0 ? (
           <Text style={styles.noTrend}>No entries yet. Log your mood above.</Text>
+        ) : window === 90 ? (
+          <View style={{ marginTop: 10, alignItems: 'center' }}>
+            <ContributionGraph
+              values={trend.filter(d => d.rating != null).map(d => ({ date: d.date, count: d.rating }))}
+              endDate={new Date()}
+              numDays={90}
+              width={Dimensions.get('window').width - 40}
+              height={220}
+              chartConfig={{
+                backgroundColor: colors.white,
+                backgroundGradientFrom: colors.white,
+                backgroundGradientTo: colors.white,
+                color: (opacity = 1) => `rgba(129, 199, 132, ${opacity})`,
+                labelColor: (opacity = 1) => colors.gray,
+              }}
+              style={{ borderRadius: 12, padding: 10, backgroundColor: colors.white }}
+            />
+          </View>
         ) : (
-          <View style={styles.trendList}>
-            {trend.filter(d => d.rating != null).map((d) => (
-              <View key={d.date} style={styles.trendRow}>
-                <Text style={styles.trendDate}>
-                  {new Date(d.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-                </Text>
-                <View style={styles.trendBarWrap}>
-                  <View style={[styles.trendBar, { width: `${(d.rating / 10) * 100}%`, backgroundColor: getRatingColor(d.rating) }]} />
-                </View>
-                <Text style={[styles.trendRating, { color: getRatingColor(d.rating) }]}>{d.rating.toFixed(1)}</Text>
-              </View>
-            ))}
+          <View style={{ marginTop: 10, alignItems: 'center' }}>
+            <LineChart
+              data={{
+                labels: trend.filter(d => d.rating != null).map(d => new Date(d.date).toLocaleDateString(undefined, { day: 'numeric' })),
+                datasets: [{ data: trend.filter(d => d.rating != null).map(d => d.rating) }]
+              }}
+              width={Dimensions.get('window').width - 40}
+              height={220}
+              fromZero
+              yAxisMax={10}
+              chartConfig={{
+                backgroundColor: colors.white,
+                backgroundGradientFrom: colors.white,
+                backgroundGradientTo: colors.white,
+                decimalPlaces: 1,
+                color: (opacity = 1) => `rgba(79, 195, 247, ${opacity})`,
+                labelColor: (opacity = 1) => colors.gray,
+                propsForDots: { r: '4', strokeWidth: '2', stroke: colors.primary }
+              }}
+              bezier
+              style={{ borderRadius: 12, padding: 10, backgroundColor: colors.white }}
+            />
           </View>
         )}
 

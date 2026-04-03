@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Alert, TextInput, Modal, Animated,
+  ActivityIndicator, Alert, TextInput, Modal,
 } from 'react-native';
 import api from '../utils/apiClient';
 import { colors } from '../constants/theme';
@@ -25,30 +25,6 @@ const STATUS_CONFIG = {
   active:    { label: 'Active',     color: '#33B679', icon: 'play-circle' },
   paused:    { label: 'Paused',     color: '#F6BF26', icon: 'pause-circle' },
   completed: { label: 'Completed',  color: '#7C4DFF', icon: 'check-circle' },
-};
-
-// ─── Progress Ring Component ────────────────────────────────────────────────
-const ProgressRing = ({ progress, size = 56, color = colors.primary }) => {
-  const r = size / 2 - 5;
-  const circ = 2 * Math.PI * r;
-  const filled = circ * (progress / 100);
-
-  return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{
-        width: size, height: size, borderRadius: size / 2,
-        borderWidth: 5, borderColor: `${color}30`,
-        position: 'absolute',
-      }} />
-      <View style={{
-        width: size, height: size, borderRadius: size / 2,
-        borderWidth: 5, borderColor: color,
-        borderStyle: 'dashed', position: 'absolute', opacity: progress > 0 ? 1 : 0,
-        // A rough approximation using border—ideal would be SVG
-      }} />
-      <Text style={{ fontSize: 14, fontWeight: '800', color }}>{progress}%</Text>
-    </View>
-  );
 };
 
 // ─── Goal Card Component ─────────────────────────────────────────────────────
