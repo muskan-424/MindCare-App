@@ -150,4 +150,22 @@ router.post('/report', auth, async (req, res) => {
   }
 });
 
+// GET /api/issues/burnout-alert — Get recent burnout alert for user
+router.get('/burnout-alert', auth, async (req, res) => {
+  try {
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+    const alert = await IssueReport.findOne({
+      user: req.user.id,
+      category: 'burnout_alert',
+      createdAt: { $gte: twoDaysAgo }
+    }).sort({ createdAt: -1 }).lean();
+    
+    res.json({ active: !!alert, alert });
+  } catch (err) {
+    console.error('Burnout check error:', err.message);
+    res.status(500).json({ active: false });
+  }
+});
+
 module.exports = router;

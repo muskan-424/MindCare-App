@@ -1,7 +1,6 @@
-import { REGISTER_SUCCESS, REGISTER_FAIL, CLEAR_WELCOME } from './type';
+import { REGISTER_SUCCESS, CLEAR_WELCOME } from './type';
 import api from '../../utils/apiClient';
 import { ToastAndroid, Platform } from 'react-native';
-import { fetchQuoteOfTheDay } from './quote';
 
 export const clearWelcome = () => ({ type: CLEAR_WELCOME });
 

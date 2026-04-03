@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import {
   StyleSheet,
   Text,
@@ -12,11 +11,10 @@ import {
 import {
   TextInput,
   RadioButton,
-  HelperText,
   Checkbox,
   Button,
 } from 'react-native-paper';
-import { colors, sizes, fonts } from '../constants/theme';
+import { colors, fonts } from '../constants/theme';
 // import { AntDesign,MaterialCommunityIcons,Feather,Entypo} from '@expo/vector-icons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -27,6 +25,34 @@ import { updateUser } from '../redux/actions/profile';
 import { connect } from 'react-redux';
 import { getAvatarForGender } from '../utils/avatar';
 
+const renderGenderRadio = (value, checked, setChecked) => (
+  <RadioButton
+    value={value}
+    color={colors.secondary}
+    status={checked === value ? 'checked' : 'unchecked'}
+    onPress={() => setChecked(value)}
+  />
+);
+
+const renderProblem = (prob, selectedConcerns, setSelectedConcerns) => (
+  <View style={styles.checkbox}>
+    <Text style={{ width: '57%' }}>{prob.name}</Text>
+    <Checkbox
+      color={colors.primary}
+      status={selectedConcerns.includes(prob.id) ? 'checked' : 'unchecked'}
+      onPress={() => {
+        if (selectedConcerns.includes(prob.id)) {
+          setSelectedConcerns([
+            ...selectedConcerns.filter(concern => concern !== prob.id),
+          ]);
+        } else {
+          setSelectedConcerns([...selectedConcerns, prob.id]);
+        }
+      }}
+    />
+  </View>
+);
+
 const Profile = props => {
   const [checked, setChecked] = useState(props.auth.profile.gender);
   const [selectedConcerns, setSelectedConcerns] = useState(
@@ -36,42 +62,6 @@ const Profile = props => {
   const [email, setEmail] = useState(props.auth.user.email);
   const [phone, setPhone] = useState(props.auth.profile.phone_no);
   const [age, setAge] = useState(props.auth.profile.age);
-
-  const hasErrors = () => {
-    return !email.includes('@');
-  };
-
-  const Gender = props => {
-    return (
-      <RadioButton
-        value={props}
-        color={colors.secondary}
-        status={checked === props ? 'checked' : 'unchecked'}
-        onPress={() => setChecked(props)}
-      />
-    );
-  };
-
-  const Problem = prob => {
-    return (
-      <View style={styles.checkbox}>
-        <Text style={{ width: '57%' }}>{prob.name}</Text>
-        <Checkbox
-          color={colors.primary}
-          status={selectedConcerns.includes(prob.id) ? 'checked' : 'unchecked'}
-          onPress={() => {
-            if (selectedConcerns.includes(prob.id)) {
-              setSelectedConcerns([
-                ...selectedConcerns.filter(concern => concern !== prob.id),
-              ]);
-            } else {
-              setSelectedConcerns([...selectedConcerns, prob.id]);
-            }
-          }}
-        />
-      </View>
-    );
-  };
 
   const submitHandler = () => {
     props.updateUser(
@@ -170,11 +160,11 @@ const Profile = props => {
               paddingBottom: 5,
             }}>
             <Text>Male: </Text>
-            {Gender('male')}
+            {renderGenderRadio('male', checked, setChecked)}
             <Text>Female: </Text>
-            {Gender('female')}
+            {renderGenderRadio('female', checked, setChecked)}
             <Text>Other: </Text>
-            {Gender('other')}
+            {renderGenderRadio('other', checked, setChecked)}
           </View>
           <View style={styles.inputBox2}>
             <Feather
@@ -229,7 +219,7 @@ const Profile = props => {
               {concerns.map(prob => {
                 return (
                   <View key={prob.id} style={styles.problemsPart}>
-                    {Problem(prob)}
+                    {renderProblem(prob, selectedConcerns, setSelectedConcerns)}
                   </View>
                 );
               })}

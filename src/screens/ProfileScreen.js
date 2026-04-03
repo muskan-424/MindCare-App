@@ -3,8 +3,6 @@ import {
   StyleSheet,
   Text,
   View,
-  Button,
-  ImageBackground,
   Image,
   ScrollView,
   TouchableOpacity,
@@ -19,8 +17,6 @@ import {Chip} from 'react-native-paper';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Feather from 'react-native-vector-icons/Feather';
-import Entypo from 'react-native-vector-icons/Entypo';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import {colors, sizes, fonts} from '../constants/theme';
 import {concerns} from '../constants/concerns';
@@ -34,6 +30,24 @@ const ProfileScreen = props => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [instModalVisible, setInstModalVisible] = useState(false);
+  const [accessCode, setAccessCode] = useState('');
+  const [instLoading, setInstLoading] = useState(false);
+
+  const handleJoinInstitution = async () => {
+    if (!accessCode.trim()) return Alert.alert('Required', 'Please enter an access code.');
+    setInstLoading(true);
+    try {
+      const res = await api.post('/api/institutions/join', { accessCode: accessCode.trim() });
+      Alert.alert('Success', `You have joined ${res.data.institutionName}!`);
+      setInstModalVisible(false);
+      // Ideally refresh profile here
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.error || 'Failed to join institution.');
+    }
+    setInstLoading(false);
+  };
 
   const requestDeletion = async () => {
     if (!deleteReason.trim()) {
@@ -165,6 +179,49 @@ const ProfileScreen = props => {
         </View>
         <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
       </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.historyRow, { marginTop: 10, borderLeftColor: '#F06292' }]}
+        onPress={() => props.navigation.navigate('PeerMatching')}
+        activeOpacity={0.8}>
+        <MaterialCommunityIcons name="account-group" size={24} color="#F06292" />
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={styles.historyText}>Peer Matching</Text>
+          <Text style={styles.historySubtext}>Connect with others on a similar journey</Text>
+        </View>
+        <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
+      </TouchableOpacity>
+      
+      {/* Institution Row */}
+      {props.auth.user.institutionId ? (
+        <TouchableOpacity
+          style={[styles.historyRow, { marginTop: 10, borderLeftColor: '#455A64' }]}
+          onPress={() => {
+            // Check if user is an admin of this institution
+            // This logic might need a more robust backend check, but for now we'll attempt navigation
+            props.navigation.navigate('InstitutionDashboard', { institutionId: props.auth.user.institutionId });
+          }}
+          activeOpacity={0.8}>
+          <MaterialCommunityIcons name="office-building" size={24} color="#455A64" />
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={styles.historyText}>My Organization</Text>
+            <Text style={styles.historySubtext}>View aggregate wellness trends (Admins only)</Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={[styles.historyRow, { marginTop: 10, borderLeftColor: '#9E9E9E' }]}
+          onPress={() => setInstModalVisible(true)}
+          activeOpacity={0.8}>
+          <MaterialCommunityIcons name="plus-circle-outline" size={24} color="#9E9E9E" />
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={styles.historyText}>Join Organization</Text>
+            <Text style={styles.historySubtext}>Connect to your school or workplace</Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
+        </TouchableOpacity>
+      )}
+
       <View style={styles.concernContainer}>
         <Text style={styles.concernTitle}>My Concerns:</Text>
         <View style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap'}}>
@@ -232,6 +289,44 @@ const ProfileScreen = props => {
                   <ActivityIndicator color={colors.white} />
                 ) : (
                   <Text style={styles.modalBtnText}>Submit</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Institution Join Modal */}
+      <Modal visible={instModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Join Organization</Text>
+            <Text style={styles.modalText}>
+              Enter the access code provided by your school or workplace to join their private wellness community.
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="e.g. COLLEGE2026"
+              placeholderTextColor={colors.gray}
+              value={accessCode}
+              onChangeText={setAccessCode}
+              autoCapitalize="characters"
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.gray3 }]}
+                onPress={() => setInstModalVisible(false)}
+                disabled={instLoading}>
+                <Text style={styles.modalBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.primary }]}
+                onPress={handleJoinInstitution}
+                disabled={instLoading}>
+                {instLoading ? (
+                  <ActivityIndicator color={colors.white} />
+                ) : (
+                  <Text style={styles.modalBtnText}>Join</Text>
                 )}
               </TouchableOpacity>
             </View>

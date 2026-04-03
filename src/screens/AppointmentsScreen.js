@@ -146,7 +146,7 @@ const AppointmentsScreen = ({ navigation }) => {
       </View>
 
       {loading ? (
-        <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 60 }} />
+        <ActivityIndicator color={colors.primary} size="large" style={styles.loadingIndicator} />
       ) : filtered.length === 0 ? (
         <View style={styles.emptyWrap}>
           <Text style={styles.emptyEmoji}>🗓️</Text>
@@ -207,6 +207,7 @@ const styles = StyleSheet.create({
   cancelBtn: { marginTop: 12, paddingVertical: 10, borderWidth: 1, borderColor: '#E57373', borderRadius: 10, alignItems: 'center' },
   cancelBtnText: { fontSize: 14, color: '#E57373', fontWeight: '600' },
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
+  loadingIndicator: { marginTop: 60 },
   emptyEmoji: { fontSize: 56, marginBottom: 16 },
   emptyTitle: { fontSize: 20, fontWeight: '700', color: colors.secondary, marginBottom: 8 },
   emptyText: { fontSize: 15, color: colors.gray, textAlign: 'center', marginBottom: 24 },

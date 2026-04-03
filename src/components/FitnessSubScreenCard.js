@@ -1,13 +1,8 @@
 import React from 'react';
 import {
   StyleSheet,
-  Text,
-  View,
-  Image,
-  Dimensions,
   TouchableOpacity,
 } from 'react-native';
-import {colors, sizes, fonts} from '../constants/theme';
 import ImageOverlay from 'react-native-image-overlay';
 import {useNavigation} from '@react-navigation/native';
 

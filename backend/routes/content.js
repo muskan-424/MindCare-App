@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const ytSearch = require('yt-search');
 
+const { auth } = require('../middleware/auth');
+const AssessmentFusionResult = require('../models/AssessmentFusionResult');
+
 // Map of predefined safe categories to aggressive YouTube search strings
 const SAFETY_MAPPINGS = {
     'meditation': 'guided meditation calm sleep anxiety 10 minute',
@@ -13,19 +16,33 @@ const SAFETY_MAPPINGS = {
 
 // @route   GET /api/content/search
 // @desc    Get safe, moderated YouTube content by category
-// @access  Public
-router.get('/search', async (req, res) => {
+// @access  Private
+router.get('/search', auth, async (req, res) => {
     const category = req.query.category;
 
-    if (!category || !SAFETY_MAPPINGS[category]) {
+    if (!category || (!SAFETY_MAPPINGS[category] && category !== 'recommended')) {
         return res.status(400).json({
-            errors: [{ msg: 'Invalid or missing content category. Must be one of: ' + Object.keys(SAFETY_MAPPINGS).join(', ') }]
+            errors: [{ msg: 'Invalid category. Must be one of: recommended, ' + Object.keys(SAFETY_MAPPINGS).join(', ') }]
         });
     }
 
     try {
-        // We enforce the backend safety query to ensure zero arbitrary user search strings reach YouTube
-        const safeQuery = SAFETY_MAPPINGS[category];
+        let safeQuery = '';
+        if (category === 'recommended') {
+            const fusion = await AssessmentFusionResult.findOne({ user: req.user.id }).sort({ createdAt: -1 });
+            if (fusion) {
+                const keywords = [ fusion.riskLevel ];
+                if (fusion.recommendations && fusion.recommendations[0]) {
+                    keywords.push(fusion.recommendations[0]);
+                }
+                safeQuery = `mental health coping strategies ${keywords.join(' ')} relaxation safe`;
+            } else {
+                safeQuery = SAFETY_MAPPINGS['meditation']; // fallback to meditation
+            }
+        } else {
+            safeQuery = SAFETY_MAPPINGS[category];
+        }
+
         const results = await ytSearch(safeQuery);
 
         // Grab the first 10 video results

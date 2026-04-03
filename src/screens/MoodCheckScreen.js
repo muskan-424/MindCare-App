@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
-  Alert, ScrollView,
+  ScrollView,
 } from 'react-native';
 import { connect } from 'react-redux';
 import { colors, sizes } from '../constants/theme';
@@ -15,18 +15,14 @@ const MOODS = [
   { id: 'anxious', emoji: '😰', label: 'Anxious', rating: 2 },
 ];
 
-const RISK_COLORS = { LOW: '#81C784', MEDIUM: '#FFB74D', HIGH: '#E57373', CRITICAL: '#C62828' };
-
 const MoodCheckScreen = ({ navigation }) => {
   const [selected, setSelected] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [aiInsight, setAiInsight] = useState(null);
 
   const handleSelect = (id) => {
     setSelected(id);
     setSubmitted(false);
-    setAiInsight(null);
   };
 
   const submit = async () => {
@@ -34,11 +30,10 @@ const MoodCheckScreen = ({ navigation }) => {
     setLoading(true);
     try {
       const moodData = MOODS.find(m => m.id === selected);
-      const res = await api.post('/api/mood', {
+      await api.post('/api/mood', {
         rating: moodData.rating,
         note: `Quick check-in: ${moodData.label}`,
       });
-      setAiInsight(res.data);
       setSubmitted(true);
     } catch (error) {
       console.error('Mood check-in failed:', error);

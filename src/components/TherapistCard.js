@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleSheet, Text, View, Image} from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import {colors, sizes, fonts} from '../constants/theme';
+import {colors, fonts} from '../constants/theme';
 import {useNavigation} from '@react-navigation/native';
 
 const TherapistCard = props => {

@@ -33,9 +33,9 @@ const BreathingScreen = ({ navigation }) => {
       useNativeDriver: true,
       easing: Easing.bezier(0.4, 0, 0.2, 1),
     }).start(() => {
-      setPhaseIndex((phaseIndex + 1) % PHASES.length);
+      setPhaseIndex((prevPhaseIndex) => (prevPhaseIndex + 1) % PHASES.length);
     });
-  }, [running, phaseIndex]);
+  }, [running, phaseIndex, phase.duration, scale]);
 
   const startStop = () => {
     if (running) {

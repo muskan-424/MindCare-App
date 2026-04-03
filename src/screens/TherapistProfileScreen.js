@@ -1,9 +1,8 @@
 import React from 'react';
 import {StyleSheet, Text, View, Image, ScrollView} from 'react-native';
-import {colors, sizes, fonts} from '../constants/theme';
+import {colors, fonts} from '../constants/theme';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import Feather from 'react-native-vector-icons/Feather';
 
 import {Button} from 'react-native-paper';
 

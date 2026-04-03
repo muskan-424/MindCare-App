@@ -2,10 +2,7 @@ import React from 'react';
 import {StyleSheet, Text, View, Image, FlatList} from 'react-native';
 // import { MaterialIcons,Entypo,AntDesign} from '@expo/vector-icons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import Feather from 'react-native-vector-icons/Feather';
-import Entypo from 'react-native-vector-icons/Entypo';
-import {colors, sizes, fonts} from '../constants/theme';
+import {colors, fonts} from '../constants/theme';
 import {useNavigation} from '@react-navigation/native';
 
 const Appointments = props => {

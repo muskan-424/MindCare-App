@@ -55,6 +55,9 @@ const startServer = async () => {
   app.use('/api/resources', require('./routes/resources'));
   app.use('/api/groups', require('./routes/groups'));
   app.use('/api/goals', require('./routes/goals'));
+  app.use('/api/peers', require('./routes/peers'));
+  app.use('/api/institutions', require('./routes/institutions'));
+  app.use('/api/ai-intake', require('./routes/aiIntake'));
 
   // Start server
   const PORT = process.env.PORT || 5000;

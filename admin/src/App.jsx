@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+/* global localStorage */
+import React, { useCallback, useEffect, useState } from 'react';
 import { createAdminClient } from './api';
 import { colors } from './theme';
 
 export default function App() {
-  const [token, setToken] = useState(localStorage.getItem('ADMIN_TOKEN') || '');
+  const [token, setToken] = useState(localStorage?.getItem('ADMIN_TOKEN') || '');
   const [client, setClient] = useState(null);
   const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -11,7 +12,7 @@ export default function App() {
   const [moods, setMoods] = useState([]);
   const [error, setError] = useState('');
 
-  const initClient = (t) => {
+  const initClient = useCallback((t) => {
     const trimmed = t.trim();
     if (!trimmed) return;
     const c = createAdminClient(trimmed);
@@ -19,16 +20,16 @@ export default function App() {
     c.getUsers()
       .then(setUsers)
       .catch((e) => setError(e.message || 'Failed to load users'));
-  };
+  }, []);
 
   useEffect(() => {
     if (token) {
       initClient(token);
     }
-  }, []); // run once on mount
+  }, [token, initClient]);
 
   const handleSaveToken = () => {
-    localStorage.setItem('ADMIN_TOKEN', token.trim());
+    localStorage?.setItem('ADMIN_TOKEN', token.trim());
     initClient(token);
   };
 

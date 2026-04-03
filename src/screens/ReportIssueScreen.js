@@ -80,7 +80,7 @@ const ReportIssueScreen = ({ navigation, auth }) => {
         <Text style={styles.subtitle}>Share what's on your mind. We'll suggest support and check in if needed.</Text>
 
         {loadingCat ? (
-          <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 20 }} />
+          <ActivityIndicator size="small" color={colors.primary} style={styles.loadingIndicator} />
         ) : (
           <>
             <Text style={styles.label}>Category</Text>
@@ -181,6 +181,7 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.primary },
   chipText: { fontSize: 14, color: colors.secondary },
   chipTextActive: { color: colors.white },
+  loadingIndicator: { marginVertical: 20 },
   severityRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   sevBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center', elevation: 2 },
   sevBtnActive: { backgroundColor: colors.primary },

@@ -3,14 +3,12 @@ import {
   StyleSheet,
   Text,
   View,
-  Dimensions,
   Image,
   FlatList,
-  TouchableOpacity,
 } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import TouchableScale from 'react-native-touchable-scale';
-import { colors, sizes } from '../constants/theme';
+import { colors } from '../constants/theme';
 import { FAB } from 'react-native-paper';
 import api from '../utils/apiClient';
 import { data as localData } from '../constants/JournalsData';

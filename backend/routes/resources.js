@@ -16,9 +16,9 @@ router.get('/assigned', auth, async (req, res) => {
     // Flatten all assigned resources from reports into a single array
     const allResources = [];
     reports.forEach(report => {
-      report.assignedResources.forEach(res => {
+      report.assignedResources.forEach(resource => {
         allResources.push({
-          ...res,
+          ...resource,
           assignedAt: report.createdAt,
           reportCategory: report.category
         });

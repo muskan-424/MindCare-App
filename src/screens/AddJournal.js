@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet, Text, ScrollView, TouchableOpacity, View,
   TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Alert,
@@ -79,7 +79,7 @@ const AddJournal = ({ navigation }) => {
         </TouchableOpacity>
         {aiResult.riskLevel === 'HIGH' || aiResult.riskLevel === 'CRITICAL' ? (
           <TouchableOpacity
-            style={[styles.doneBtn, { backgroundColor: colors.redPink || '#E57373', marginTop: 10 }]}
+            style={styles.talkToTinkBtn}
             onPress={() => navigation.navigate('Chat', { name: 'Tink' })}>
             <Text style={styles.doneBtnText}>Talk to Tink 💜</Text>
           </TouchableOpacity>
@@ -99,7 +99,7 @@ const AddJournal = ({ navigation }) => {
           <Icon name="arrow-back" size={22} color={colors.secondary} />
         </TouchableOpacity>
         <Text style={styles.toolTitle}>New Entry</Text>
-        <TouchableOpacity style={[styles.saveBtn, loading && { opacity: 0.6 }]} onPress={save} disabled={loading}>
+        <TouchableOpacity style={[styles.saveBtn, loading && styles.saveBtnDisabled]} onPress={save} disabled={loading}>
           {loading ? (
             <ActivityIndicator size="small" color={colors.white} />
           ) : (
@@ -132,6 +132,7 @@ const styles = StyleSheet.create({
   toolBtn: { padding: 6 },
   toolTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: colors.secondary },
   saveBtn: { backgroundColor: colors.secondary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+  saveBtnDisabled: { opacity: 0.6 },
   saveBtnText: { color: colors.white, fontWeight: '700', fontSize: 13 },
   editor: { flex: 1, padding: 20, fontSize: 16, lineHeight: 26, color: colors.secondary },
   charCount: { paddingHorizontal: 20, paddingBottom: 8, fontSize: 12, color: colors.gray, textAlign: 'right' },
@@ -152,5 +153,6 @@ const styles = StyleSheet.create({
   sentimentFill: { height: 8, borderRadius: 4 },
   sentimentValue: { fontSize: 12, fontWeight: '700', color: colors.secondary, width: 40, textAlign: 'right' },
   doneBtn: { backgroundColor: colors.secondary, borderRadius: 24, paddingVertical: 14, alignItems: 'center' },
+  talkToTinkBtn: { backgroundColor: colors.redPink || '#E57373', borderRadius: 24, paddingVertical: 14, alignItems: 'center', marginTop: 10 },
   doneBtnText: { color: colors.white, fontWeight: '700', fontSize: 16 },
 });

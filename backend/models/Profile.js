@@ -39,6 +39,14 @@ const ProfileSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    isPeerMatchingEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    peerBio: {
+      type: String,
+      default: '',
+    },
   },
   { timestamps: true }
 );

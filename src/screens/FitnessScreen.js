@@ -3,13 +3,10 @@ import {
   StyleSheet,
   Text,
   View,
-  SafeAreaView,
-  Dimensions,
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
 import { colors } from '../constants/theme';
-import BrickList from 'react-native-masonry-brick-list';
 import api from '../utils/apiClient';
 import AnimatedLoader from 'react-native-animated-loader';
 import FitnessCategoryCard from '../components/FitnessCategoryCard';
@@ -20,11 +17,9 @@ const FitnessScreen = () => {
   const [categories, setCategories] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsError(false);
       try {
         const result = await api.get('/api/fitness/categories');
         setCategories(result.data);
@@ -39,7 +34,6 @@ const FitnessScreen = () => {
         };
         setCategories(fallbackData);
         setCategoryData(Object.keys(fallbackData));
-        setIsError(false);
       }
       setIsLoading(false);
     };
@@ -143,18 +137,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   categoryItem: { marginBottom: 4 },
-  item: {
-    flex: 1,
-    height: 160,
-    margin: 1,
-  },
-  list: {
-    flex: 1,
-    marginTop: 40,
-  },
-  innerStyle: {
-    justifyContent: 'space-between',
-  },
   lottie: {
     width: 200,
     height: 200,

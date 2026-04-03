@@ -3,14 +3,9 @@ import {
   StyleSheet,
   Text,
   View,
-  SafeAreaView,
-  Dimensions,
   Image,
 } from 'react-native';
-import {colors} from '../constants/theme';
-import BrickList from 'react-native-masonry-brick-list';
 import api from '../utils/apiClient';
-import base64 from 'react-native-base64';
 import AnimatedLoader from 'react-native-animated-loader';
 import Grid from 'react-native-grid-component';
 import FitnessContentCard from '../components/FitnessContentCard';
@@ -67,19 +62,17 @@ const fallbackContent = {
 };
 
 const FitnessContent = ({route}) => {
+  const { category, subcategory } = route.params;
   const [content, setContent] = useState({});
   const [title, setTitle] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
-  const [contentList, setList] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsError(false);
       setIsLoading(true);
       try {
         const result = await api.get(
-          `/api/fitness/${encodeURIComponent(route.params.category)}/${encodeURIComponent(route.params.subcategory)}/getContent`,
+          `/api/fitness/${encodeURIComponent(category)}/${encodeURIComponent(subcategory)}/getContent`,
         );
         setContent(result.data);
         setTitle(Object.keys(result.data));
@@ -93,22 +86,22 @@ const FitnessContent = ({route}) => {
         //console.log(categoryData[0])
       } catch (error) {
         console.warn('Fitness Content API Error:', error.message);
-        const byCategory = fallbackContent[route.params.category] || fallbackContent.Yoga || {};
-        const localContent = byCategory[route.params.subcategory] || {};
+        const byCategory = fallbackContent[category] || fallbackContent.Yoga || {};
+        const localContent = byCategory[subcategory] || {};
         setContent(localContent);
         setTitle(Object.keys(localContent));
-        setIsError(false);
       }
 
       setIsLoading(false);
     };
 
     fetchData();
-  }, []);
-  const _renderItem = (data, index) => (
+  }, [category, subcategory]);
+  const _renderItem = (data) => (
     <FitnessContentCard
       img_uri={content[data]}
-      category={data}></FitnessContentCard>
+      category={data}
+    />
   );
   return (
     <View style={styles.container}>
@@ -128,12 +121,14 @@ const FitnessContent = ({route}) => {
           data={title}
           showsVerticalScrollIndicator={false}
           numColumns={2}
-          columnWrapperStyle={{justifyContent: 'space-between'}}></Grid>
+          columnWrapperStyle={{justifyContent: 'space-between'}}
+        />
       ) : (
         <View style={{justifyContent: 'center', alignItems: 'center'}}>
           <Image
             source={require('../assets/no-data.jpg')}
-            style={{width: 200, height: 200}}></Image>
+            style={{width: 200, height: 200}}
+          />
           <Text style={{paddingHorizontal: 5}}>
             Uh ohh! We are hard at curating the most useful data for you.{' '}
           </Text>

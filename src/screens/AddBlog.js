@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useRef} from 'react';
 import {
   StyleSheet,
   Text,
@@ -15,11 +15,14 @@ import {
 import Entypo from 'react-native-vector-icons/Entypo';
 import {colors} from '../constants/theme';
 
+const Heading1Icon = ({tintColor}) => (
+  <Text style={[styles.tib, {color: tintColor}]}>H1</Text>
+);
+
 const AddStory = props => {
   const strikethrough = require('../assets/strikethrough.png'); //icon for strikethrough
   const video = require('../assets/video.png'); //icon for Addvideo
   const RichText = useRef(); //reference to the RichEditor component
-  const [article, setArticle] = useState('');
 
   function onPressAddImage() {
     // you can easily add images from your gallery
@@ -69,9 +72,7 @@ const AddStory = props => {
           ]}
           // map icons for self made actions
           iconMap={{
-            [actions.heading1]: ({tintColor}) => (
-              <Text style={[styles.tib, {color: tintColor}]}>H1</Text>
-            ),
+            [actions.heading1]: Heading1Icon,
             [actions.setStrikethrough]: strikethrough,
             ['insertVideo']: video,
           }}

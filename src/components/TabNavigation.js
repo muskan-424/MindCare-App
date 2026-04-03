@@ -1,15 +1,12 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Entypo from 'react-native-vector-icons/Entypo';
 import Feather from 'react-native-vector-icons/Feather';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import TherapistStackNavigation from './TherapistStackNavigation';
 // import FitnessScreen from '../screens/FitnessScreen';
 import { colors } from '../constants/theme';
 import { logTab } from '../utils/logTouch';
-import { View, Text } from 'react-native';
 import HomeStackNavigator from './HomeStackNavigation';
 import StoryScreen from '../screens/StoryScreen';
 import FitnessStackNavigator from './FitnessStackNavigation';
@@ -18,29 +15,27 @@ import FitnessStackNavigator from './FitnessStackNavigation';
 
 const Tab = createBottomTabNavigator();
 
-const HomeScreen = () => {
-  return (
-    <View>
-      <Text>Home Screen</Text>
-    </View>
-  );
+const getTabBarIcon = routeName => ({ color, size }) => {
+  if (routeName === 'HomeTab') {
+    return <Feather name="home" size={size} color={color} />;
+  }
+  if (routeName === 'Story') {
+    return <Entypo name="open-book" size={size} color={color} />;
+  }
+  if (routeName === 'TherapistTab') {
+    return <Fontisto name="doctor" size={size} color={color} />;
+  }
+  if (routeName === 'Fitness') {
+    return <Entypo name="check" size={size} color={color} />;
+  }
+  return null;
 };
 
 const TabNavigation = () => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          if (route.name === 'HomeTab') {
-            return <Feather name="home" size={size} color={color} />;
-          } else if (route.name === 'Story') {
-            return <Entypo name="open-book" size={size} color={color} />;
-          } else if (route.name === 'TherapistTab') {
-            return <Fontisto name="doctor" size={size} color={color} />;
-          } else if (route.name === 'Fitness') {
-            return <Entypo name="check" size={size} color={color} />;
-          }
-        },
+        tabBarIcon: getTabBarIcon(route.name),
         tabBarShowLabel: false,
         tabBarActiveTintColor: colors.white,
         tabBarInactiveTintColor: colors.white2,
@@ -69,5 +64,3 @@ const TabNavigation = () => {
 };
 
 export default TabNavigation;
-
-const styles = StyleSheet.create({});

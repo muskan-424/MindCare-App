@@ -17,13 +17,17 @@ import GratitudeScreen from '../screens/GratitudeScreen';
 import GroundingScreen from '../screens/GroundingScreen';
 import ReportIssueScreen from '../screens/ReportIssueScreen';
 import MoodTrackerScreen from '../screens/MoodTrackerScreen';
+import SafetyScreen from '../screens/SafetyScreen';
 import EmergencyContactScreen from '../screens/EmergencyContactScreen';
 import WellnessPlanScreen from '../screens/WellnessPlanScreen';
 import AssignedResourcesScreen from '../screens/AssignedResourcesScreen';
 import GroupSessionsScreen from '../screens/GroupSessionsScreen';
 import GoalTrackingScreen from '../screens/GoalTrackingScreen';
+import PeerMatchingScreen from '../screens/PeerMatchingScreen';
+import InstitutionDashboardScreen from '../screens/InstitutionDashboardScreen';
 // import BubbleWrapGame from '../screens/BubbleWrapGame';
 // import PunchGame from '../screens/PunchGame';
+import MultidimensionalIntakeScreen from '../screens/MultidimensionalIntakeScreen';
 
 const HomeStackNavigator = () => {
   return (
@@ -39,6 +43,7 @@ const HomeStackNavigator = () => {
         name="Home"
         component={HomeScreen}
       />
+      <Stack.Screen name="MultidimensionalIntake" component={MultidimensionalIntakeScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="Chat" component={ChatWithTink} />
@@ -59,6 +64,8 @@ const HomeStackNavigator = () => {
       <Stack.Screen name="AssignedResources" component={AssignedResourcesScreen} />
       <Stack.Screen name="GroupSessions" component={GroupSessionsScreen} />
       <Stack.Screen name="GoalTracking" component={GoalTrackingScreen} />
+      <Stack.Screen name="PeerMatching" component={PeerMatchingScreen} />
+      <Stack.Screen name="InstitutionDashboard" component={InstitutionDashboardScreen} />
     </Stack.Navigator>
   );
 };

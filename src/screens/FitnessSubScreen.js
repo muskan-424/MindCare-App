@@ -3,12 +3,9 @@ import {
   StyleSheet,
   Text,
   View,
-  SafeAreaView,
   Dimensions,
   Image,
 } from 'react-native';
-import {colors} from '../constants/theme';
-import base64 from 'react-native-base64';
 import AnimatedLoader from 'react-native-animated-loader';
 import Grid from 'react-native-grid-component';
 import FitnessSubScreenCard from '../components/FitnessSubScreenCard';
@@ -40,36 +37,35 @@ const fallbackSubcategories = {
 };
 
 const FitnessSubScreen = ({route}) => {
+  const { category } = route.params;
   const [content, setContent] = useState([]);
   const [title, setTitle] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsError(false);
       try {
-        const result = await api.get(`/api/fitness/${encodeURIComponent(route.params.category)}`);
+        const result = await api.get(`/api/fitness/${encodeURIComponent(category)}`);
         setContent(result.data);
         setTitle(Object.keys(result.data));
       } catch (error) {
         console.warn('Fitness SubScreen API Error:', error.message);
-        const fallback = fallbackSubcategories[route.params.category] || fallbackSubcategories.Yoga || {};
+        const fallback = fallbackSubcategories[category] || fallbackSubcategories.Yoga || {};
         setContent(fallback);
         setTitle(Object.keys(fallback));
-        setIsError(false);
       }
 
       setIsLoading(false);
     };
 
     fetchData();
-  }, []);
-  const _renderItem = (data, i) => (
+  }, [category]);
+  const _renderItem = (data) => (
     <FitnessSubScreenCard
-      img_uri={content[data]['icon']}
+      img_uri={content[data].icon}
       subcategory={data}
-      category={route.params.category}></FitnessSubScreenCard>
+      category={category}
+    />
   );
   return (
     <View style={styles.container}>
@@ -87,16 +83,17 @@ const FitnessSubScreen = ({route}) => {
           renderItem={_renderItem}
           //renderPlaceholder={this._renderPlaceholder}
           data={title}
-          numColumns={1}
           contentContainerStyle={styles.innerStyle}
           showsVerticalScrollIndicator={false}
           cardWidth={Dimensions.get('window').width}
-          numColumns={2}></Grid>
+          numColumns={2}
+        />
       ) : (
         <View style={{justifyContent: 'center', alignItems: 'center'}}>
           <Image
             source={require('../assets/no-data.jpg')}
-            style={{width: 200, height: 200}}></Image>
+            style={{width: 200, height: 200}}
+          />
           <Text style={{paddingHorizontal: 5}}>
             Uh ohh! We are hard at curating the most useful data for you.{' '}
           </Text>
@@ -114,11 +111,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  item: {
-    flex: 1,
-    height: 160,
-    margin: 1,
   },
   list: {
     flex: 1,

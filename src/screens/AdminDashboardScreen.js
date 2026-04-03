@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList,
-  ScrollView, ActivityIndicator, TextInput, Alert, Modal, Linking,
+  ScrollView, ActivityIndicator, TextInput, Alert, Modal, Linking, Dimensions
 } from 'react-native';
 import api from '../utils/apiClient';
 import { colors } from '../constants/theme';
+import { LineChart, ContributionGraph } from 'react-native-chart-kit';
 
 const ADMIN_TOKEN = 'CHANGE_ME_ADMIN_TOKEN';
 const H = { headers: { 'x-admin-token': ADMIN_TOKEN } };
@@ -955,6 +956,93 @@ const GroupsTab = () => {
   );
 };
 
+// ─── Analytics Tab ───────────────────────────────────────────────────────────
+const AnalyticsTab = () => {
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState({ riskTrend: [], moodHeatmap: [] });
+  
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get('/api/admin/analytics', H);
+        setData(res.data || { riskTrend: [], moodHeatmap: [] });
+      } catch (e) {
+        Alert.alert('Error', 'Failed to load analytics.');
+      }
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  if (loading) return <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />;
+
+  const screenWidth = Dimensions.get('window').width - 32;
+
+  // Format Risk Trend
+  const riskLabels = data.riskTrend.map(d => new Date(d._id.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })).slice(-10); // limit to last 10 points
+  const riskCounts = data.riskTrend.map(d => d.count).slice(-10);
+  
+  // Format Heatmap
+  const heatmapValues = data.moodHeatmap.map(d => ({ date: d._id, count: d.avgRating }));
+
+  return (
+    <ScrollView contentContainerStyle={styles.pendingScroll}>
+      <Text style={[styles.sectionTitle, { fontSize: 20, marginBottom: 16 }]}>Platform Analytics</Text>
+
+      <Text style={styles.modalLabel}>System Risk Trend (Last 30 Days)</Text>
+      {riskCounts.length > 0 ? (
+        <View style={{ alignItems: 'center', marginTop: 8 }}>
+          <LineChart
+            data={{
+              labels: riskLabels.length ? riskLabels : ['No Data'],
+              datasets: [{ data: riskCounts.length ? riskCounts : [0] }]
+            }}
+            width={screenWidth}
+            height={220}
+            fromZero
+            chartConfig={{
+              backgroundColor: colors.white,
+              backgroundGradientFrom: colors.white,
+              backgroundGradientTo: colors.white,
+              decimalPlaces: 0,
+              color: (opacity = 1) => `rgba(229, 115, 115, ${opacity})`,
+              labelColor: (opacity = 1) => colors.gray,
+              propsForDots: { r: '4', strokeWidth: '2', stroke: '#C62828' }
+            }}
+            bezier
+            style={{ borderRadius: 12, elevation: 1, padding: 10, backgroundColor: colors.white }}
+          />
+        </View>
+      ) : (
+        <Text style={styles.placeholderText}>No risk reports in the last 30 days.</Text>
+      )}
+
+      <Text style={[styles.modalLabel, { marginTop: 24 }]}>Global Mood Heatmap</Text>
+      {heatmapValues.length > 0 ? (
+        <View style={{ alignItems: 'center', marginTop: 8 }}>
+          <ContributionGraph
+            values={heatmapValues}
+            endDate={new Date()}
+            numDays={90}
+            width={screenWidth}
+            height={220}
+            chartConfig={{
+              backgroundColor: colors.white,
+              backgroundGradientFrom: colors.white,
+              backgroundGradientTo: colors.white,
+              color: (opacity = 1) => `rgba(129, 199, 132, ${opacity})`,
+              labelColor: (opacity = 1) => colors.gray,
+            }}
+            style={{ borderRadius: 12, elevation: 1, padding: 10, backgroundColor: colors.white }}
+          />
+        </View>
+      ) : (
+        <Text style={styles.placeholderText}>No mood data recorded yet.</Text>
+      )}
+    </ScrollView>
+  );
+};
 
 // ─── Main Admin Dashboard ────────────────────────────────────────────────────
 const AdminDashboardScreen = () => {
@@ -987,7 +1075,6 @@ const AdminDashboardScreen = () => {
       interval = setInterval(loadFeed, 5000);
     }
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   useEffect(() => {
@@ -1023,6 +1110,7 @@ const AdminDashboardScreen = () => {
 
   const TABS = [
     { id: 'pending', label: '🔔 Actions' },
+    { id: 'analytics', label: '📈 Analytics' },
     { id: 'feed', label: '📡 Live Feed' },
     { id: 'users', label: '👥 Users' },
     { id: 'groups', label: '🤝 Groups' },
@@ -1050,6 +1138,8 @@ const AdminDashboardScreen = () => {
 
       {activeTab === 'pending' && <PendingTab />}
       
+      {activeTab === 'analytics' && <AnalyticsTab />}
+
       {activeTab === 'groups' && <GroupsTab />}
 
       {activeTab === 'feed' && (
