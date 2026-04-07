@@ -32,7 +32,6 @@ const EmergencyContactSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-EmergencyContactSchema.index({ user: 1 });
 EmergencyContactSchema.index({ status: 1 });
 
 module.exports = mongoose.model('EmergencyContact', EmergencyContactSchema);
