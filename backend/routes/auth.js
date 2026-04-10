@@ -103,4 +103,73 @@ router.post(
   }
 );
 
+// @route   POST /api/auth/forgot-password
+// @desc    Generate password reset OTP
+// @access  Public
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email: email.toLowerCase() });
+    
+    if (!user) {
+      // Don't leak whether user exists, just return success
+      return res.status(200).json({ success: true, message: 'If that user exists, we have sent a reset code.' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    user.resetPasswordToken = otp;
+    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 mins
+    await user.save();
+
+    // In a real app, send email here. For dev, log it.
+    console.log(`\n===================================`);
+    console.log(`🔐 PASSWORD RESET OTP GENERATED`);
+    console.log(`USER: ${email}`);
+    console.log(`OTP: ${otp}`);
+    console.log(`===================================\n`);
+
+    res.status(200).json({ success: true, message: 'Password reset code has been sent (see backend console).' });
+  } catch (err) {
+    console.error('Forgot password error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset password with OTP
+// @access  Public
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    const user = await User.findOne({ 
+      email: email.toLowerCase(),
+      resetPasswordToken: otp,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid or expired reset token.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'Password successfully reset.' });
+  } catch (err) {
+    console.error('Reset password error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

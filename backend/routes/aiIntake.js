@@ -49,8 +49,8 @@ router.post('/session/start', async (req, res) => {
       questions: getSessionQuestions(),
     });
   } catch (err) {
-    console.error('AI Intake session start error:', err.message);
-    res.status(500).json({ error: 'Failed to start AI intake session' });
+    console.error('AI Intake session start error:', err);
+    res.status(500).json({ error: 'Failed to start AI intake session', details: err.message, stack: err.stack });
   }
 });
 
@@ -63,7 +63,7 @@ router.post('/session/:sessionId/text-response', async (req, res) => {
     if (!session) return res.status(404).json({ error: 'Session not found' });
     if (session.status === 'completed') return res.status(400).json({ error: 'Session already completed' });
 
-    const textResult = assessTextPayload(req.body || {});
+    const textResult = await assessTextPayload(req.body || {});
 
     const fv = await AssessmentFeatureVector.findOne({ session: session._id });
     fv.text = textResult;

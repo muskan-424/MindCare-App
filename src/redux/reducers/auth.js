@@ -4,6 +4,7 @@ import {
   CLEAR_WELCOME,
   CONCERN_UPDATE,
   UPDATE_USER,
+  LOGOUT,
 } from '../actions/type';
 
 const initialState = {
@@ -36,7 +37,12 @@ export default function(state = initialState, action) {
         isLogin: false,
         welcomeMessage: null,
       };
+    case LOGOUT:
+      return {
+        ...initialState,
+      };
     case CLEAR_WELCOME:
+
       return { ...state, welcomeMessage: null };
     case CONCERN_UPDATE:
       return {

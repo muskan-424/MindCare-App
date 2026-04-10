@@ -11,49 +11,52 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { colors } from '../constants/theme';
-import { connect } from 'react-redux';
-import { login } from '../redux/actions/auth';
-import { validateEmail, validatePassword } from '../utils/validation';
+import { validatePassword } from '../utils/validation';
+import api from '../utils/apiClient';
 
-const Login = props => {
-  const [state, setState] = useState({
-    email: '',
-    password: ''
-  });
-  const [error, setError] = useState('');
-  const [emailError, setEmailError] = useState('');
+const ResetPasswordScreen = ({ route, navigation }) => {
+  const { email } = route.params || {};
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
+  const handleResetPassword = async () => {
     setError('');
-    setEmailError('');
     setPasswordError('');
 
-    const emailCheck = validateEmail(state.email);
-    if (!emailCheck.valid) {
-      setEmailError(emailCheck.message);
+    if (!otp || otp.length < 6) {
+      setError('Please enter a valid 6-digit OTP code.');
+      return;
     }
 
-    const passwordCheck = validatePassword(state.password);
+    const passwordCheck = validatePassword(newPassword);
     if (!passwordCheck.valid) {
       setPasswordError(passwordCheck.message);
-    }
-
-    if (!emailCheck.valid || !passwordCheck.valid) {
       return;
     }
 
     setLoading(true);
     try {
-      await props.login({ email: state.email.trim(), password: state.password });
-      // Success: auth state updates and user is navigated to app; confirmation shows on Home
+      const response = await api.post(`/api/auth/reset-password`, { 
+        email, 
+        otp, 
+        newPassword 
+      });
+      
+      if (response.data.success) {
+        Alert.alert('Success', 'Password successfully reset. You can now login with your new password.', [
+          { text: 'OK', onPress: () => navigation.navigate('Login') }
+        ]);
+      }
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
+      setError(err.response?.data?.error || 'Failed to reset password. Please check your OTP.');
     }
     setLoading(false);
   };
@@ -76,35 +79,32 @@ const Login = props => {
               source={require('../assets/yoga_main.jpg')}
               style={{
                 width: Dimensions.get('screen').width,
-                height: Dimensions.get('screen').width
+                height: Dimensions.get('screen').width * 0.8
               }}
             />
           </View>
-          <View style={styles.signUpContainer}>
-            <Text style={styles.headerText}>Login</Text>
+          <View style={styles.contentContainer}>
+            <Text style={styles.headerText}>Reset Password</Text>
+            <Text style={styles.subtext}>Enter the 6-digit code sent to you and your new password.</Text>
+            
             <TextInput
-              style={[styles.textInput, (emailError || error) && styles.inputError]}
-              placeholder={'Email'}
+              style={[styles.textInput, error && styles.inputError]}
+              placeholder={'6-digit OTP Code'}
               placeholderTextColor={colors.gray}
-              value={state.email}
-              onChangeText={text => {
-                setState({ ...state, email: text });
-                const check = validateEmail(text);
-                setEmailError(check.valid ? '' : check.message);
-                if (check.valid) setError('');
-              }}
-              autoCapitalize="none"
-              keyboardType="email-address"
+              value={otp}
+              onChangeText={setOtp}
+              keyboardType="number-pad"
+              maxLength={6}
             />
-            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+            
             <View style={styles.passwordRow}>
               <TextInput
                 style={[styles.textInput, styles.passwordInput, (passwordError || error) && styles.inputError]}
-                placeholder={'Password'}
+                placeholder={'New Password'}
                 placeholderTextColor={colors.gray}
-                value={state.password}
+                value={newPassword}
                 onChangeText={text => {
-                  setState({ ...state, password: text });
+                  setNewPassword(text);
                   const check = validatePassword(text);
                   setPasswordError(check.valid ? '' : check.message);
                   if (check.valid) setError('');
@@ -123,23 +123,23 @@ const Login = props => {
               </TouchableOpacity>
             </View>
             {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
-            {error && !emailError && !passwordError ? (
+
+            {error && !passwordError ? (
               <Text style={styles.errorText}>{error}</Text>
             ) : null}
-            <TouchableOpacity onPress={handleLogin} disabled={loading}>
+            
+            <TouchableOpacity onPress={handleResetPassword} disabled={loading} style={{ marginTop: 20 }}>
               <View style={[styles.submitButton, loading && styles.submitButtonDisabled]}>
                 {loading ? (
                   <ActivityIndicator color={colors.white} size="small" />
                 ) : (
-                  <Text style={styles.submitText}>Login</Text>
+                  <Text style={styles.submitText}>Reset Password</Text>
                 )}
               </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.navigation.navigate('SignUp')}>
-              <Text style={styles.already}>Don't have an account?</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => props.navigation.navigate('ForgotPassword')}>
-              <Text style={styles.already}>Forgot Password?</Text>
+
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.backButton}>Back to Login</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -148,7 +148,7 @@ const Login = props => {
   );
 };
 
-export default connect(null, { login })(Login);
+export default ResetPasswordScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -166,34 +166,36 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.white,
   },
-  signUpContainer: {
+  contentContainer: {
     backgroundColor: colors.white,
     flex: 1,
     position: 'relative',
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
-    top: -10
+    top: -20,
+    paddingTop: 10
   },
   textInput: {
     backgroundColor: colors.accent,
-    margin: 10,
-    height: 40,
+    marginHorizontal: 20,
+    marginVertical: 10,
+    height: 50,
     borderRadius: 30,
     elevation: 1,
-    padding: 10,
+    paddingHorizontal: 20,
     color: colors.black
   },
   passwordRow: {
     position: 'relative',
-    marginHorizontal: 10,
+    marginHorizontal: 0,
   },
   passwordInput: {
-    marginHorizontal: 0,
+    marginHorizontal: 20,
   },
   eyeButton: {
     position: 'absolute',
-    right: 18,
-    top: 10,
+    right: 35,
+    top: 22,
     height: 24,
     width: 24,
     justifyContent: 'center',
@@ -203,21 +205,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.redPink,
   },
-  radioButton: {
-    flexDirection: 'row',
-    paddingLeft: 20
-  },
-  radio: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
   submitButton: {
     alignSelf: 'center',
-    width: 150,
+    width: 200,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.yellow,
-    height: 40,
+    height: 50,
     borderRadius: 60
   },
   submitText: {
@@ -229,11 +223,18 @@ const styles = StyleSheet.create({
   },
   headerText: {
     color: colors.secondary,
-    fontSize: 40,
+    fontSize: 28,
     textTransform: 'uppercase',
-    padding: 10,
+    paddingTop: 10,
+    paddingBottom: 5,
     alignSelf: 'center',
     fontWeight: 'bold'
+  },
+  subtext: {
+    textAlign: 'center',
+    paddingHorizontal: 25,
+    marginBottom: 15,
+    color: colors.gray
   },
   errorText: {
     color: colors.redPink || '#c62828',
@@ -246,10 +247,11 @@ const styles = StyleSheet.create({
   submitButtonDisabled: {
     opacity: 0.7
   },
-  already: {
-    alignSelf: 'flex-end',
-    paddingRight: 20,
-    paddingBottom: 10,
-    color: colors.secondary
+  backButton: {
+    alignSelf: 'center',
+    marginTop: 20,
+    paddingBottom: 20,
+    color: colors.secondary,
+    fontWeight: 'bold'
   }
 });

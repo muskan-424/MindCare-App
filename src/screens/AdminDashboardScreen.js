@@ -6,9 +6,16 @@ import {
 import api from '../utils/apiClient';
 import { colors } from '../constants/theme';
 import { LineChart, ContributionGraph } from 'react-native-chart-kit';
+import { useDispatch } from 'react-redux';
+import { logout } from '../redux/actions/auth';
+import { useNavigation } from '@react-navigation/native';
+import { ADMIN_TOKEN } from '@env';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
-const ADMIN_TOKEN = 'CHANGE_ME_ADMIN_TOKEN';
+
+// const ADMIN_TOKEN = 'CHANGE_ME_ADMIN_TOKEN'; // Handled by @env import above
 const H = { headers: { 'x-admin-token': ADMIN_TOKEN } };
+
 
 const RISK_COLORS = { LOW: '#81C784', MEDIUM: '#FFB74D', HIGH: '#E57373', CRITICAL: '#C62828' };
 const ACTION_COLORS = { none: colors.gray, contacted: '#4FC3F7', referred: '#FFB74D', resolved: '#81C784' };
@@ -1044,9 +1051,77 @@ const AnalyticsTab = () => {
   );
 };
 
+// ─── Notes Tab ──────────────────────────────────────────────────────────────
+const NotesTab = () => {
+  const navigation = useNavigation();
+  const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/api/admin/users', H);
+      setUsers(res.data || []);
+    } catch (e) {
+      Alert.alert('Error', 'Failed to load users for notes.');
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = users.filter(u => 
+    u.name?.toLowerCase().includes(search.toLowerCase()) || 
+    u.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (loading) return <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />;
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={styles.notesSearchContainer}>
+        <TextInput
+          style={styles.notesSearchInput}
+          placeholder="Search patient by name or email..."
+          value={search}
+          onChangeText={setSearch}
+          placeholderTextColor={colors.gray}
+        />
+      </View>
+      <FlatList
+        data={filtered}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity 
+            style={styles.noteUserCard}
+            onPress={() => navigation.navigate('PatientHistory', { patientId: item.id, patientName: item.name })}
+          >
+            <View style={styles.noteUserAvatar}>
+              <Text style={styles.noteUserAvatarText}>{item.name?.charAt(0)}</Text>
+            </View>
+            <View style={styles.noteUserInfo}>
+              <Text style={styles.noteUserName}>{item.name}</Text>
+              <Text style={styles.noteUserEmail}>{item.email}</Text>
+            </View>
+            <View style={styles.noteActionBtn}>
+              <MaterialIcons name="chevron-right" size={24} color={colors.gray} />
+            </View>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={<Text style={styles.placeholderText}> {search ? 'No patients found matching search.' : 'No patients found.'}</Text>}
+      />
+    </View>
+  );
+};
+
 // ─── Main Admin Dashboard ────────────────────────────────────────────────────
+
 const AdminDashboardScreen = () => {
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState('pending');
+
   const [feed, setFeed] = useState([]);
   const [loadingFeed, setLoadingFeed] = useState(false);
   const [users, setUsers] = useState([]);
@@ -1113,14 +1188,24 @@ const AdminDashboardScreen = () => {
     { id: 'analytics', label: '📈 Analytics' },
     { id: 'feed', label: '📡 Live Feed' },
     { id: 'users', label: '👥 Users' },
+    { id: 'notes', label: '📝 Notes' },
     { id: 'groups', label: '🤝 Groups' },
   ];
+
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>MindCare Admin</Text>
-        <Text style={styles.headerSubtitle}>Admin Verification Center</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View>
+            <Text style={styles.headerTitle}>MindCare Admin</Text>
+            <Text style={styles.headerSubtitle}>Admin Verification Center</Text>
+          </View>
+          <TouchableOpacity style={styles.logoutBtn} onPress={() => dispatch(logout())}>
+            <MaterialIcons name="logout" size={24} color={colors.white} />
+          </TouchableOpacity>
+        </View>
+
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabContainer}>
           {TABS.map(t => (
             <TouchableOpacity
@@ -1141,6 +1226,9 @@ const AdminDashboardScreen = () => {
       {activeTab === 'analytics' && <AnalyticsTab />}
 
       {activeTab === 'groups' && <GroupsTab />}
+
+      {activeTab === 'notes' && <NotesTab />}
+
 
       {activeTab === 'feed' && (
         <View style={styles.feedContainer}>
@@ -1333,4 +1421,28 @@ const styles = StyleSheet.create({
   planTaskSub: { fontSize: 12, color: colors.gray },
   addTaskBtn: { backgroundColor: colors.cream, borderRadius: 10, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.gray3, borderStyle: 'dashed', marginBottom: 8 },
   addTaskBtnText: { color: colors.primary, fontWeight: '700' },
+  // Logout Button
+  logoutBtn: { padding: 8, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12 },
+  // Crisis Modal Missing Styles
+  crisisContactBox: { backgroundColor: '#FFEBEE', borderRadius: 12, padding: 16, marginBottom: 16 },
+  crisisContactName: { fontSize: 18, fontWeight: '800', color: '#B71C1C' },
+  crisisContactRel: { fontSize: 13, color: '#D32F2F', fontWeight: '600', marginBottom: 4 },
+  crisisContactPhone: { fontSize: 20, fontWeight: 'bold', color: '#2D3436', marginVertical: 8 },
+  crisisNoteBox: { backgroundColor: 'rgba(183, 28, 28, 0.05)', borderRadius: 8, padding: 10, marginTop: 10 },
+  crisisNoteLabel: { fontSize: 11, fontWeight: 'bold', color: '#B71C1C', textTransform: 'uppercase', marginBottom: 2 },
+  crisisNoteText: { fontSize: 13, color: '#2D3436', fontStyle: 'italic' },
+  crisisCallCount: { fontSize: 12, color: colors.gray, marginTop: 12, textAlign: 'center' },
+  dialBtn: { backgroundColor: '#B71C1C', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginVertical: 16 },
+  dialBtnText: { color: colors.white, fontWeight: 'bold', fontSize: 15 },
+  // Notes Tab Styles
+  notesSearchContainer: { padding: 16, backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.gray3 },
+  notesSearchInput: { backgroundColor: colors.cream, borderRadius: 12, padding: 12, fontSize: 14, color: colors.secondary },
+  noteUserCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.white, padding: 16, borderBottomWidth: 1, borderBottomColor: colors.gray3 },
+  noteUserAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  noteUserAvatarText: { color: colors.white, fontWeight: 'bold', fontSize: 18 },
+  noteUserInfo: { flex: 1 },
+  noteUserName: { fontSize: 15, fontWeight: '700', color: colors.secondary },
+  noteUserEmail: { fontSize: 12, color: colors.gray, marginTop: 2 },
+  noteActionBtn: { padding: 10 },
 });
+

@@ -4,8 +4,9 @@
  */
 
 import { GOOGLE_API_KEY } from '@env';
-const GEMINI_API_KEY = GOOGLE_API_KEY;
-const MODEL = 'gemini-2.5-flash';
+const GEMINI_API_KEY = (GOOGLE_API_KEY || '').replace(/^"|"$|^'|'$/g, '');
+// Using gemini-flash-latest to avoid 503 high demand errors gracefully
+const MODEL = 'gemini-flash-latest';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 const SYSTEM_PROMPT = `You are "Tink", an empathetic, supportive, and knowledgeable AI mental health assistant for the MindCare app.
@@ -54,9 +55,14 @@ function buildContents(history, newMessage) {
 }
 
 /**
- * Send a message to Gemini and get a reply.
+ * Helper to pause execution for a given number of milliseconds
  */
-export async function sendMessageToGemini(message, history = []) {
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Send a message to Gemini and get a reply (with automatic retries).
+ */
+export async function sendMessageToGemini(message, history = [], retries = 2) {
   const contents = buildContents(history, message);
 
   const body = {
@@ -70,23 +76,39 @@ export async function sendMessageToGemini(message, history = []) {
     },
   };
 
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
 
-  const data = await response.json();
+      const data = await response.json();
 
-  if (!response.ok) {
-    // Log the full error to help debugging
-    console.error('Gemini API Error:', JSON.stringify(data, null, 2));
-    const errMsg = data?.error?.message || `HTTP ${response.status}`;
-    throw new Error(errMsg);
+      if (!response.ok) {
+        // If it's a 503 or 429 and we still have retries left, delay and try again
+        if ((response.status === 503 || response.status === 429) && attempt < retries) {
+          console.warn(`Gemini API busy (Status ${response.status}). Retrying in 2 seconds... (Attempt ${attempt + 1}/${retries})`);
+          await delay(2000 * (attempt + 1)); // Exponential backoff spacing
+          continue;
+        }
+
+        // Log the full error to help debugging if all retries fail
+        console.error('Gemini API Error:', JSON.stringify(data, null, 2));
+        const errMsg = data?.error?.message || `HTTP ${response.status}`;
+        throw new Error(errMsg);
+      }
+
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('Empty response from Gemini');
+
+      return text.trim();
+      
+    } catch (err) {
+      if (attempt === retries) {
+        throw err; // Re-throw the error on the final attempt
+      }
+    }
   }
-
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('Empty response from Gemini');
-
-  return text.trim();
 }

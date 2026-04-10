@@ -23,6 +23,8 @@ const AssessmentFusionResultSchema = new mongoose.Schema(
     },
     confidence: { type: Number, default: 0 },
     contradictionFlags: { type: [String], default: [] },
+    aiMarkers: { type: [String], default: [] },
+    primaryEmotions: { type: [String], default: [] },
     recommendations: { type: [String], default: [] },
     modelVersion: { type: String, default: 'fusion-v1-stub' },
   },

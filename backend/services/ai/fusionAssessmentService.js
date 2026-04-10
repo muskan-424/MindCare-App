@@ -39,9 +39,9 @@ function fuseAssessment(featureVector) {
   const voice = featureVector?.voice || {};
   const vision = featureVector?.vision || {};
 
-  const wText = 0.35;
-  const wVoice = 0.3;
-  const wVision = 0.35;
+  const wText = 0.50; // Text is now Gemini-driven (higher weight)
+  const wVoice = 0.25; // Stub/Heuristic
+  const wVision = 0.25; // Stub/Heuristic
 
   const riskScore = Math.max(
     0,
@@ -77,8 +77,10 @@ function fuseAssessment(featureVector) {
     riskLevel,
     confidence,
     contradictionFlags,
+    aiMarkers: text.features?.clinicalMarkers || [],
+    primaryEmotions: text.features?.primaryEmotions || [],
     recommendations,
-    modelVersion: 'fusion-v1-stub',
+    modelVersion: 'fusion-v2-gemini',
   };
 }
 

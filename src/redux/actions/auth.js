@@ -1,4 +1,4 @@
-import { REGISTER_SUCCESS, CLEAR_WELCOME } from './type';
+import { REGISTER_SUCCESS, CLEAR_WELCOME, LOGOUT } from './type';
 import api from '../../utils/apiClient';
 import { ToastAndroid, Platform } from 'react-native';
 
@@ -51,3 +51,8 @@ export const login = ({ email, password }) => async dispatch => {
     throw new Error(message);
   }
 };
+
+export const logout = () => dispatch => {
+  dispatch({ type: LOGOUT });
+};
+

@@ -7,3 +7,5 @@ export const REGISTER_FAIL = 'REGISTER_FAIL';
 export const CLEAR_WELCOME = 'CLEAR_WELCOME';
 export const CONCERN_UPDATE = 'CONCERN_UPDATE';
 export const UPDATE_QUOTE_OF_THE_DAY = 'UPDATE_QUOTE_OF_THE_DAY';
+export const LOGOUT = 'LOGOUT';
+

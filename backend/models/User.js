@@ -33,6 +33,12 @@ const UserSchema = new mongoose.Schema(
       ref: 'Institution',
       default: null,
     },
+    resetPasswordToken: {
+      type: String,
+    },
+    resetPasswordExpires: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );

@@ -8,11 +8,7 @@ client.on('error', (err) => console.log('Redis Client Error', err));
 client.on('connect', () => console.log('Redis connected'));
 
 const connectRedis = async () => {
-  try {
-    await client.connect();
-  } catch (err) {
-    console.error('Failed to connect to Redis', err);
-  }
+  console.log('Skipping Redis locally to prevent hang');
 };
 
 module.exports = { client, connectRedis };

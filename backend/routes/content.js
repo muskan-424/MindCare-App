@@ -32,9 +32,9 @@ router.get('/search', auth, async (req, res) => {
             const fusion = await AssessmentFusionResult.findOne({ user: req.user.id }).sort({ createdAt: -1 });
             if (fusion) {
                 const keywords = [ fusion.riskLevel ];
-                if (fusion.recommendations && fusion.recommendations[0]) {
-                    keywords.push(fusion.recommendations[0]);
-                }
+                if (fusion.primaryEmotions?.length) keywords.push(fusion.primaryEmotions[0]);
+                if (fusion.aiMarkers?.length) keywords.push(fusion.aiMarkers[0]);
+                
                 safeQuery = `mental health coping strategies ${keywords.join(' ')} relaxation safe`;
             } else {
                 safeQuery = SAFETY_MAPPINGS['meditation']; // fallback to meditation

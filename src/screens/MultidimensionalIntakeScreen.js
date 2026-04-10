@@ -27,17 +27,47 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
+  const [isInitializing, setIsInitializing] = useState(false);
+
+  // Helper to wait a few seconds
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
   const startSession = async () => {
-    try {
-      setError('');
-      const res = await api.post('/api/aiIntake/session/start', {
-        triggerType: 'login_quick',
-        consent: { cameraConsent: true, micConsent: true, textConsent: true }
-      });
-      setSessionId(res.data.sessionId);
-      setStep(1); // Move to Text Input
-    } catch (e) {
-      setError(e.response?.data?.error || 'Failed to initialize AI Intake session.');
+    setIsInitializing(true);
+    let attempts = 0;
+    const maxRetries = 2; // Try up to 3 times total
+
+    while (attempts <= maxRetries) {
+      try {
+        setError('');
+        const res = await api.post('/api/aiIntake/session/start', {
+          triggerType: 'login_quick',
+          consent: { cameraConsent: true, micConsent: true, textConsent: true }
+        });
+        
+        setSessionId(res.data.sessionId);
+        setStep(1); // Move to Text Input
+        setIsInitializing(false);
+        return; // Success! Exit loop.
+        
+      } catch (e) {
+        console.warn(`AI Intake session start failed (Attempt ${attempts + 1}/${maxRetries + 1}):`, e.response?.status, e.message);
+        
+        // If it was a 502 Bad Gateway (Render cold start) or 503, wait and retry.
+        if ((e.response?.status === 502 || e.response?.status === 503 || !e.response) && attempts < maxRetries) {
+          attempts++;
+          setError(`Waking up secure servers... Please wait (${attempts}/${maxRetries})`);
+          await delay(3000 * attempts); // 3s, then 6s delay
+          continue; // Try again
+        }
+
+        // If we ran out of retries or got a different fatal error, auto-skip to Home
+        const todayStr = new Date().toISOString().slice(0, 10);
+        await AsyncStorage.setItem('MindCare_dismissedCheckInDate', todayStr);
+        setIsInitializing(false);
+        navigation.navigate('Home');
+        return;
+      }
     }
   };
 
@@ -140,10 +170,16 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
             <Text style={styles.cardText}>
               All data is processed securely and is never stored as raw media files on our servers.
             </Text>
-            <TouchableOpacity style={styles.actionBtn} onPress={startSession}>
-              <Text style={styles.actionBtnText}>I Agree, Start Scan</Text>
+            <TouchableOpacity style={styles.actionBtn} onPress={startSession} disabled={isInitializing}>
+              <Text style={styles.actionBtnText}>{isInitializing ? "Connecting to Server..." : "I Agree, Start Scan"}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={{marginTop:16, alignItems:'center'}} onPress={() => navigation.navigate('Home')}>
+            <TouchableOpacity 
+              style={{marginTop:16, alignItems:'center'}} 
+              onPress={async () => {
+                const todayStr = new Date().toISOString().slice(0, 10);
+                await AsyncStorage.setItem('MindCare_dismissedCheckInDate', todayStr);
+                navigation.navigate('Home');
+              }}>
               <Text style={{color: colors.gray}}>Skip for now</Text>
             </TouchableOpacity>
           </View>
