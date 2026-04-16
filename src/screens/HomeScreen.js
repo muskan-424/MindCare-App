@@ -127,10 +127,12 @@ const HomeScreen = props => {
     })();
   }, []);
 
-  // Daily check-in: show assessment when user is logged in and has not logged mood today (for burnout prediction history)
+  // Daily check-in: show assessment when user has not logged mood today.
+  // Skip if welcomeMessage is set — that effect handles the navigation so we don't race.
   useEffect(() => {
     const userId = props.auth.user?._id;
     if (!userId) return;
+    if (props.auth.welcomeMessage) return; // welcomeMessage effect will handle it
 
     const checkDailyMood = async () => {
       try {
@@ -144,7 +146,7 @@ const HomeScreen = props => {
       } catch (_) {}
     };
     checkDailyMood();
-  }, [props.auth.user?._id]);
+  }, [props.auth.user?._id, props.auth.welcomeMessage]);
 
   useEffect(() => {
     fetchQuoteOfTheDay();
@@ -169,15 +171,15 @@ const HomeScreen = props => {
     fetchContent();
   }, [selectedCategory]);
 
+  // Trigger assessment automatically on login/signup (welcomeMessage set by auth action)
   useEffect(() => {
     if (!welcomeMessage) return;
-    
-    // Trigger assessment automatically on login/signup
+
     props.navigation.navigate('MultidimensionalIntake');
 
     const t = setTimeout(() => clearWelcomeMessage(), 4000);
     return () => clearTimeout(t);
-  }, [welcomeMessage, clearWelcomeMessage, props.navigation]);
+  }, [welcomeMessage]);
 
   const renderItem = ({ item }) => {
     return (

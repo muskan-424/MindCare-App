@@ -61,9 +61,9 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
           continue; // Try again
         }
 
-        // If we ran out of retries or got a different fatal error, auto-skip to Home
-        const todayStr = new Date().toISOString().slice(0, 10);
-        await AsyncStorage.setItem('MindCare_dismissedCheckInDate', todayStr);
+        // If we ran out of retries or got a different fatal error, just go Home.
+        // Do NOT write to 'MindCare_dismissedCheckInDate' — this is a server error,
+        // not a user choice to skip, so we should try again next time.
         setIsInitializing(false);
         navigation.navigate('Home');
         return;

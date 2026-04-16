@@ -33,6 +33,23 @@ const UserSchema = new mongoose.Schema(
       ref: 'Institution',
       default: null,
     },
+    role: {
+      type: String,
+      enum: ['user', 'clinician', 'super_admin'],
+      default: 'user',
+    },
+    suspended: {
+      type: Boolean,
+      default: false,
+    },
+    flagged: {
+      type: Boolean,
+      default: false,
+    },
+    flagReason: {
+      type: String,
+      default: '',
+    },
     resetPasswordToken: {
       type: String,
     },
