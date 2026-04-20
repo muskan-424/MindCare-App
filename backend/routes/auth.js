@@ -61,7 +61,7 @@ router.post(
       const isAdmin =
         ADMIN_EMAILS.length > 0 &&
         ADMIN_EMAILS.includes((user.email || '').toLowerCase());
-      const role = isAdmin ? 'admin' : 'user';
+      const role = isAdmin ? 'admin' : (user.role || 'user');
 
       const payload = {
         user: {
