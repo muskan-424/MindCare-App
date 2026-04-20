@@ -25,6 +25,7 @@ import futureData from '../constants/futureData';
 import Appointments from '../components/Appointments';
 import {connect} from 'react-redux';
 import { getAvatarForGender } from '../utils/avatar';
+import { logout } from '../redux/actions/auth';
 
 const ProfileScreen = props => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -65,6 +66,17 @@ const ProfileScreen = props => {
       Alert.alert('Error', 'Failed to submit request.');
     }
     setDeleteLoading(false);
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to log out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Logout', onPress: () => props.logout(), style: 'destructive' }
+      ]
+    );
   };
 
   return (
@@ -253,6 +265,12 @@ const ProfileScreen = props => {
 
       <View style={{position: 'relative', top: 50, marginBottom: 80}}>
         <TouchableOpacity
+          style={[styles.deleteBtn, { borderColor: colors.primary, marginBottom: 15 }]}
+          onPress={handleLogout}>
+          <Text style={[styles.deleteBtnText, { color: colors.primary }]}>Logout</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={styles.deleteBtn}
           onPress={() => setDeleteModalVisible(true)}>
           <Text style={styles.deleteBtnText}>Delete Account (GDPR)</Text>
@@ -340,7 +358,7 @@ const mapStateToProps = state => ({
   auth: state.auth,
 });
 
-export default connect(mapStateToProps, null)(ProfileScreen);
+export default connect(mapStateToProps, { logout })(ProfileScreen);
 
 const styles = StyleSheet.create({
   container: {

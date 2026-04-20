@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Searchbar } from 'react-native-paper';
 import { connect } from 'react-redux';
+import { logout } from '../redux/actions/auth';
 import TherapistCard from '../components/TherapistCard';
 import api from '../utils/apiClient';
 import TrackedTouchable from '../components/TrackedTouchable';
@@ -94,8 +95,15 @@ const TherapistHomeScreen = (props) => {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-            <Text style={styles.headerTitle}>Professional Workspace</Text>
-            <Text style={styles.headerSubtitle}>Manage your patients and session notes</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View>
+                    <Text style={styles.headerTitle}>Professional Workspace</Text>
+                    <Text style={styles.headerSubtitle}>Manage your patients and session notes</Text>
+                </View>
+                <TouchableOpacity onPress={() => props.logout()}>
+                    <MaterialCommunityIcons name="logout" size={24} color={colors.white} />
+                </TouchableOpacity>
+            </View>
         </View>
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
@@ -155,8 +163,15 @@ const TherapistHomeScreen = (props) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Consultation</Text>
-        <Text style={styles.headerSubtitle}>Talk to a professional</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View>
+                <Text style={styles.headerTitle}>Consultation</Text>
+                <Text style={styles.headerSubtitle}>Talk to a professional</Text>
+            </View>
+            <TouchableOpacity onPress={() => props.logout()}>
+                <MaterialCommunityIcons name="logout" size={24} color={colors.white} />
+            </TouchableOpacity>
+        </View>
         <View style={styles.searchWrap}>
           <Searchbar
             style={styles.search}
@@ -196,7 +211,7 @@ const mapStateToProps = (state) => ({
     auth: state.auth
 });
 
-export default connect(mapStateToProps)(TherapistHomeScreen);
+export default connect(mapStateToProps, { logout })(TherapistHomeScreen);
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
