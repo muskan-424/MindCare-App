@@ -2604,11 +2604,12 @@ const UsersTab = () => {
           </ScrollView>
         )}
       </View>
+    </View>
 
-      {/* Role Change Modal */}
-      <Modal visible={roleModal} transparent animationType="slide">
-        <View style={ss.modalOverlay}>
-          <View style={ss.modalSheet}>
+    {/* Role Change Modal */}
+    <Modal visible={roleModal} transparent animationType="slide">
+      <View style={ss.modalOverlay}>
+        <View style={ss.modalSheet}>
             <View style={ss.modalHandle} />
             <View style={ss.modalHeaderRow}>
               <Text style={ss.modalTitle}>Change Role</Text>
