@@ -137,7 +137,6 @@ const PendingTab = () => {
   const [delTarget, setDelTarget] = useState(null);
   const [delNote, setDelNote] = useState('');
   const [delLoading, setDelLoading] = useState(false);
-  const [activeFilter, setActiveFilter] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1144,7 +1143,6 @@ const GroupsTab = () => {
   const [assignModal, setAssignModal] = useState(false);
   const [targetGroup, setTargetGroup] = useState(null);
   const [users, setUsers] = useState([]);
-  const [activeFilter, setActiveFilter] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
 
   const load = useCallback(async () => {
@@ -1330,6 +1328,7 @@ const GroupsTab = () => {
 // ─── Therapists Tab ──────────────────────────────────────────────────────────
 const TherapistsTab = () => {
   const [therapists, setTherapists] = useState([]);
+  const [activeFilter, setActiveFilter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [editTarget, setEditTarget] = useState(null); // null = add new
@@ -1445,6 +1444,12 @@ const TherapistsTab = () => {
     </View>
   );
 
+  const STATS = [
+    { label: 'All Therapists', value: therapists.length, icon: 'groups', color: D.primaryLight },
+    { label: 'Active', value: therapists.filter(t => t.active !== false).length, icon: 'check-circle', color: D.success },
+    { label: 'Inactive', value: therapists.filter(t => t.active === false).length, icon: 'block', color: D.dangerDeep },
+  ];
+
   return (
     <ScrollView contentContainerStyle={ss.tabScroll} showsVerticalScrollIndicator={false}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -1454,12 +1459,6 @@ const TherapistsTab = () => {
           <Text style={ss.createBtnText}>Add Therapist</Text>
         </TouchableOpacity>
       </View>
-
-  const STATS = [
-    { label: 'All Therapists', value: therapists.length, icon: 'groups', color: D.primaryLight },
-    { label: 'Active', value: therapists.filter(t => t.active !== false).length, icon: 'check-circle', color: D.success },
-    { label: 'Inactive', value: therapists.filter(t => t.active === false).length, icon: 'block', color: D.dangerDeep },
-  ];
 
       {/* ── Overview Stats Grid ── */}
       <View style={ss.overviewHeader}>
@@ -1783,6 +1782,13 @@ const ResourcesTab = () => {
     </View>
   );
 
+  const STATS = [
+    { label: 'Total Resources', value: resources.length, icon: 'library-books', color: D.primaryLight },
+    { label: 'Articles', value: resources.filter(r => r.type === 'article').length, icon: 'article', color: D.accent },
+    { label: 'Videos', value: resources.filter(r => r.type === 'video').length, icon: 'play-circle', color: D.danger },
+    { label: 'Exercises', value: resources.filter(r => r.type === 'exercise').length, icon: 'fitness-center', color: D.success },
+  ];
+
   return (
     <ScrollView contentContainerStyle={ss.tabScroll} showsVerticalScrollIndicator={false}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -1792,6 +1798,37 @@ const ResourcesTab = () => {
           <Text style={ss.createBtnText}>New Resource</Text>
         </TouchableOpacity>
       </View>
+
+      {/* ── Overview Stats Grid ── */}
+      <View style={ss.overviewHeader}>
+        <Text style={ss.overviewTitle}>Overview</Text>
+      </View>
+      <View style={ss.statsGrid}>
+        {STATS.map((s, i) => (
+          <TouchableOpacity 
+            key={i} 
+            activeOpacity={0.7}
+            onPress={() => setActiveFilter(activeFilter === s.label || s.label.includes('Total') || s.label.includes('All') ? null : s.label)}
+            style={[
+              ss.statTile, 
+              { borderTopColor: s.color },
+              activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
+            ]}
+          >
+            <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
+              <MaterialIcons name={s.icon} size={18} color={s.color} />
+            </View>
+            <Text style={ss.statValue}>{s.value}</Text>
+            <Text style={ss.statLabel}>{s.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <View style={ss.workQueueHeader}>
+        <View style={ss.workQueueLine} />
+        <Text style={ss.workQueueLabel}>Filtered Results</Text>
+        <View style={ss.workQueueLine} />
+      </View>
+
       <Text style={[ss.cardMeta, { marginBottom: 16 }]}>{resources.length} resource{resources.length !== 1 ? 's' : ''} — these appear in the Verify Risk Report modal</Text>
 
       {/* Type filter legend */}
@@ -1961,6 +1998,12 @@ const AuditTab = () => {
     </View>
   );
 
+  const STATS = [
+    { label: 'All Logs', value: logs.length, icon: 'history', color: D.primaryLight },
+    { label: 'Auth Events', value: logs.filter(l => ['login','register'].includes(l.actionType)).length, icon: 'login', color: D.accent },
+    { label: 'Admin Actions', value: logs.filter(l => ['create','delete','update'].includes(l.actionType) || l.performedByModel === 'Admin').length, icon: 'gavel', color: D.danger },
+  ];
+
   return (
     <View style={{ flex: 1 }}>
       {/* Header */}
@@ -1970,6 +2013,38 @@ const AuditTab = () => {
           <Text style={ss.tabPageTitle}>Audit Trail</Text>
         </View>
         <Text style={ss.cardMeta}>{total} records</Text>
+      </View>
+
+      <View style={{ paddingHorizontal: 16 }}>
+        {/* ── Overview Stats Grid ── */}
+        <View style={ss.overviewHeader}>
+          <Text style={ss.overviewTitle}>Overview</Text>
+        </View>
+        <View style={ss.statsGrid}>
+          {STATS.map((s, i) => (
+            <TouchableOpacity 
+              key={i} 
+              activeOpacity={0.7}
+              onPress={() => setActiveFilter(activeFilter === s.label || s.label.includes('Total') || s.label.includes('All') ? null : s.label)}
+              style={[
+                ss.statTile, 
+                { borderTopColor: s.color },
+                activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
+              ]}
+            >
+              <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
+                <MaterialIcons name={s.icon} size={18} color={s.color} />
+              </View>
+              <Text style={ss.statValue}>{s.value}</Text>
+              <Text style={ss.statLabel}>{s.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={ss.workQueueHeader}>
+          <View style={ss.workQueueLine} />
+          <Text style={ss.workQueueLabel}>Filtered Results</Text>
+          <View style={ss.workQueueLine} />
+        </View>
       </View>
 
       <FlatList
@@ -2268,6 +2343,7 @@ const NotesTab = () => {
 // ─── Users Tab ────────────────────────────────────────────────────────────────
 const UsersTab = () => {
   const [users, setUsers] = useState([]);
+  const [activeFilter, setActiveFilter] = useState(null);
   const [selected, setSelected] = useState(null);
   const [issues, setIssues] = useState([]);
   const [moods, setMoods] = useState([]);
@@ -2363,10 +2439,49 @@ const UsersTab = () => {
     </View>
   );
 
+  const STATS = [
+    { label: 'Total Accounts', value: users.length, icon: 'people', color: D.primaryLight },
+    { label: 'Patients', value: users.filter(u => u.role === 'user').length, icon: 'person', color: D.accent },
+    { label: 'Clinicians', value: users.filter(u => u.role === 'clinician').length, icon: 'medical-services', color: D.success },
+    { label: 'Suspended', value: users.filter(u => u.suspended).length, icon: 'gavel', color: D.dangerDeep },
+  ];
+
   return (
     <View style={ss.usersLayout}>
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 180, zIndex: 10, paddingHorizontal: 16, backgroundColor: D.bg }}>
+        {/* ── Overview Stats Grid ── */}
+        <View style={ss.overviewHeader}>
+          <Text style={ss.overviewTitle}>Overview</Text>
+        </View>
+        <View style={ss.statsGrid}>
+          {STATS.map((s, i) => (
+            <TouchableOpacity 
+              key={i} 
+              activeOpacity={0.7}
+              onPress={() => setActiveFilter(activeFilter === s.label || s.label.includes('Total') || s.label.includes('All') ? null : s.label)}
+              style={[
+                ss.statTile, 
+                { borderTopColor: s.color, height: 80, paddingVertical: 8 },
+                activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
+              ]}
+            >
+              <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A', width: 30, height: 30 }]}>
+                <MaterialIcons name={s.icon} size={16} color={s.color} />
+              </View>
+              <Text style={[ss.statValue, { fontSize: 16, marginTop: 2 }]}>{s.value}</Text>
+              <Text style={[ss.statLabel, { fontSize: 9 }]}>{s.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={[ss.workQueueHeader, { marginTop: 10 }]}>
+          <View style={ss.workQueueLine} />
+          <Text style={ss.workQueueLabel}>Filtered Results</Text>
+          <View style={ss.workQueueLine} />
+        </View>
+      </View>
+
       {/* User List Panel */}
-      <View style={ss.userListPanel}>
+      <View style={[ss.userListPanel, { marginTop: 180 }]}>
         <Text style={ss.userListTitle}>Users ({users.length})</Text>
         <FlatList
           data={users.filter(u => {
@@ -2591,6 +2706,12 @@ const NotificationsTab = () => {
 
   const audienceInfo = (key) => AUDIENCES.find(a => a.key === key) || AUDIENCES[0];
 
+  const STATS = [
+    { label: 'Total Broadcasts', value: notifications.length, icon: 'campaign', color: D.primaryLight },
+    { label: 'To All Users', value: notifications.filter(n => n.audience === 'all_users').length, icon: 'people', color: D.accent },
+    { label: 'To Therapists', value: notifications.filter(n => n.audience === 'therapists').length, icon: 'medical-services', color: D.success },
+  ];
+
   return (
     <View style={{ flex: 1 }}>
       {/* Header */}
@@ -2604,13 +2725,6 @@ const NotificationsTab = () => {
           <Text style={ss.createBtnText}>New Broadcast</Text>
         </TouchableOpacity>
       </View>
-
-
-  const STATS = [
-    { label: 'Total Broadcasts', value: notifications.length, icon: 'campaign', color: D.primaryLight },
-    { label: 'To All Users', value: notifications.filter(n => n.audience === 'all_users').length, icon: 'people', color: D.accent },
-    { label: 'To Therapists', value: notifications.filter(n => n.audience === 'therapists').length, icon: 'medical-services', color: D.success },
-  ];
   const renderedStats = (
     <View style={{ paddingHorizontal: 16 }}>
       
