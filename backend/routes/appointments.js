@@ -64,6 +64,35 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// GET /api/appointments/therapist/me — therapist/clinician sees their assigned patients
+router.get('/therapist/me', auth, async (req, res) => {
+  try {
+    const allowedRoles = ['therapist', 'clinician', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Access denied: Clinician role required' });
+    }
+    
+    // Step 1: Find the Therapist listing linked to this clinician User account
+    const Therapist = require('../models/Therapist');
+    const listing = await Therapist.findOne({ userId: req.user.id }).lean();
+    
+    if (!listing) {
+      // If the clinician isn't linked to a Therapist listing, they have no assigned patients
+      return res.json([]);
+    }
+
+    // Step 2: Fetch appointments assigned to that Therapist listing
+    const appointments = await Appointment.find({ therapist: listing._id })
+      .populate('user', 'name email age gender')
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(appointments);
+  } catch (err) {
+    console.error('Therapist patients fetch error:', err.message);
+    res.status(500).json({ error: 'Failed to load assigned patients' });
+  }
+});
+
 // PATCH /api/appointments/:id/cancel — user cancels own pending request
 router.patch('/:id/cancel', auth, async (req, res) => {
   try {

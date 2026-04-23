@@ -816,6 +816,56 @@ router.post('/therapists', adminAuth, async (req, res) => {
   }
 });
 
+// GET /api/admin/therapists — get all therapists with linked userId info
+router.get('/therapists', adminAuth, async (req, res) => {
+  try {
+    const Therapist = require('../models/Therapist');
+    const therapists = await Therapist.find({})
+      .populate('userId', 'name email')
+      .lean();
+    res.json(therapists.map(t => ({
+      ...t,
+      id: String(t._id),
+      linkedUserEmail: t.userId?.email || null,
+      linkedUserName: t.userId?.name || null
+    })));
+  } catch (err) {
+    console.error('Admin get therapists error:', err.message);
+    res.status(500).json({ error: 'Failed to query therapists' });
+  }
+});
+
+// POST /api/admin/therapists/:id/link-user — link a therapist to a user account
+router.post('/therapists/:id/link-user', adminAuth, async (req, res) => {
+  try {
+    const Therapist = require('../models/Therapist');
+    const { userId } = req.body;
+    
+    // Allow unlinking if userId is null
+    const updatePayload = userId ? { userId } : { $unset: { userId: 1 } };
+    
+    const therapist = await Therapist.findByIdAndUpdate(
+      req.params.id,
+      updatePayload,
+      { new: true }
+    ).populate('userId', 'name email');
+    
+    if (!therapist) return res.status(404).json({ error: 'Therapist not found' });
+    
+    await logAdminAction('link_therapist_account', req.headers['x-admin-id'] || 'admin', userId || null, {
+      therapistId: String(therapist._id),
+      userId: userId || null
+    });
+    res.json({ success: true, therapist });
+  } catch (err) {
+    console.error('Admin link therapist error:', err.message);
+    if (err.code === 11000) {
+      return res.status(400).json({ error: 'This user account is already linked to another therapist.' });
+    }
+    res.status(500).json({ error: 'Failed to link account' });
+  }
+});
+
 // PUT /api/admin/therapists/:id — update therapist details
 router.put('/therapists/:id', adminAuth, async (req, res) => {
   try {

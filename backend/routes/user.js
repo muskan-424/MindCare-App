@@ -21,8 +21,7 @@ router.post(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-
-    const { name, email, password, age, gender, phone_no } = req.body;
+    const { name, email, password, age, gender, phone_no, role } = req.body;
 
     try {
       // Check if user already exists
@@ -42,6 +41,7 @@ router.post(
         password: hashedPassword,
         age: age || '',
         gender: gender || '',
+        role: role === 'clinician' ? 'clinician' : 'user',
       });
       await user.save();
 
@@ -58,9 +58,23 @@ router.post(
       });
       await profile.save();
 
+      // Auto-link to Therapist listing if one exists with the same email
+      if (user.role === 'clinician') {
+        const Therapist = require('../models/Therapist');
+        try {
+          await Therapist.findOneAndUpdate(
+            { email: user.email },
+            { $set: { userId: user._id } }
+          );
+        } catch (linkErr) {
+          console.error('Auto-link error:', linkErr.message);
+        }
+      }
+
       const payload = {
         user: {
           id: user._id,
+          role: user.role,
         },
       };
       const token = jwt.sign(payload, process.env.JWT_SECRET || 'dev_jwt_secret_change_me', {
@@ -76,6 +90,7 @@ router.post(
           email: user.email,
           age: user.age,
           gender: user.gender,
+          role: user.role,
         },
         profile: {
           _id: profile._id,

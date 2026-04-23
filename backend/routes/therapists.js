@@ -116,8 +116,8 @@ const { auth } = require('../middleware/auth');
 // Fetch all session notes for a specific patient (Therapist only)
 router.get('/notes/:userId', auth, async (req, res) => {
   try {
-    if (req.user.role !== 'therapist') {
-      return res.status(403).json({ error: 'Access denied: Therapist only' });
+    if (!['therapist', 'clinician'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Access denied: Clinician only' });
     }
 
     const notes = await TherapistNote.find({
@@ -137,8 +137,8 @@ router.get('/notes/:userId', auth, async (req, res) => {
 // Save a new session note
 router.post('/notes', auth, async (req, res) => {
   try {
-    if (req.user.role !== 'therapist') {
-      return res.status(403).json({ error: 'Access denied: Therapist only' });
+    if (!['therapist', 'clinician'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Access denied: Clinician only' });
     }
 
     const { patientId, sessionDate, content, category, confidentialityLevel } = req.body;
@@ -167,7 +167,7 @@ router.post('/notes', auth, async (req, res) => {
 // Remove a note (only by the therapist who wrote it)
 router.delete('/notes/:id', auth, async (req, res) => {
   try {
-    if (req.user.role !== 'therapist') {
+    if (!['therapist', 'clinician'].includes(req.user.role)) {
       return res.status(403).json({ error: 'Access denied' });
     }
 

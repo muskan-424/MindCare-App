@@ -95,6 +95,7 @@ const PendingTab = () => {
   const [data, setData] = useState({ appointmentRequests: [], riskReports: [], pendingContacts: [], wellnessPlans: [], deletionRequests: [], totalPending: 0, escalatedCount: 0 });
   const [loading, setLoading] = useState(true);
   const [therapists, setTherapists] = useState([]);
+  const [activeFilter, setActiveFilter] = useState(null);
   const [cmsResources, setCmsResources] = useState([]);
 
   const [assignModal, setAssignModal] = useState(false);
@@ -136,6 +137,7 @@ const PendingTab = () => {
   const [delTarget, setDelTarget] = useState(null);
   const [delNote, setDelNote] = useState('');
   const [delLoading, setDelLoading] = useState(false);
+  const [activeFilter, setActiveFilter] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -397,13 +399,22 @@ const PendingTab = () => {
 
       <View style={ss.statsGrid}>
         {STATS.map((s, i) => (
-          <View key={i} style={[ss.statTile, { borderTopColor: s.color }]}>
+          <TouchableOpacity 
+            key={i} 
+            activeOpacity={0.7}
+            onPress={() => setActiveFilter(activeFilter === s.label || s.label === 'Total Pending' ? null : s.label)}
+            style={[
+              ss.statTile, 
+              { borderTopColor: s.color },
+              activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
+            ]}
+          >
             <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
               <MaterialIcons name={s.icon} size={18} color={s.color} />
             </View>
             <Text style={ss.statValue}>{s.value}</Text>
             <Text style={ss.statLabel}>{s.label}</Text>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
 
@@ -414,6 +425,8 @@ const PendingTab = () => {
         <View style={ss.workQueueLine} />
       </View>
 
+      {(!activeFilter || activeFilter === 'Consultations') && (
+      <View>
       {/* Appointment Requests */}
       <SectionHeader icon="event-note" title="Consultation Requests" count={data.appointmentRequests.length} />
       {data.appointmentRequests.length === 0
@@ -464,7 +477,11 @@ const PendingTab = () => {
             />
           </View>
         ))}
+      </View>
+      )}
 
+      {(!activeFilter || activeFilter === 'Risk Reports') && (
+      <View>
       {/* Risk Reports */}
       <SectionHeader icon="warning" title="Unverified Risk Reports" count={data.riskReports.length} />
       {data.riskReports.length === 0
@@ -535,7 +552,11 @@ const PendingTab = () => {
             </View>
           </View>
         ))}
+      </View>
+      )}
 
+      {(!activeFilter || activeFilter === 'Emergency Contacts') && (
+      <View>
       {/* Emergency Contacts */}
       <SectionHeader icon="contact-emergency" title="Emergency Contacts" count={(data.pendingContacts || []).length} />
       {(data.pendingContacts || []).length === 0
@@ -575,7 +596,11 @@ const PendingTab = () => {
             />
           </View>
         ))}
+      </View>
+      )}
 
+      {(!activeFilter || activeFilter === 'Wellness Plans') && (
+      <View>
       {/* Wellness Plans */}
       <SectionHeader icon="self-improvement" title="Wellness Plan Requests" count={(data.wellnessPlans || []).length} />
       {(data.wellnessPlans || []).length === 0
@@ -621,7 +646,11 @@ const PendingTab = () => {
             />
           </View>
         ))}
+      </View>
+      )}
 
+      {(!activeFilter || activeFilter === 'Deletion Requests') && (
+      <View>
       {/* Deletion Requests */}
       <SectionHeader icon="delete-forever" title="Account Deletion Requests" count={(data.deletionRequests || []).length} />
       {(data.deletionRequests || []).length === 0
@@ -652,6 +681,8 @@ const PendingTab = () => {
             />
           </View>
         ))}
+      </View>
+      )}
 
       {/* ── Assign Modal ── */}
       <Modal visible={assignModal} transparent animationType="slide">
@@ -1113,6 +1144,7 @@ const GroupsTab = () => {
   const [assignModal, setAssignModal] = useState(false);
   const [targetGroup, setTargetGroup] = useState(null);
   const [users, setUsers] = useState([]);
+  const [activeFilter, setActiveFilter] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
 
   const load = useCallback(async () => {
@@ -1305,6 +1337,11 @@ const TherapistsTab = () => {
   const [saving, setSaving] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [linkModal, setLinkModal] = useState(false);
+  const [linkTarget, setLinkTarget] = useState(null);
+  const [clinicians, setClinicians] = useState([]);
+  const [selectedClinician, setSelectedClinician] = useState(null);
+  const [linking, setLinking] = useState(false);
 
   const SPECIALISATIONS = ['Anxiety', 'Depression', 'Trauma', 'Relationships', 'Addiction', 'Child Therapy', 'Career', 'General'];
 
@@ -1331,6 +1368,33 @@ const TherapistsTab = () => {
     setEditTarget(t);
     setForm({ name: t.name || '', specialisation: t.specialisation || '', timing: t.timing || '', about: t.about || '' });
     setModal(true);
+  };
+
+  const openLink = async (t) => {
+    setLinkTarget(t);
+    setSelectedClinician(t.userId ? { id: typeof t.userId === 'string' ? t.userId : t.userId._id } : null);
+    setLinkModal(true);
+    setLinking(true);
+    try {
+      const res = await api.get('/api/admin/users', H);
+      setClinicians((res.data || []).filter(u => u.role === 'clinician'));
+    } catch (e) {
+      Alert.alert('Error', 'Failed to load clinicians.');
+    }
+    setLinking(false);
+  };
+
+  const confirmLink = async () => {
+    setLinking(true);
+    try {
+      await api.post(`/api/admin/therapists/${linkTarget.id}/link-user`, { userId: selectedClinician?.id || null }, H);
+      Alert.alert('Success', 'Account link updated.');
+      setLinkModal(false);
+      load();
+    } catch (e) {
+      Alert.alert('Error', e.response?.data?.error || 'Failed to link account.');
+    }
+    setLinking(false);
   };
 
   const save = async () => {
@@ -1390,11 +1454,51 @@ const TherapistsTab = () => {
           <Text style={ss.createBtnText}>Add Therapist</Text>
         </TouchableOpacity>
       </View>
-      <Text style={[ss.cardMeta, { marginBottom: 16 }]}>{therapists.length} therapist{therapists.length !== 1 ? 's' : ''} registered</Text>
+
+  const STATS = [
+    { label: 'All Therapists', value: therapists.length, icon: 'groups', color: D.primaryLight },
+    { label: 'Active', value: therapists.filter(t => t.active !== false).length, icon: 'check-circle', color: D.success },
+    { label: 'Inactive', value: therapists.filter(t => t.active === false).length, icon: 'block', color: D.dangerDeep },
+  ];
+
+      {/* ── Overview Stats Grid ── */}
+      <View style={ss.overviewHeader}>
+        <Text style={ss.overviewTitle}>Overview</Text>
+      </View>
+      <View style={ss.statsGrid}>
+        {STATS.map((s, i) => (
+          <TouchableOpacity 
+            key={i} 
+            activeOpacity={0.7}
+            onPress={() => setActiveFilter(activeFilter === s.label || s.label.includes('Total') || s.label.includes('All') ? null : s.label)}
+            style={[
+              ss.statTile, 
+              { borderTopColor: s.color },
+              activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
+            ]}
+          >
+            <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
+              <MaterialIcons name={s.icon} size={18} color={s.color} />
+            </View>
+            <Text style={ss.statValue}>{s.value}</Text>
+            <Text style={ss.statLabel}>{s.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <View style={ss.workQueueHeader}>
+        <View style={ss.workQueueLine} />
+        <Text style={ss.workQueueLabel}>Filtered Results</Text>
+        <View style={ss.workQueueLine} />
+      </View>
 
       {therapists.length === 0
         ? <EmptyState icon="person-off" message="No therapists registered yet" />
-        : therapists.map(t => (
+        : therapists.filter(t => {
+          if (!activeFilter || activeFilter === 'All Therapists') return true;
+          if (activeFilter === 'Active') return t.active !== false;
+          if (activeFilter === 'Inactive') return t.active === false;
+          return true;
+        }).map(t => (
           <View key={t.id || t._id} style={[ss.card, { borderLeftColor: t.active !== false ? D.success : D.textMuted }]}>
             <View style={ss.cardRow}>
               <View style={[ss.cardAvatarCircle, { backgroundColor: (t.active !== false ? D.success : D.textMuted) + '22' }]}>
@@ -1403,6 +1507,11 @@ const TherapistsTab = () => {
               <View style={{ flex: 1, marginLeft: 10 }}>
                 <Text style={ss.cardName}>{t.name}</Text>
                 <Text style={ss.cardMeta}>{t.specialisation}</Text>
+                {t.linkedUserEmail && (
+                  <Text style={[ss.cardMeta, { color: D.accentLight, marginTop: 4 }]}>
+                    <MaterialIcons name="link" size={11} color={D.accentLight} /> Linked: {t.linkedUserEmail}
+                  </Text>
+                )}
               </View>
               <PillBadge
                 label={t.active !== false ? 'Active' : 'Inactive'}
@@ -1429,6 +1538,13 @@ const TherapistsTab = () => {
                 <Text style={[ss.actionButtonText, { color: D.textPrimary }]}>Edit</Text>
               </TouchableOpacity>
               <TouchableOpacity
+                style={[ss.actionButton, { flex: 1, backgroundColor: D.accent + '22', borderWidth: 1, borderColor: D.accent + '55' }]}
+                onPress={() => openLink(t)} activeOpacity={0.8}
+              >
+                <MaterialIcons name="link" size={14} color={D.accent} style={{ marginRight: 5 }} />
+                <Text style={[ss.actionButtonText, { color: D.accent }]}>Link</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
                 style={[ss.actionButton, { flex: 1, backgroundColor: t.active !== false ? D.warning + '22' : D.success + '22', borderWidth: 1, borderColor: t.active !== false ? D.warning + '55' : D.success + '55' }]}
                 onPress={() => toggleActive(t)} activeOpacity={0.8}
               >
@@ -1436,7 +1552,7 @@ const TherapistsTab = () => {
                 <Text style={[ss.actionButtonText, { color: t.active !== false ? D.warning : D.success }]}>{t.active !== false ? 'Deactivate' : 'Activate'}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[ss.actionButton, { backgroundColor: D.danger + '22', borderWidth: 1, borderColor: D.danger + '55' }]}
+                style={[ss.actionButton, { backgroundColor: D.danger + '22', borderWidth: 1, borderColor: D.danger + '55', paddingHorizontal: 12 }]}
                 onPress={() => { setDeleteTarget(t); setDeleteModal(true); }} activeOpacity={0.8}
               >
                 <MaterialIcons name="delete" size={16} color={D.danger} />
@@ -1513,6 +1629,64 @@ const TherapistsTab = () => {
           </View>
         </View>
       </Modal>
+      {/* Link Account Modal */}
+      <Modal visible={linkModal} transparent animationType="slide">
+        <View style={ss.modalOverlay}>
+          <ScrollView contentContainerStyle={ss.modalSheet}>
+            <View style={ss.modalHandle} />
+            <View style={ss.modalHeaderRow}>
+              <Text style={ss.modalTitle}>Link User Account</Text>
+              <TouchableOpacity onPress={() => setLinkModal(false)} style={ss.modalCloseBtn}>
+                <MaterialIcons name="close" size={20} color={D.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            {linkTarget && (
+              <View style={ss.modalInfoBox}>
+                <Text style={ss.modalInfoText}>Link <Text style={{ fontWeight: 'bold' }}>{linkTarget.name}</Text> to a clinician account.</Text>
+              </View>
+            )}
+
+            <Text style={ss.modalLabel}>Select Clinician</Text>
+            {linking && clinicians.length === 0 ? <ActivityIndicator color={D.primary} /> : (
+              <ScrollView style={{ maxHeight: 240, marginBottom: 16 }}>
+                <TouchableOpacity
+                  style={[ss.userSelectItem, selectedClinician === null && ss.userSelectItemActive]}
+                  onPress={() => setSelectedClinician(null)}
+                >
+                  <Text style={[ss.userSelectName, selectedClinician === null && { color: D.textPrimary }]}>No Link (Unlink)</Text>
+                  {selectedClinician === null && <MaterialIcons name="check-circle" size={18} color={D.primary} />}
+                </TouchableOpacity>
+                {clinicians.map(u => (
+                  <TouchableOpacity
+                    key={u.id}
+                    style={[ss.userSelectItem, selectedClinician?.id === u.id && ss.userSelectItemActive]}
+                    onPress={() => setSelectedClinician(u)}
+                  >
+                    <View style={ss.userSelectAvatar}>
+                      <Text style={ss.userSelectAvatarText}>{u.name?.charAt(0)}</Text>
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 10 }}>
+                      <Text style={[ss.userSelectName, selectedClinician?.id === u.id && { color: D.textPrimary }]}>{u.name}</Text>
+                      <Text style={ss.userSelectEmail}>{u.email}</Text>
+                    </View>
+                    {selectedClinician?.id === u.id && <MaterialIcons name="check-circle" size={18} color={D.primary} />}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+
+            <TouchableOpacity style={ss.modalConfirmBtn} onPress={confirmLink} disabled={linking}>
+              {linking ? <ActivityIndicator color="#fff" size="small" /> : (
+                <Text style={ss.modalPrimaryBtnText}>Save Link</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setLinkModal(false)}>
+              <Text style={ss.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -1520,6 +1694,7 @@ const TherapistsTab = () => {
 // ─── Resource CMS Tab ─────────────────────────────────────────────────────────
 const ResourcesTab = () => {
   const [resources, setResources] = useState([]);
+  const [activeFilter, setActiveFilter] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
@@ -1631,7 +1806,13 @@ const ResourcesTab = () => {
 
       {resources.length === 0
         ? <EmptyState icon="library-books" message="No resources yet. Add articles, videos, and exercises." />
-        : resources.map(r => (
+        : resources.filter(r => {
+          if (!activeFilter || activeFilter === 'Total Resources') return true;
+          if (activeFilter === 'Articles') return r.type === 'article';
+          if (activeFilter === 'Videos') return r.type === 'video';
+          if (activeFilter === 'Exercises') return r.type === 'exercise';
+          return true;
+        }).map(r => (
           <View key={r.id} style={[ss.card, { borderLeftColor: TYPE_COLORS[r.type], opacity: r.active === false ? 0.55 : 1 }]}>
             <View style={ss.cardRow}>
               <View style={[ss.cardAvatarCircle, { backgroundColor: TYPE_COLORS[r.type] + '22' }]}>
@@ -1732,6 +1913,7 @@ const ResourcesTab = () => {
 // ─── Audit Trail Tab ──────────────────────────────────────────────────────────
 const AuditTab = () => {
   const [logs, setLogs] = useState([]);
+  const [activeFilter, setActiveFilter] = useState(null);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -1791,7 +1973,12 @@ const AuditTab = () => {
       </View>
 
       <FlatList
-        data={logs}
+        data={logs.filter(l => {
+          if (!activeFilter || activeFilter === 'All Logs') return true;
+          if (activeFilter === 'Auth Events') return ['login','register'].includes(l.actionType);
+          if (activeFilter === 'Admin Actions') return ['create','delete','update'].includes(l.actionType) || l.performedByModel === 'Admin';
+          return true;
+        })}
         keyExtractor={item => item.id}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 30 }}
         showsVerticalScrollIndicator={false}
@@ -2182,7 +2369,13 @@ const UsersTab = () => {
       <View style={ss.userListPanel}>
         <Text style={ss.userListTitle}>Users ({users.length})</Text>
         <FlatList
-          data={users}
+          data={users.filter(u => {
+          if (!activeFilter || activeFilter === 'Total Accounts') return true;
+          if (activeFilter === 'Patients') return u.role === 'user';
+          if (activeFilter === 'Clinicians') return u.role === 'clinician';
+          if (activeFilter === 'Suspended') return !!u.suspended;
+          return true;
+        })}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -2343,6 +2536,7 @@ const UsersTab = () => {
 // ─── Notifications Hub Tab ────────────────────────────────────────────────────
 const NotificationsTab = () => {
   const [notifications, setNotifications] = useState([]);
+  const [activeFilter, setActiveFilter] = useState(null);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [composeModal, setComposeModal] = useState(false);
@@ -2411,10 +2605,56 @@ const NotificationsTab = () => {
         </TouchableOpacity>
       </View>
 
-      <Text style={[ss.cardMeta, { paddingHorizontal: 16, marginBottom: 8 }]}>{total} broadcast{total !== 1 ? 's' : ''} sent</Text>
 
+  const STATS = [
+    { label: 'Total Broadcasts', value: notifications.length, icon: 'campaign', color: D.primaryLight },
+    { label: 'To All Users', value: notifications.filter(n => n.audience === 'all_users').length, icon: 'people', color: D.accent },
+    { label: 'To Therapists', value: notifications.filter(n => n.audience === 'therapists').length, icon: 'medical-services', color: D.success },
+  ];
+  const renderedStats = (
+    <View style={{ paddingHorizontal: 16 }}>
+      
+      {/* ── Overview Stats Grid ── */}
+      <View style={ss.overviewHeader}>
+        <Text style={ss.overviewTitle}>Overview</Text>
+      </View>
+      <View style={ss.statsGrid}>
+        {STATS.map((s, i) => (
+          <TouchableOpacity 
+            key={i} 
+            activeOpacity={0.7}
+            onPress={() => setActiveFilter(activeFilter === s.label || s.label.includes('Total') || s.label.includes('All') ? null : s.label)}
+            style={[
+              ss.statTile, 
+              { borderTopColor: s.color },
+              activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
+            ]}
+          >
+            <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
+              <MaterialIcons name={s.icon} size={18} color={s.color} />
+            </View>
+            <Text style={ss.statValue}>{s.value}</Text>
+            <Text style={ss.statLabel}>{s.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <View style={ss.workQueueHeader}>
+        <View style={ss.workQueueLine} />
+        <Text style={ss.workQueueLabel}>Filtered Results</Text>
+        <View style={ss.workQueueLine} />
+      </View>
+
+    </View>
+  );
+      <Text style={[ss.cardMeta, { paddingHorizontal: 16, marginBottom: 8 }]}>{total} broadcast{total !== 1 ? 's' : ''} sent</Text>
+      {renderedStats}
       <FlatList
-        data={notifications}
+        data={notifications.filter(n => {
+          if (!activeFilter || activeFilter === 'Total Broadcasts') return true;
+          if (activeFilter === 'To All Users') return n.audience === 'all_users';
+          if (activeFilter === 'To Therapists') return n.audience === 'therapists';
+          return true;
+        })}
         keyExtractor={item => item.id}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 30 }}
         showsVerticalScrollIndicator={false}

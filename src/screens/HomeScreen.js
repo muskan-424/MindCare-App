@@ -175,10 +175,16 @@ const HomeScreen = props => {
   useEffect(() => {
     if (!welcomeMessage) return;
 
-    props.navigation.navigate('MultidimensionalIntake');
+    // Wait for the Home screen to fully mount and transition before popping the Intake Modal
+    const navDelay = setTimeout(() => {
+      props.navigation.navigate('MultidimensionalIntake');
+    }, 600);
 
     const t = setTimeout(() => clearWelcomeMessage(), 4000);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(navDelay);
+    };
   }, [welcomeMessage]);
 
   const renderItem = ({ item }) => {

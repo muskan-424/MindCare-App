@@ -11,6 +11,7 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Switch,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { colors } from '../constants/theme';
@@ -27,7 +28,8 @@ const Signup = props => {
     phone_no: '',
     gender: '',
     password: '',
-    password2: ''
+    password2: '',
+    isClinician: false
   });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -85,6 +87,7 @@ const Signup = props => {
         age: String(ageNum),
         gender: state.gender,
         phone_no: state.phone_no.replace(/\D/g, ''),
+        role: state.isClinician ? 'clinician' : 'user',
       });
       // Success: auth state updates and user is navigated; confirmation shows on Home
     } catch (err) {
@@ -253,6 +256,15 @@ const Signup = props => {
                 />
               </TouchableOpacity>
             </View>
+            <View style={styles.clinicianToggleContainer}>
+              <Text style={styles.clinicianToggleText}>Register as a Professional Clinician</Text>
+              <Switch
+                value={state.isClinician}
+                onValueChange={(val) => setState({ ...state, isClinician: val })}
+                trackColor={{ false: '#767577', true: colors.primary }}
+                thumbColor={state.isClinician ? colors.white : '#f4f3f4'}
+              />
+            </View>
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
             <TouchableOpacity onPress={handleSignUp} disabled={loading}>
               <View style={[styles.submitButton, loading && styles.submitButtonDisabled]}>
@@ -382,5 +394,23 @@ const styles = StyleSheet.create({
     paddingRight: 20,
     paddingBottom: 10,
     color: colors.secondary
+  },
+  clinicianToggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginVertical: 10,
+    backgroundColor: '#F8F9FA',
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#EFEFEF'
+  },
+  clinicianToggleText: {
+    color: colors.secondary,
+    fontWeight: '600',
+    fontSize: 14,
   }
 });

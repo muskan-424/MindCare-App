@@ -311,7 +311,7 @@ async function runTests() {
   console.log('\n📢  [11] Broadcast Notifications');
   await test('POST /notifications/broadcast  →  all_users', async () => {
     const r = await req('POST', '/api/admin/notifications/broadcast', {
-      title:    '🧪 QA Broadcast — All Users',
+      title:    'QA Broadcast — All Users',
       body:     'Automated test message. Please ignore.',
       audience: 'all_users',
     });
@@ -322,7 +322,7 @@ async function runTests() {
 
   await test('POST /notifications/broadcast  →  therapists', async () => {
     const r = await req('POST', '/api/admin/notifications/broadcast', {
-      title:    '🧪 QA Broadcast — Therapists',
+      title:    'QA Broadcast — Therapists',
       body:     'Staff test notice.',
       audience: 'therapists',
     });

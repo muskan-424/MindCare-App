@@ -12,6 +12,7 @@ const TherapistSchema = new mongoose.Schema(
     fee: { type: String, default: '' },
     stars: { type: Number, default: 0 },
     active: { type: Boolean, default: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, sparse: true },
   },
   { timestamps: true }
 );

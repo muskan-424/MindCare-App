@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Switch,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { colors } from '../constants/theme';
@@ -21,7 +22,8 @@ import { validateEmail, validatePassword } from '../utils/validation';
 const Login = props => {
   const [state, setState] = useState({
     email: '',
-    password: ''
+    password: '',
+    loginType: 'patient' // 'patient', 'professional', or 'admin'
   });
   const [error, setError] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -81,7 +83,20 @@ const Login = props => {
             />
           </View>
           <View style={styles.signUpContainer}>
-            <Text style={styles.headerText}>Login</Text>
+            <View style={styles.tabContainer}>
+              <TouchableOpacity style={state.loginType === 'patient' ? styles.activeTab : styles.inactiveTab} onPress={() => setState({...state, loginType: 'patient'})}>
+                <Text style={state.loginType === 'patient' ? styles.activeTabText : styles.inactiveTabText}>Patient</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={state.loginType === 'professional' ? styles.activeTab : styles.inactiveTab} onPress={() => setState({...state, loginType: 'professional'})}>
+                <Text style={state.loginType === 'professional' ? styles.activeTabText : styles.inactiveTabText}>Professional</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={state.loginType === 'admin' ? styles.activeTab : styles.inactiveTab} onPress={() => setState({...state, loginType: 'admin'})}>
+                <Text style={state.loginType === 'admin' ? styles.activeTabText : styles.inactiveTabText}>Admin</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.headerText}>
+              {state.loginType === 'professional' ? 'Clinician Login' : state.loginType === 'admin' ? 'Admin Login' : 'Login'}
+            </Text>
             <TextInput
               style={[styles.textInput, (emailError || error) && styles.inputError]}
               placeholder={'Email'}
@@ -251,5 +266,38 @@ const styles = StyleSheet.create({
     paddingRight: 20,
     paddingBottom: 10,
     color: colors.secondary
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+    marginBottom: 5,
+    marginHorizontal: 30,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 20,
+    padding: 3,
+  },
+  activeTab: {
+    flex: 1,
+    backgroundColor: colors.white,
+    paddingVertical: 8,
+    borderRadius: 17,
+    alignItems: 'center',
+    elevation: 2,
+  },
+  inactiveTab: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  activeTabText: {
+    color: colors.primary,
+    fontWeight: 'bold',
+  },
+  inactiveTabText: {
+    color: colors.gray,
+    fontWeight: '600',
   }
 });
