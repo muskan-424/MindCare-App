@@ -2707,7 +2707,7 @@ const NotificationsTab = () => {
   const audienceInfo = (key) => AUDIENCES.find(a => a.key === key) || AUDIENCES[0];
 
   const STATS = [
-    { label: 'Total Broadcasts', value: notifications.length, icon: 'campaign', color: D.primaryLight },
+    { label: 'Total Broadcasts', value: notifications.filter(n => n.active !== false).length, icon: 'campaign', color: D.primaryLight },
     { label: 'To All Users', value: notifications.filter(n => n.audience === 'all_users').length, icon: 'people', color: D.accent },
     { label: 'To Therapists', value: notifications.filter(n => n.audience === 'therapists').length, icon: 'medical-services', color: D.success },
   ];
@@ -2725,43 +2725,41 @@ const NotificationsTab = () => {
           <Text style={ss.createBtnText}>New Broadcast</Text>
         </TouchableOpacity>
       </View>
-  const renderedStats = (
-    <View style={{ paddingHorizontal: 16 }}>
-      
-      {/* ── Overview Stats Grid ── */}
-      <View style={ss.overviewHeader}>
-        <Text style={ss.overviewTitle}>Overview</Text>
-      </View>
-      <View style={ss.statsGrid}>
-        {STATS.map((s, i) => (
-          <TouchableOpacity 
-            key={i} 
-            activeOpacity={0.7}
-            onPress={() => setActiveFilter(activeFilter === s.label || s.label.includes('Total') || s.label.includes('All') ? null : s.label)}
-            style={[
-              ss.statTile, 
-              { borderTopColor: s.color },
-              activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
-            ]}
-          >
-            <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
-              <MaterialIcons name={s.icon} size={18} color={s.color} />
-            </View>
-            <Text style={ss.statValue}>{s.value}</Text>
-            <Text style={ss.statLabel}>{s.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      <View style={ss.workQueueHeader}>
-        <View style={ss.workQueueLine} />
-        <Text style={ss.workQueueLabel}>Filtered Results</Text>
-        <View style={ss.workQueueLine} />
+
+      <View style={{ paddingHorizontal: 16 }}>
+        {/* ── Overview Stats Grid ── */}
+        <View style={ss.overviewHeader}>
+          <Text style={ss.overviewTitle}>Overview</Text>
+        </View>
+        <View style={ss.statsGrid}>
+          {STATS.map((s, i) => (
+            <TouchableOpacity 
+              key={i} 
+              activeOpacity={0.7}
+              onPress={() => setActiveFilter(activeFilter === s.label || s.label.includes('Total') || s.label.includes('All') ? null : s.label)}
+              style={[
+                ss.statTile, 
+                { borderTopColor: s.color },
+                activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
+              ]}
+            >
+              <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
+                <MaterialIcons name={s.icon} size={18} color={s.color} />
+              </View>
+              <Text style={ss.statValue}>{s.value}</Text>
+              <Text style={ss.statLabel}>{s.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={ss.workQueueHeader}>
+          <View style={ss.workQueueLine} />
+          <Text style={ss.workQueueLabel}>Filtered Results</Text>
+          <View style={ss.workQueueLine} />
+        </View>
       </View>
 
-    </View>
-  );
       <Text style={[ss.cardMeta, { paddingHorizontal: 16, marginBottom: 8 }]}>{total} broadcast{total !== 1 ? 's' : ''} sent</Text>
-      {renderedStats}
+      
       <FlatList
         data={notifications.filter(n => {
           if (!activeFilter || activeFilter === 'Total Broadcasts') return true;
