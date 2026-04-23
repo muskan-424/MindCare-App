@@ -2447,9 +2447,9 @@ const UsersTab = () => {
   ];
 
   return (
-    <View style={ss.usersLayout}>
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 180, zIndex: 10, paddingHorizontal: 16, backgroundColor: D.bg }}>
-        {/* ── Overview Stats Grid ── */}
+    <View style={{ flex: 1, backgroundColor: D.bg }}>
+      {/* ── Overview Stats Section ── */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 16, backgroundColor: D.bg }}>
         <View style={ss.overviewHeader}>
           <Text style={ss.overviewTitle}>Overview</Text>
         </View>
@@ -2473,16 +2473,17 @@ const UsersTab = () => {
             </TouchableOpacity>
           ))}
         </View>
-        <View style={[ss.workQueueHeader, { marginTop: 10 }]}>
+        <View style={[ss.workQueueHeader, { marginTop: 8, marginBottom: 16 }]}>
           <View style={ss.workQueueLine} />
           <Text style={ss.workQueueLabel}>Filtered Results</Text>
           <View style={ss.workQueueLine} />
         </View>
       </View>
 
-      {/* User List Panel */}
-      <View style={[ss.userListPanel, { marginTop: 180 }]}>
-        <Text style={ss.userListTitle}>Users ({users.length})</Text>
+      <View style={ss.usersLayout}>
+        {/* User List Panel */}
+        <View style={ss.userListPanel}>
+          <Text style={ss.userListTitle}>Users ({users.length})</Text>
         <FlatList
           data={users.filter(u => {
           if (!activeFilter || activeFilter === 'Total Accounts') return true;
