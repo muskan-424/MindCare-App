@@ -27,7 +27,7 @@ df['Married'] = df['Married'].map({'No': 0, 'Yes': 1}).fillna(0)
 df['Age'] = pd.to_numeric(df['Age'], errors='coerce').fillna(20)
 
 # Process Year (Extract number)
-df['Year'] = df['Year'].str.extract('(\d+)').astype(float).fillna(1)
+df['Year'] = df['Year'].str.extract(r'(\d+)').astype(float).fillna(1)
 
 # Process CGPA (take median of range like '3.00 - 3.49')
 def parse_cgpa(val):

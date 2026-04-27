@@ -39,9 +39,9 @@ function fuseAssessment(featureVector) {
   const voice = featureVector?.voice || {};
   const vision = featureVector?.vision || {};
 
-  const wText = 0.50; // Text is now Gemini-driven (higher weight)
-  const wVoice = 0.25; // Stub/Heuristic
-  const wVision = 0.25; // Stub/Heuristic
+  const wText = 0.45;  // Gemini AI text analysis (richest semantic signal)
+  const wVoice = 0.30; // Python ML prosodic analysis (upgraded from stub)
+  const wVision = 0.25; // Python ML micro-expression analysis (upgraded from stub)
 
   const riskScore = Math.max(
     0,
@@ -80,7 +80,7 @@ function fuseAssessment(featureVector) {
     aiMarkers: text.features?.clinicalMarkers || [],
     primaryEmotions: text.features?.primaryEmotions || [],
     recommendations,
-    modelVersion: 'fusion-v2-gemini',
+    modelVersion: 'fusion-v3-full-ml',
   };
 }
 

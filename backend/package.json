@@ -10,7 +10,8 @@
     "seed:test": "node scripts/seedTestUser.js",
     "delete:users": "node scripts/deleteAllUsers.js",
     "reset-admin": "node scripts/resetAdmin.js",
-    "test:admin": "node scripts/testAdminPortal.js"
+    "test:admin": "node scripts/testAdminPortal.js",
+    "test:ml": "node scripts/testMLPipeline.js"
   },
   "dependencies": {
     "@langchain/classic": "^1.0.22",

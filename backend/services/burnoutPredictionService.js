@@ -10,17 +10,21 @@ async function evaluateBurnoutRisk(userId) {
     // 1. Gather Demographic Data
     const profile = await Profile.findOne({ user: userId }).lean();
     
-    // Map profile defaults to Dataset constraints
+    // Map profile defaults to Dataset constraints for Burnout V2 Model (EPAT)
     const payload = {
-      gender: profile?.gender === 'Male' ? 'Male' : 'Female',
       age: parseInt(profile?.age) || 20,
-      year: 2, // Default fallback
-      cgpa: 3.5,
-      married: 'No'
+      gender: profile?.gender === 'Male' ? 'Male' : 'Female',
+      academic_stress: profile?.academicStress || 3,
+      anxiety: profile?.anxietyLevel || 2,
+      depression: profile?.depressionLevel || 2,
+      general_stress: profile?.stressLevel || 3,
+      sleep_quality: profile?.sleepQuality || 2.0,
+      behavioral_activity: profile?.activityLevel || 2.0,
+      social_interaction: profile?.socialInteraction || 2.0
     };
 
     // 2. Query Python ML Server
-    const mlResponse = await axios.post('http://127.0.0.1:5000/predict/burnout', payload).catch(err => null);
+    const mlResponse = await axios.post('http://127.0.0.1:8000/predict/burnout', payload, { timeout: 5000 }).catch(err => null);
     
     if (!mlResponse || !mlResponse.data) {
         console.log('Python ML Server unreachable or model not trained.');

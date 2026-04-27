@@ -91,7 +91,7 @@ router.post('/session/:sessionId/voice-response', async (req, res) => {
     });
     if (!session) return res.status(404).json({ error: 'Session not found' });
 
-    const voiceResult = assessVoicePayload(req.body || {});
+    const voiceResult = await assessVoicePayload(req.body || {});
     const fv = await AssessmentFeatureVector.findOne({ session: session._id });
     fv.voice = voiceResult;
     fv.rawRefs.latestVoiceRef = String(req.body?.voiceRef || '');
@@ -118,7 +118,7 @@ router.post('/session/:sessionId/vision-meta', async (req, res) => {
     });
     if (!session) return res.status(404).json({ error: 'Session not found' });
 
-    const visionResult = assessVisionPayload(req.body || {});
+    const visionResult = await assessVisionPayload(req.body || {});
     const fv = await AssessmentFeatureVector.findOne({ session: session._id });
     fv.vision = visionResult;
     fv.rawRefs.latestVisionRef = String(req.body?.visionRef || '');
