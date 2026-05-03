@@ -1163,7 +1163,7 @@ const GroupsTab = () => {
   useEffect(() => { load(); }, [load]);
 
   const handleCreate = async () => {
-    if (!form.title || !form.description || !form.scheduledDate || !form.meetingLink) {
+    if (!form.title || !form.description || !form.scheduledDate) {
       return Alert.alert('Error', 'Missing required fields.');
     }
     setSaving(true);

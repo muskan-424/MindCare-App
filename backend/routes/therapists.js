@@ -98,8 +98,24 @@ router.get('/', async (_req, res) => {
 // GET /api/therapists/me
 router.get('/me', auth, async (req, res) => {
   try {
-    const t = await Therapist.findOne({ userId: req.user.id }).lean();
+    let t = await Therapist.findOne({ userId: req.user.id }).lean();
+
+    // Fallback: for older clinician accounts where userId wasn't set,
+    // find by email and auto-link the userId for future lookups.
+    if (!t) {
+      const User = require('../models/User');
+      const user = await User.findById(req.user.id).lean();
+      if (user) {
+        t = await Therapist.findOneAndUpdate(
+          { email: user.email },
+          { $set: { userId: user._id } },
+          { new: true }
+        ).lean();
+      }
+    }
+
     if (!t) return res.status(404).json({ error: 'Therapist profile not found' });
+
     res.json({
       id: String(t._id),
       name: t.name,
@@ -136,17 +152,13 @@ const AssessmentFusionResult = require('../models/AssessmentFusionResult');
 const IssueReport = require('../models/IssueReport');
 const MoodEntry = require('../models/MoodEntry');
 const JournalEntry = require('../models/JournalEntry');
-const { auth } = require('../middleware/auth');
-
-// Seed data ... (already exists)
-
-// ... existing routes ...
+// ── Clinical / Notes routes ─────────────────────────────────────────────────
 
 // ── GET /api/therapists/notes/:userId ───────────────────────────────────────
 // Fetch all session notes for a specific patient (Therapist only)
 router.get('/notes/:userId', auth, async (req, res) => {
   try {
-    if (!['therapist', 'clinician'].includes(req.user.role)) {
+    if (!['therapist', 'clinician', 'admin', 'super_admin'].includes(req.user.role)) {
       return res.status(403).json({ error: 'Access denied: Clinician only' });
     }
 
@@ -167,7 +179,7 @@ router.get('/notes/:userId', auth, async (req, res) => {
 // Fetch full clinical profile (AI assessments, reports, moods, journals)
 router.get('/patient/:userId/profile', auth, async (req, res) => {
   try {
-    if (!['therapist', 'clinician'].includes(req.user.role)) {
+    if (!['therapist', 'clinician', 'admin', 'super_admin'].includes(req.user.role)) {
       return res.status(403).json({ error: 'Access denied: Clinician only' });
     }
 
@@ -201,7 +213,7 @@ router.get('/patient/:userId/profile', auth, async (req, res) => {
 // Save a new session note
 router.post('/notes', auth, async (req, res) => {
   try {
-    if (!['therapist', 'clinician'].includes(req.user.role)) {
+    if (!['therapist', 'clinician', 'admin', 'super_admin'].includes(req.user.role)) {
       return res.status(403).json({ error: 'Access denied: Clinician only' });
     }
 
@@ -231,7 +243,7 @@ router.post('/notes', auth, async (req, res) => {
 // Remove a note (only by the therapist who wrote it)
 router.delete('/notes/:id', auth, async (req, res) => {
   try {
-    if (!['therapist', 'clinician'].includes(req.user.role)) {
+    if (!['therapist', 'clinician', 'admin', 'super_admin'].includes(req.user.role)) {
       return res.status(403).json({ error: 'Access denied' });
     }
 

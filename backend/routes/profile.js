@@ -85,4 +85,49 @@ router.post('/delete-request', auth, async (req, res) => {
   }
 });
 
+// @route   GET /api/profile/me
+// @desc    Get current user's profile (used by Peer Matching)
+// @access  Private
+router.get('/me', auth, async (req, res) => {
+  try {
+    const profile = await Profile.findOne({ userId: req.user.id }).lean();
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+    res.json(profile);
+  } catch (err) {
+    console.error('Get profile error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// @route   PATCH /api/profile/update
+// @desc    Update profile fields (e.g. isPeerMatchingEnabled)
+// @access  Private
+router.patch('/update', auth, async (req, res) => {
+  try {
+    const allowedFields = ['isPeerMatchingEnabled', 'peerBio', 'concerns', 'name', 'age', 'gender', 'phone_no'];
+    const updates = {};
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    });
+
+    const profile = await Profile.findOneAndUpdate(
+      { userId: req.user.id },
+      { $set: updates },
+      { new: true }
+    );
+
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    res.json(profile);
+  } catch (err) {
+    console.error('Update profile error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;
+

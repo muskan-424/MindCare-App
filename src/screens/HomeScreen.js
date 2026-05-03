@@ -108,6 +108,27 @@ const HomeScreen = props => {
   const [selfHelpTiles, setSelfHelpTiles] = useState(FALLBACK_SELF_HELP);
   const [contentCategories, setContentCategories] = useState(FALLBACK_CONTENT_CATEGORIES);
   const [burnoutAlert, setBurnoutAlert] = useState(null);
+  const [notificationsVisible, setNotificationsVisible] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+
+  const fetchNotifications = async () => {
+    setLoadingNotifications(true);
+    try {
+      const res = await api.get('/api/user/notifications');
+      setNotifications(res.data || []);
+    } catch (_) {
+      // fallback
+    }
+    setLoadingNotifications(false);
+  };
+
+  useEffect(() => {
+    if (notificationsVisible) {
+      fetchNotifications();
+    }
+  }, [notificationsVisible]);
+
 
   useEffect(() => {
     (async () => {
@@ -231,18 +252,76 @@ const HomeScreen = props => {
             <Text style={styles.helloText}>Hello !</Text>
             <Text style={styles.nameText}>{props.auth.profile.name}</Text>
           </View>
-          <TouchableOpacity
-            onPress={() => {
-              props.navigation.navigate('Profile');
-            }}>
-            <View style={styles.avatar}>
-              <Image
-                source={getAvatarForGender(props.auth.profile.gender)}
-                style={{ width: 60, height: 60, borderRadius: 30 }}
-              />
-            </View>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 15 }}>
+            <TouchableOpacity
+              onPress={() => setNotificationsVisible(true)}
+              style={{ marginRight: 8, padding: 8 }}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons name="bell" size={28} color={colors.white} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                props.navigation.navigate('Profile');
+              }}>
+              <View style={[styles.avatar, { marginTop: 0, marginLeft: 0 }]}>
+                <Image
+                  source={getAvatarForGender(props.auth.profile.gender)}
+                  style={{ width: 60, height: 60, borderRadius: 30 }}
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
+
+        {/* Notifications Modal */}
+        <Modal
+          visible={notificationsVisible}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setNotificationsVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Broadcasts</Text>
+                <TouchableOpacity onPress={() => setNotificationsVisible(false)} style={styles.modalCloseButton}>
+                  <MaterialCommunityIcons name="close" size={24} color={colors.gray} />
+                </TouchableOpacity>
+              </View>
+              {loadingNotifications ? (
+                <View style={styles.modalLoading}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                  <Text style={styles.modalSub}>Loading notifications...</Text>
+                </View>
+              ) : notifications.length === 0 ? (
+                <View style={styles.modalEmpty}>
+                  <MaterialCommunityIcons name="bell-outline" size={32} color={colors.gray} />
+                  <Text style={styles.modalEmptyText}>No notifications broadcasted yet.</Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={notifications}
+                  keyExtractor={item => item._id}
+                  showsVerticalScrollIndicator={false}
+                  renderItem={({ item }) => (
+                    <View style={styles.notificationCard}>
+                      <View style={styles.notificationHeaderRow}>
+                        <Text style={styles.notificationTitle}>{item.title}</Text>
+                        <MaterialCommunityIcons name="bullhorn" size={16} color={colors.primary} />
+                      </View>
+                      <Text style={styles.notificationBody}>{item.body}</Text>
+                      <Text style={styles.notificationDate}>
+                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-IN') : ''}
+                      </Text>
+                    </View>
+                  )}
+                />
+              )}
+            </View>
+          </View>
+        </Modal>
+
 
         {burnoutAlert && (
           <View style={styles.burnoutBanner}>
@@ -297,7 +376,7 @@ const HomeScreen = props => {
 
         <TouchableOpacity onPress={() => props.navigation.navigate('WellnessPlan')} style={styles.wellnessPlanCard}>
           <View style={styles.wellnessPlanContent}>
-            <Text style={styles.wellnessPlanTitle}>🧘 My Wellness Plan</Text>
+            <Text style={styles.wellnessPlanTitle}>My Wellness Plan</Text>
             <Text style={styles.wellnessPlanSubtitle}>Get a custom 30-day routine curated by a professional.</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={28} color={colors.white} />
@@ -305,16 +384,14 @@ const HomeScreen = props => {
 
         <TouchableOpacity 
           onPress={() => props.navigation.navigate('EmotionalFingerprint')} 
-          style={styles.fingerprintCard}
+          style={styles.wellnessPlanCard}
           activeOpacity={0.9}
         >
           <View style={styles.wellnessPlanContent}>
-            <Text style={styles.fingerprintTitle}>🔮 Emotional Fingerprint</Text>
-            <Text style={styles.fingerprintSubtitle}>Explore your unique emotional trends and inner patterns.</Text>
+            <Text style={styles.wellnessPlanTitle}>Emotional Fingerprint</Text>
+            <Text style={styles.wellnessPlanSubtitle}>Explore your unique emotional trends and inner patterns.</Text>
           </View>
-          <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.25)', padding: 12, borderRadius: 14 }}>
-            <MaterialCommunityIcons name="fingerprint" size={30} color={colors.white} />
-          </View>
+          <MaterialCommunityIcons name="chevron-right" size={28} color={colors.white} />
         </TouchableOpacity>
 
         <View>
@@ -921,4 +998,89 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     lineHeight: 18,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    width: Dimensions.get('window').width - 40,
+    maxHeight: Dimensions.get('window').height * 0.75,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: colors.secondary,
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  modalLoading: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  modalSub: {
+    fontSize: 14,
+    color: colors.gray,
+    marginTop: 10,
+  },
+  modalEmpty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 50,
+  },
+  modalEmptyText: {
+    fontSize: 15,
+    color: colors.gray,
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  notificationCard: {
+    backgroundColor: '#F5F7FA',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+  },
+  notificationHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  notificationTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.secondary,
+    flex: 1,
+  },
+  notificationBody: {
+    fontSize: 14,
+    color: '#4A5568',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  notificationDate: {
+    fontSize: 12,
+    color: colors.gray1,
+    alignSelf: 'flex-end',
+  },
 });
+

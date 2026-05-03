@@ -122,4 +122,24 @@ router.post(
   }
 );
 
+// GET /api/user/notifications — fetch admin broadcasts for users
+router.get('/notifications', async (req, res) => {
+  try {
+    const Notification = require('../models/Notification');
+    // Fetch notifications broadcast to all_users or specifically for therapists
+    const notifications = await Notification.find({
+      audience: { $in: ['all_users', 'therapists'] }
+    })
+    .sort({ createdAt: -1 })
+    .limit(30)
+    .lean();
+
+    res.json(notifications);
+  } catch (err) {
+    console.error('Fetch notifications error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
 module.exports = router;
+

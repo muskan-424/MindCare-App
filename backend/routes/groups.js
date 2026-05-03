@@ -23,15 +23,22 @@ router.post('/', adminAuth, async (req, res) => {
   try {
     const { title, description, scheduledDate, meetingLink, maxParticipants, facilitatorName } = req.body;
     
-    if (!title || !description || !scheduledDate || !meetingLink) {
+    if (!title || !description || !scheduledDate) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    let finalMeetingLink = meetingLink;
+    if (!finalMeetingLink || finalMeetingLink.trim() === '') {
+      const sanitizedTitle = title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+      const randomStr = Math.random().toString(36).substring(2, 8);
+      finalMeetingLink = `https://meet.jit.si/MindCare-${sanitizedTitle || 'Session'}-${randomStr}`;
     }
 
     const newGroup = new GroupSession({
       title,
       description,
       scheduledDate,
-      meetingLink,
+      meetingLink: finalMeetingLink,
       maxParticipants: maxParticipants || 10,
       facilitatorName: facilitatorName || 'MindCare Team',
     });

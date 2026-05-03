@@ -328,8 +328,17 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'android' ? 80 : 0}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+      >
         
         {step > 0 && <View style={styles.progressBar}>
           <View style={[styles.progressFill, { width: `${(step / 4) * 100}%` }]} />
@@ -536,7 +545,7 @@ export default MultidimensionalIntakeScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
-  scroll: { padding: 20, paddingTop: 60, paddingBottom: 60 },
+  scroll: { padding: 20, paddingTop: 60, paddingBottom: 300 },
   progressBar: { height: 6, backgroundColor: colors.gray3, borderRadius: 3, marginBottom: 20, overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: colors.primary },
   headerTitle: { fontSize: 24, fontWeight: '800', color: colors.secondary, marginBottom: 24, textAlign: 'center' },
