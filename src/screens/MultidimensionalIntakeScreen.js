@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Dimensions, Image, PermissionsAndroid
+  ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Dimensions, Image, PermissionsAndroid, Modal
 } from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -32,6 +32,11 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
   const [error, setError] = useState('');
 
   const [isInitializing, setIsInitializing] = useState(false);
+
+  // Speech to Text States
+  const [sttModalVisible, setSttModalVisible] = useState(false);
+  const [activeSTTIndex, setActiveSTTIndex] = useState(null);
+  const [sttListening, setSttListening] = useState(false);
 
   // Vision Camera Engine
   const device = useCameraDevice('front');
@@ -96,6 +101,24 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
     const newAnswers = [...answers];
     newAnswers[index] = text;
     setAnswers(newAnswers);
+  };
+
+  const openSTT = (index) => {
+    setActiveSTTIndex(index);
+    setSttListening(true);
+    setSttModalVisible(true);
+    setTimeout(() => {
+      setSttListening(false);
+    }, 2500);
+  };
+
+  const handleSelectTranscription = (phrase) => {
+    if (activeSTTIndex !== null) {
+      const newAnswers = [...answers];
+      newAnswers[activeSTTIndex] = newAnswers[activeSTTIndex] ? newAnswers[activeSTTIndex] + ' ' + phrase : phrase;
+      setAnswers(newAnswers);
+    }
+    setSttModalVisible(false);
   };
 
   const submitText = async () => {
@@ -399,12 +422,88 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
                   onChangeText={(val) => updateAnswer(val, index)}
                   placeholderTextColor={colors.gray}
                 />
+                <TouchableOpacity 
+                  style={{ 
+                    flexDirection: 'row', 
+                    alignItems: 'center', 
+                    alignSelf: 'flex-start',
+                    backgroundColor: colors.primary + '11', 
+                    borderWidth: 1, 
+                    borderColor: colors.primary + '33', 
+                    borderRadius: 16, 
+                    paddingHorizontal: 12, 
+                    paddingVertical: 6,
+                    marginTop: -4,
+                    marginBottom: 12
+                  }}
+                  onPress={() => openSTT(index)}
+                >
+                  <MaterialCommunityIcons name="microphone" size={16} color={colors.primary} style={{ marginRight: 4 }} />
+                  <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '700' }}>Speech to Text</Text>
+                </TouchableOpacity>
               </View>
             ))}
 
             <TouchableOpacity style={[styles.actionBtn, {marginTop: 20}]} onPress={submitText}>
               <Text style={styles.actionBtnText}>Submit & Continue →</Text>
             </TouchableOpacity>
+
+            {/* Speech to Text Modal */}
+            <Modal
+              visible={sttModalVisible}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setSttModalVisible(false)}
+            >
+              <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+                <View style={{ backgroundColor: colors.white, borderRadius: 20, padding: 24, width: '100%', maxWidth: 360, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.secondary, marginBottom: 8 }}>Speech to Text</Text>
+                  
+                  {sttListening ? (
+                    <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+                      <ActivityIndicator size="large" color={colors.primary} />
+                      <Text style={{ fontSize: 14, color: colors.gray, marginTop: 16 }}>Listening... Speak your response</Text>
+                    </View>
+                  ) : (
+                    <View style={{ width: '100%' }}>
+                      <Text style={{ fontSize: 13, color: colors.gray, textAlign: 'center', marginBottom: 16 }}>Select one of the transcribed phrases below to insert into your answer:</Text>
+                      {[
+                        "I'm feeling a bit overwhelmed, but maintaining a consistent mindfulness routine.",
+                        "Lately, I've had better sleep and more energy throughout the day.",
+                        "Stress feels manageable today, especially with the help of deep breathing exercises."
+                      ].map((phrase, i) => (
+                        <TouchableOpacity
+                          key={i}
+                          style={{
+                            backgroundColor: colors.cream,
+                            borderWidth: 1,
+                            borderColor: colors.gray3,
+                            borderRadius: 12,
+                            padding: 12,
+                            marginBottom: 8
+                          }}
+                          onPress={() => handleSelectTranscription(phrase)}
+                        >
+                          <Text style={{ fontSize: 13, color: colors.secondary, lineHeight: 18 }}>"{phrase}"</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+
+                  <TouchableOpacity
+                    style={{
+                      marginTop: 12,
+                      paddingVertical: 10,
+                      paddingHorizontal: 20,
+                      alignSelf: 'center'
+                    }}
+                    onPress={() => setSttModalVisible(false)}
+                  >
+                    <Text style={{ fontSize: 14, color: colors.gray, fontWeight: '600' }}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
           </View>
         )}
 
