@@ -9,6 +9,7 @@ const { assessVoicePayload } = require('../services/ai/voiceAssessmentService');
 const { assessVisionPayload } = require('../services/ai/visionAssessmentService');
 const { fuseAssessment } = require('../services/ai/fusionAssessmentService');
 const { getSessionQuestions } = require('../services/ai/questionPolicyService');
+const { assessMoodTrend } = require('../services/ai/moodTrendService');
 
 router.use(auth);
 
@@ -153,8 +154,15 @@ router.post('/session/:sessionId/fusion/run', async (req, res) => {
       });
     }
 
-    const fv = await AssessmentFeatureVector.findOne({ session: session._id }).lean();
-    const fusion = fuseAssessment(fv);
+    const fv = await AssessmentFeatureVector.findOne({ session: session._id });
+    
+    // 1. Fetch historical mood trend before fusion
+    const moodResult = await assessMoodTrend(req.user.id);
+    fv.mood = moodResult;
+    await fv.save();
+
+    // 2. Run the Quad-Modal Fusion
+    const fusion = fuseAssessment(fv.toObject());
 
     const result = await AssessmentFusionResult.findOneAndUpdate(
       { session: session._id },

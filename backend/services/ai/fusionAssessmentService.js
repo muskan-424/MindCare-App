@@ -38,16 +38,20 @@ function fuseAssessment(featureVector) {
   const text = featureVector?.text || {};
   const voice = featureVector?.voice || {};
   const vision = featureVector?.vision || {};
+  const mood = featureVector?.mood || {}; // New: Historical Mood Trend
 
-  const wText = 0.45;  // Gemini AI text analysis (richest semantic signal)
-  const wVoice = 0.30; // Python ML prosodic analysis (upgraded from stub)
-  const wVision = 0.25; // Python ML micro-expression analysis (upgraded from stub)
+  // New Weights (Total = 1.00)
+  const wText = 0.35;   // Real-time Semantic (Text)
+  const wMood = 0.25;   // Historical Trend (Logged Moods)
+  const wVoice = 0.20;  // Real-time Prosodic (Voice)
+  const wVision = 0.20; // Real-time Visual (Face)
 
   const riskScore = Math.max(
     0,
     Math.min(
       1,
       (Number(text.riskScore || 0) * wText) +
+        (Number(mood.riskScore || 0) * wMood) +
         (Number(voice.riskScore || 0) * wVoice) +
         (Number(vision.riskScore || 0) * wVision)
     )
@@ -58,6 +62,7 @@ function fuseAssessment(featureVector) {
     Math.min(
       1,
       (Number(text.confidence || 0) * wText) +
+        (Number(mood.confidence || 0) * wMood) +
         (Number(voice.confidence || 0) * wVoice) +
         (Number(vision.confidence || 0) * wVision)
     )
@@ -66,8 +71,11 @@ function fuseAssessment(featureVector) {
   const contradictionFlags = [];
   const textVsVisionGap = Math.abs(Number(text.riskScore || 0) - Number(vision.riskScore || 0));
   const voiceVsVisionGap = Math.abs(Number(voice.riskScore || 0) - Number(vision.riskScore || 0));
+  const liveVsTrendGap = Math.abs(Number(text.riskScore || 0) - Number(mood.riskScore || 0));
+
   if (textVsVisionGap > 0.45) contradictionFlags.push('text_vision_mismatch');
   if (voiceVsVisionGap > 0.45) contradictionFlags.push('voice_vision_mismatch');
+  if (liveVsTrendGap > 0.50) contradictionFlags.push('live_signal_vs_trend_mismatch');
 
   const riskLevel = toRiskLevel(riskScore);
   const recommendations = buildRecommendations(riskLevel);

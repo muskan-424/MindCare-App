@@ -148,6 +148,17 @@ const ProfileScreen = props => {
         </View>
       </TouchableOpacity>
       <TouchableOpacity
+        style={[styles.historyRow, { marginTop: 10, borderLeftColor: '#E65100' }]}
+        onPress={() => props.navigation.navigate('Appointments')}
+        activeOpacity={0.8}>
+        <MaterialCommunityIcons name="calendar-multiselect" size={24} color="#E65100" />
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={styles.historyText}>My Requests & Appointments</Text>
+          <Text style={styles.historySubtext}>View or modify your consultations</Text>
+        </View>
+        <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
+      </TouchableOpacity>
+      <TouchableOpacity
         style={[styles.historyRow, { marginTop: 10, borderLeftColor: '#C62828' }]}
         onPress={() => props.navigation.navigate('EmergencyContact')}
         activeOpacity={0.8}>
@@ -256,12 +267,7 @@ const ProfileScreen = props => {
           )}
         </View>
       </View>
-      <View style={{position: 'relative', top: 60}}>
-        <Appointments data={futureData} type="Future" />
-      </View>
-      <View style={{position: 'relative', top: 60, marginBottom: 70}}>
-        <Appointments data={pastData} type="Past" />
-      </View>
+
 
       <View style={{position: 'relative', top: 50, marginBottom: 80}}>
         <TouchableOpacity

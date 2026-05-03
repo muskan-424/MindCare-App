@@ -468,9 +468,11 @@ const PendingTab = () => {
                 setAssignTarget(req);
                 setAssignModal(true);
                 setAssignTherapist(null);
-                setAssignDate('');
-                setAvailableSlots([]);
-                setAssignSlot('');
+                const prefilledDate = req.preferredDates?.length > 0 ? req.preferredDates[0] : '';
+                const prefilledTime = req.preferredTime && req.preferredTime !== 'No time preference' ? req.preferredTime : '';
+                setAssignDate(prefilledDate);
+                setAvailableSlots(prefilledTime ? [prefilledTime] : []);
+                setAssignSlot(prefilledTime);
                 setAssignNote('');
               }}
             />
@@ -2353,6 +2355,9 @@ const UsersTab = () => {
   const [roleTarget, setRoleTarget] = useState(null);
   const [roleLoading, setRoleLoading] = useState(false);
   const [suspendLoading, setSuspendLoading] = useState(false);
+  const [fullProfile, setFullProfile] = useState(null);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const ROLES = [
     { key: 'user',        label: 'Standard User',    color: D.textMuted,  icon: 'person' },
@@ -2400,6 +2405,20 @@ const UsersTab = () => {
       Alert.alert('Error', e.response?.data?.error || 'Failed to change role.');
     }
     setRoleLoading(false);
+  };
+
+  const fetchFullProfile = async () => {
+    if (!selected) return;
+    setProfileLoading(true);
+    setProfileModalVisible(true);
+    try {
+      const res = await api.get(`/api/admin/users/${selected.id}/full-profile`, H);
+      setFullProfile(res.data);
+    } catch (e) {
+      Alert.alert('Error', 'Failed to load full clinical profile.');
+      setProfileModalVisible(false);
+    }
+    setProfileLoading(false);
   };
 
   const toggleSuspend = async (user) => {
@@ -2575,6 +2594,15 @@ const UsersTab = () => {
               </TouchableOpacity>
             </View>
 
+            <TouchableOpacity
+              style={[ss.actionButton, { backgroundColor: '#3498DB', marginBottom: 14 }]}
+              onPress={fetchFullProfile}
+              activeOpacity={0.8}
+            >
+              <MaterialIcons name="analytics" size={14} color="#fff" style={{ marginRight: 5 }} />
+              <Text style={[ss.actionButtonText, { color: '#fff' }]}>View Full Clinical Profile</Text>
+            </TouchableOpacity>
+
             <Text style={ss.detailSectionLabel}>AI Assessments</Text>
             {loadingDetails ? <ActivityIndicator color={D.primary} style={{ marginTop: 8 }} /> :
               issues.length === 0 ? <Text style={ss.emptyStateText}>No assessments yet.</Text> :
@@ -2643,6 +2671,62 @@ const UsersTab = () => {
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setRoleModal(false)}>
               <Text style={ss.modalCancelText}>Cancel</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Full Profile Modal */}
+      <Modal visible={profileModalVisible} transparent animationType="slide">
+        <View style={ss.modalOverlay}>
+          <View style={ss.modalSheet}>
+            <View style={ss.modalHeaderRow}>
+              <Text style={ss.modalTitle}>Full Clinical Profile</Text>
+              <TouchableOpacity onPress={() => setProfileModalVisible(false)} style={ss.modalCloseBtn}>
+                <MaterialIcons name="close" size={20} color={D.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            {profileLoading ? (
+              <ActivityIndicator color={D.primary} size="large" style={{ marginVertical: 20 }} />
+            ) : fullProfile ? (
+              <ScrollView style={{ maxHeight: '85%' }} showsVerticalScrollIndicator={false}>
+                <View style={{ marginBottom: 25 }}>
+                  <Text style={ss.detailSectionLabel}>AI Assessments</Text>
+                  {fullProfile.fusions?.length === 0 && <Text style={ss.emptyStateText}>No AI assessments found.</Text>}
+                  {fullProfile.fusions?.map(f => (
+                    <View key={f.id} style={ss.detailCard}>
+                      <Text style={[ss.detailCardDate, { color: D.textPrimary, fontWeight: 'bold' }]}>Risk Level: {f.riskLevel}</Text>
+                      <Text style={ss.detailCardMeta}>Score: {(f.riskScore * 100).toFixed(0)}%</Text>
+                      <Text style={ss.detailCardMeta}>Markers: {(f.aiMarkers || []).join(', ')}</Text>
+                      <Text style={[ss.detailCardDate, { marginTop: 4 }]}>{new Date(f.createdAt).toLocaleDateString()}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                <View style={{ marginBottom: 25 }}>
+                  <Text style={ss.detailSectionLabel}>Risk Reports</Text>
+                  {fullProfile.issues?.length === 0 && <Text style={ss.emptyStateText}>No risk reports found.</Text>}
+                  {fullProfile.issues?.map(i => (
+                    <View key={i.id} style={ss.detailCard}>
+                      <Text style={[ss.detailCardDate, { color: D.textPrimary, fontWeight: 'bold' }]}>{i.category} (Severity: {i.severity}/5)</Text>
+                      <Text style={ss.detailCardMeta}>Risk: {i.riskLevel}</Text>
+                      <Text style={[ss.detailCardDate, { marginTop: 4 }]}>{new Date(i.createdAt).toLocaleDateString()}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                <View style={{ marginBottom: 25 }}>
+                  <Text style={ss.detailSectionLabel}>Recent Moods</Text>
+                  {fullProfile.moods?.length === 0 && <Text style={ss.emptyStateText}>No moods logged.</Text>}
+                  {fullProfile.moods?.slice(0, 5).map(m => (
+                    <View key={m.id} style={ss.detailCard}>
+                      <Text style={[ss.detailCardDate, { color: D.textPrimary, fontWeight: 'bold' }]}>Rating: {m.rating}/10</Text>
+                      {m.note ? <Text style={ss.detailCardMeta}>Note: {m.note}</Text> : null}
+                      <Text style={[ss.detailCardDate, { marginTop: 4 }]}>{new Date(m.date).toLocaleDateString()}</Text>
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
+            ) : null}
           </View>
         </View>
       </Modal>

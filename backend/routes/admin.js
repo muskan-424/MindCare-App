@@ -14,6 +14,7 @@ const AdminAuditLog = require('../models/AdminAuditLog');
 const Resource = require('../models/Resource');
 const Therapist = require('../models/Therapist');
 const Notification = require('../models/Notification');
+const AssessmentFusionResult = require('../models/AssessmentFusionResult');
 
 function adminAuth(req, res, next) {
   const token = req.headers['x-admin-token'];
@@ -73,6 +74,35 @@ router.get('/users', adminAuth, async (_req, res) => {
   } catch (err) {
     console.error('Admin users error:', err.message);
     res.status(500).json({ error: 'Failed to load users' });
+  }
+});
+
+// GET /api/admin/users/:id/full-profile — comprehensive clinical profile
+router.get('/users/:id/full-profile', adminAuth, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const [user, profile, fusions, issues, moods, journals] = await Promise.all([
+      User.findById(userId).lean(),
+      Profile.findOne({ userId }).lean(),
+      AssessmentFusionResult.find({ user: userId }).sort({ createdAt: -1 }).lean(),
+      IssueReport.find({ user: userId }).sort({ createdAt: -1 }).lean(),
+      MoodEntry.find({ user: userId }).sort({ date: -1 }).lean(),
+      JournalEntry.find({ user: userId }).sort({ date: -1 }).lean(),
+    ]);
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.json({
+      user: { id: user._id, name: user.name, email: user.email, age: user.age, gender: user.gender, role: user.role, suspended: user.suspended, flagged: user.flagged },
+      profile,
+      fusions: fusions.map(f => ({ id: String(f._id), riskLevel: f.riskLevel, riskScore: f.riskScore, aiMarkers: f.aiMarkers, recommendations: f.recommendations, createdAt: f.createdAt })),
+      issues: issues.map(i => ({ id: String(i._id), category: i.category, severity: i.severity, riskLevel: i.riskLevel, safetyTriggered: i.safetyTriggered, createdAt: i.createdAt })),
+      moods: moods.map(m => ({ id: String(m._id), rating: m.rating, note: m.note, date: m.date })),
+      journals: journals.map(j => ({ id: String(j._id), title: j.title, contentPreview: j.content?.substring(0, 50) + '...', date: j.date })),
+    });
+  } catch (err) {
+    console.error('Admin full profile error:', err.message);
+    res.status(500).json({ error: 'Failed to load full profile' });
   }
 });
 

@@ -47,6 +47,14 @@ const ProfileSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    // Psychometric / Analytics fields
+    sleepQuality: { type: Number, default: 3 },
+    academicStress: { type: Number, default: 3 },
+    anxietyLevel: { type: Number, default: 2 },
+    depressionLevel: { type: Number, default: 2 },
+    stressLevel: { type: Number, default: 3 },
+    activityLevel: { type: Number, default: 3 },
+    socialInteraction: { type: Number, default: 3 },
   },
   { timestamps: true }
 );

@@ -1,44 +1,14 @@
-const { callGeminiAssessment } = require('./geminiAiService');
+const axios = require('axios');
 
 const NEGATIVE_TERMS = [
-  'hopeless',
-  'worthless',
-  'overwhelmed',
-  'panic',
-  'anxious',
-  'sad',
-  'stressed',
-  'tired',
-  'lonely',
+  'hopeless', 'worthless', 'overwhelmed', 'panic',
+  'anxious', 'sad', 'stressed', 'tired', 'lonely',
 ];
 
 const CRITICAL_TERMS = [
-  'suicide',
-  'suicidal',
-  'kill myself',
-  'end my life',
-  'self-harm',
-  'self harm',
-  'want to die',
+  'suicide', 'suicidal', 'kill myself', 'end my life',
+  'self-harm', 'self harm', 'want to die',
 ];
-
-const SYSTEM_PROMPT = `You are a clinical mental health assessment AI.
-Analyze the user's text check-in and provide a structured JSON assessment.
-
-RESPONSE FORMAT (JSON ONLY):
-{
-  "riskScore": (float 0-1),
-  "riskLevel": ("LOW" | "MEDIUM" | "HIGH" | "CRITICAL"),
-  "confidence": (float 0-1),
-  "clinicalMarkers": [string],
-  "primaryEmotions": [string],
-  "explanation": string
-}
-
-INSTRUCTIONS:
-1. If user mentions self-harm or suicidal ideation, riskLevel MUST be "CRITICAL" and riskScore >= 0.85.
-2. Look for signals of anxiety, depression, burnout, or acute stress.
-3. Be objective and conservative.`;
 
 function toRiskLevel(score) {
   if (score >= 0.8) return 'CRITICAL';
@@ -48,7 +18,7 @@ function toRiskLevel(score) {
 }
 
 /**
- * Fallback heuristic logic if AI fails
+ * Fallback heuristic logic if Python Server fails
  */
 function assessTextPayloadHeuristic(combined, responsesLength) {
   const tokenCount = combined ? combined.split(/\s+/).length : 0;
@@ -74,37 +44,50 @@ function assessTextPayloadHeuristic(combined, responsesLength) {
 }
 
 async function assessTextPayload(payload) {
+  // Extract all text responses and concatenate them into one block for the NLP sentiment model
   const responses = Array.isArray(payload?.responses) ? payload.responses : [];
   const combined = responses
     .map((r) => String(r?.text || '').trim())
     .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
+    .join('. '); // Join with period for NLP sentence boundaries
 
   if (!combined) {
     return assessTextPayloadHeuristic('', responses.length);
   }
 
   try {
-    const aiResult = await callGeminiAssessment(SYSTEM_PROMPT, combined);
+    // Ping the local Python FastAPI ML Pipeline (.pkl Logistic Regression Text Classifier)
+    const res = await axios.post('http://127.0.0.1:8000/analyze/text-local', {
+      statement: combined
+    }, { timeout: 8000 });
+
+    const aiResult = res.data;
     
+    // Check if the heuristic overrides due to obvious critical keywords that the model might miss
+    const criticalHits = CRITICAL_TERMS.filter((t) => combined.toLowerCase().includes(t)).length;
+
+    let finalRiskLevel = aiResult.riskLevel;
+    let finalRiskScore = aiResult.riskScore;
+
+    if (criticalHits > 0) {
+      finalRiskLevel = 'CRITICAL';
+      finalRiskScore = Math.max(finalRiskScore, 0.95);
+    }
+
     return {
       confidence: aiResult.confidence || 0.8,
-      riskScore: aiResult.riskScore || 0,
-      riskLevel: aiResult.riskLevel || 'LOW',
+      riskScore: finalRiskScore,
+      riskLevel: finalRiskLevel,
       features: {
-        clinicalMarkers: aiResult.clinicalMarkers || [],
-        primaryEmotions: aiResult.primaryEmotions || [],
-        explanation: aiResult.explanation || '',
         responseCount: responses.length,
+        textSubmittedLength: combined.length
       },
-      modelVersion: 'gemini-1.5-flash-v1',
+      modelVersion: aiResult.modelVersion || 'text-tfidf-lr-v1',
     };
   } catch (err) {
-    console.warn('Text AI Assessment failed, falling back to heuristic:', err.message);
+    console.warn('Python Text ML Assessment failed, falling back to heuristic:', err.message);
     return assessTextPayloadHeuristic(combined, responses.length);
   }
 }
 
 module.exports = { assessTextPayload };
-

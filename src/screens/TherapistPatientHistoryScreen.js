@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Alert, RefreshControl
+  ActivityIndicator, Alert, RefreshControl, Modal
 } from 'react-native';
 import api from '../utils/apiClient';
 import { colors } from '../constants/theme';
@@ -20,6 +20,9 @@ const TherapistPatientHistoryScreen = ({ route, navigation }) => {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [fullProfile, setFullProfile] = useState(null);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const loadNotes = useCallback(async () => {
     try {
@@ -34,6 +37,19 @@ const TherapistPatientHistoryScreen = ({ route, navigation }) => {
   }, [patientId]);
 
   useEffect(() => { loadNotes(); }, [loadNotes]);
+
+  const fetchFullProfile = async () => {
+    setProfileLoading(true);
+    setProfileModalVisible(true);
+    try {
+      const res = await api.get(`/api/therapists/patient/${patientId}/profile`);
+      setFullProfile(res.data);
+    } catch (e) {
+      Alert.alert('Error', 'Failed to load full clinical profile.');
+      setProfileModalVisible(false);
+    }
+    setProfileLoading(false);
+  };
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -81,6 +97,11 @@ const TherapistPatientHistoryScreen = ({ route, navigation }) => {
         </TouchableOpacity>
       </View>
 
+      <TouchableOpacity style={styles.fullProfileBtn} onPress={fetchFullProfile}>
+        <MaterialCommunityIcons name="clipboard-pulse-outline" size={20} color={colors.white} />
+        <Text style={styles.fullProfileBtnText}>View Full AI & Clinical Profile</Text>
+      </TouchableOpacity>
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -116,6 +137,62 @@ const TherapistPatientHistoryScreen = ({ route, navigation }) => {
           })
         )}
       </ScrollView>
+
+      {/* Full Profile Modal */}
+      <Modal visible={profileModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Full Clinical Profile</Text>
+              <TouchableOpacity onPress={() => setProfileModalVisible(false)}>
+                <AntDesign name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            {profileLoading ? (
+              <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>
+            ) : fullProfile ? (
+              <ScrollView style={styles.modalScroll}>
+                <View style={styles.profileSection}>
+                  <Text style={styles.sectionTitle}>AI Assessments (Quad-Modal)</Text>
+                  {fullProfile.fusions?.length === 0 && <Text style={styles.emptyText}>No AI assessments found.</Text>}
+                  {fullProfile.fusions?.map(f => (
+                    <View key={f.id} style={styles.dataCard}>
+                      <Text style={styles.dataTitle}>Risk Level: {f.riskLevel}</Text>
+                      <Text style={styles.dataText}>Score: {(f.riskScore * 100).toFixed(0)}%</Text>
+                      <Text style={styles.dataText}>Markers: {(f.aiMarkers || []).join(', ')}</Text>
+                      <Text style={styles.dataDate}>{new Date(f.createdAt).toLocaleDateString()}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                <View style={styles.profileSection}>
+                  <Text style={styles.sectionTitle}>Risk Reports</Text>
+                  {fullProfile.issues?.length === 0 && <Text style={styles.emptyText}>No risk reports found.</Text>}
+                  {fullProfile.issues?.map(i => (
+                    <View key={i.id} style={styles.dataCard}>
+                      <Text style={styles.dataTitle}>{i.category} (Severity: {i.severity}/5)</Text>
+                      <Text style={styles.dataText}>Risk: {i.riskLevel}</Text>
+                      <Text style={styles.dataDate}>{new Date(i.createdAt).toLocaleDateString()}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                <View style={styles.profileSection}>
+                  <Text style={styles.sectionTitle}>Recent Moods</Text>
+                  {fullProfile.moods?.length === 0 && <Text style={styles.emptyText}>No moods logged.</Text>}
+                  {fullProfile.moods?.slice(0, 5).map(m => (
+                    <View key={m.id} style={styles.dataCard}>
+                      <Text style={styles.dataTitle}>Rating: {m.rating}/10</Text>
+                      {m.note ? <Text style={styles.dataText}>Note: {m.note}</Text> : null}
+                      <Text style={styles.dataDate}>{new Date(m.date).toLocaleDateString()}</Text>
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
+            ) : null}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -136,6 +213,8 @@ const styles = StyleSheet.create({
   headerTitle: { color: colors.white, fontSize: 18, fontWeight: 'bold' },
   headerSub: { color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 2 },
   addBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  fullProfileBtn: { flexDirection: 'row', backgroundColor: '#3498DB', padding: 15, marginHorizontal: 20, marginTop: -15, borderRadius: 10, alignItems: 'center', justifyContent: 'center', gap: 8, elevation: 3 },
+  fullProfileBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   scrollContent: { padding: 20, paddingBottom: 40 },
   noteCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 20, elevation: 2, position: 'relative' },
   noteHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
@@ -148,4 +227,16 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', marginTop: 100 },
   emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#636E72', marginTop: 20 },
   emptySub: { fontSize: 14, color: '#95A5A6', textAlign: 'center', marginTop: 10, paddingHorizontal: 40 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#fff', height: '85%', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#eee', marginBottom: 15 },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#333' },
+  modalScroll: { flex: 1 },
+  profileSection: { marginBottom: 25 },
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: colors.primary, marginBottom: 10, textTransform: 'uppercase' },
+  dataCard: { backgroundColor: '#F8F9F9', padding: 12, borderRadius: 8, marginBottom: 8, borderWidth: 1, borderColor: '#EAEDED' },
+  dataTitle: { fontWeight: 'bold', color: '#2C3E50', marginBottom: 4 },
+  dataText: { color: '#566573', fontSize: 13, marginBottom: 2 },
+  dataDate: { color: '#99A3A4', fontSize: 11, marginTop: 4, textAlign: 'right' },
+  emptyText: { color: '#99A3A4', fontStyle: 'italic' },
 });

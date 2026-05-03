@@ -33,6 +33,7 @@ const AssessmentFeatureVectorSchema = new mongoose.Schema(
     text: { type: ModalityFeatureSchema, default: () => ({}) },
     voice: { type: ModalityFeatureSchema, default: () => ({}) },
     vision: { type: ModalityFeatureSchema, default: () => ({}) },
+    mood: { type: ModalityFeatureSchema, default: () => ({}) }, // New: Historical Mood Trend
     rawRefs: {
       textResponseCount: { type: Number, default: 0 },
       latestVoiceRef: { type: String, default: '' },

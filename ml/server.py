@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
-import pickle
+import joblib
 import os
 import pandas as pd
 
@@ -17,8 +17,11 @@ BASE_DIR = os.path.dirname(__file__)
 def load_pkl(filename):
     path = os.path.join(BASE_DIR, filename)
     if os.path.exists(path):
-        with open(path, 'rb') as f:
-            return pickle.load(f)
+        try:
+            return joblib.load(path)
+        except Exception as e:
+            print(f"[ERROR] Failed to load {filename}: {e}")
+            return None
     print(f"[WARN] {filename} not found.")
     return None
 
@@ -46,6 +49,11 @@ def load_all_models():
     models['mood'] = load_pkl('mood_trend_model.pkl')
     meta['mood_features'] = load_pkl('mood_trend_features.pkl')
     if models['mood']: print("[OK] Loaded Mood Trend Model")
+
+    # 5. Voice (NEW)
+    models['voice'] = load_pkl('voice_model.pkl')
+    meta['voice_features'] = load_pkl('voice_features.pkl')
+    if models['voice']: print("[OK] Loaded Voice Model (CREMA-D)")
 
 # ---------------------------------------------------------------------------
 # Health Check
@@ -224,6 +232,37 @@ class VoiceRequest(BaseModel):
 
 @app.post("/analyze/voice")
 def analyze_voice(req: VoiceRequest):
+    # Try using the ML model first
+    if models.get('voice') and meta.get('voice_features'):
+        try:
+            # Match features: ['speechRate', 'pauseRatio', 'pitchVariance', 'durationSec', 'snr', 'energyLevel']
+            df = pd.DataFrame([{
+                'speechRate': req.speechRate,
+                'pauseRatio': req.pauseRatio,
+                'pitchVariance': req.pitchVariance,
+                'durationSec': req.durationSec,
+                'snr': req.snr,
+                'energyLevel': req.energyLevel if req.energyLevel is not None else 0.5
+            }], columns=meta['voice_features'])
+            
+            proba = models['voice'].predict_proba(df)[0]
+            
+            # Predict Risk Score: (proba[1]*0.5 + proba[2]*1.0)
+            # Map: 0=LOW, 1=MEDIUM, 2=HIGH
+            risk_score = float(proba[1] * 0.5 + proba[2] * 1.0)
+            confidence = round(float(max(proba)), 4)
+            
+            return {
+                "riskScore": round(risk_score, 4),
+                "riskLevel": _risk_level(risk_score),
+                "confidence": confidence,
+                "modelVersion": "voice-gbc-v3-cremad"
+            }
+        except Exception as e:
+            print(f"[ERROR] Voice model prediction failed: {e}")
+            # Fall through to heuristic
+
+    # Fallback: Heuristic Engine
     if req.speechRate > 180: pace_stress = 0.30
     elif req.speechRate < 80: pace_stress = 0.35
     elif 80 <= req.speechRate < 110: pace_stress = 0.18
@@ -248,7 +287,7 @@ def analyze_voice(req: VoiceRequest):
         "riskScore": round(risk_score, 4),
         "riskLevel": _risk_level(risk_score),
         "confidence": confidence,
-        "modelVersion": "voice-prosodic-v2"
+        "modelVersion": "voice-heuristic-fallback"
     }
 
 if __name__ == "__main__":

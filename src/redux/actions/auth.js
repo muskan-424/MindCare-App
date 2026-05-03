@@ -16,6 +16,7 @@ export const register = ({
   age,
   phone_no,
   role,
+  specialisation,
 }) => async dispatch => {
   const config = {
     headers: {
@@ -23,7 +24,7 @@ export const register = ({
     },
   };
 
-  const body = JSON.stringify({ name, email, password, age, gender, phone_no, role });
+  const body = JSON.stringify({ name, email, password, age, gender, phone_no, role, specialisation });
   try {
     const res = await api.post('/api/user', body, config);
     dispatch({ type: REGISTER_SUCCESS, payload: res.data, meta: { from: 'signup' } });

@@ -303,6 +303,20 @@ const HomeScreen = props => {
           <MaterialCommunityIcons name="chevron-right" size={28} color={colors.white} />
         </TouchableOpacity>
 
+        <TouchableOpacity 
+          onPress={() => props.navigation.navigate('EmotionalFingerprint')} 
+          style={styles.fingerprintCard}
+          activeOpacity={0.9}
+        >
+          <View style={styles.wellnessPlanContent}>
+            <Text style={styles.fingerprintTitle}>🔮 Emotional Fingerprint</Text>
+            <Text style={styles.fingerprintSubtitle}>Explore your unique emotional trends and inner patterns.</Text>
+          </View>
+          <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.25)', padding: 12, borderRadius: 14 }}>
+            <MaterialCommunityIcons name="fingerprint" size={30} color={colors.white} />
+          </View>
+        </TouchableOpacity>
+
         <View>
           <TouchableOpacity
             onPress={() => {
@@ -876,4 +890,35 @@ const styles = StyleSheet.create({
   burnoutTextCont: { marginLeft: 12, flex: 1 },
   burnoutTitle: { color: colors.white, fontWeight: 'bold', fontSize: 16, marginBottom: 4 },
   burnoutText: { color: colors.white, fontSize: 13, lineHeight: 18 },
+  fingerprintCard: {
+    backgroundColor: '#4B2BB9',
+    marginHorizontal: 16,
+    marginBottom: 20,
+    borderRadius: 20,
+    padding: 22,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    elevation: 6,
+    shadowColor: '#4B2BB9',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    marginTop: -5,
+  },
+  fingerprintTitle: {
+    fontSize: 19,
+    fontWeight: '900',
+    color: colors.white,
+    marginBottom: 4,
+    letterSpacing: 0.3,
+  },
+  fingerprintSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '500',
+    lineHeight: 18,
+  },
 });

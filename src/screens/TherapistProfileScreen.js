@@ -1,17 +1,52 @@
-import React from 'react';
-import {StyleSheet, Text, View, Image, ScrollView} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {StyleSheet, Text, View, Image, ScrollView, ActivityIndicator} from 'react-native';
 import {colors, fonts} from '../constants/theme';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-
+import api from '../utils/apiClient';
 import {Button} from 'react-native-paper';
 
 const TherapistProfileScreen = ({ route, navigation }) => {
-  const {therapist} = route.params;
-  var starsCount = [];
+  const [therapist, setTherapist] = useState(route?.params?.therapist || null);
+  const [loading, setLoading] = useState(!route?.params?.therapist);
 
+  useEffect(() => {
+    if (!therapist) {
+      fetchMyProfile();
+    }
+  }, []);
+
+  const fetchMyProfile = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/api/therapists/me');
+      setTherapist(res.data);
+    } catch (err) {
+      console.error('Error fetching therapist self profile:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.cream }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!therapist) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: colors.cream }}>
+        <Text style={{ color: colors.secondary, fontSize: 16, fontWeight: '700' }}>Therapist profile not found.</Text>
+      </View>
+    );
+  }
+
+  var starsCount = [];
   for (var i = 0; i < 5; i++) {
-    if (i < therapist.stars) starsCount.push(true);
+    if (i < (therapist.stars || 0)) starsCount.push(true);
     else starsCount.push(false);
   }
 
@@ -23,6 +58,8 @@ const TherapistProfileScreen = ({ route, navigation }) => {
     );
   };
 
+  const isSelf = !route?.params?.therapist;
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.background}>
@@ -33,11 +70,11 @@ const TherapistProfileScreen = ({ route, navigation }) => {
           style={{position: 'absolute', top: 25, left: 20}}
           onPress={() => navigation.goBack()}
         />
-        <Text style={styles.profileText}>Therapist Profile</Text>
+        <Text style={styles.profileText}>{isSelf ? 'My Clinician Profile' : 'Therapist Profile'}</Text>
         <View style={styles.dpCover}>
           <Image
             style={{width: 100, height: 100, borderRadius: 62}}
-            source={{uri: therapist.img}}
+            source={{uri: therapist.img || 'https://www.allsmilesdentist.com/wp-content/uploads/2017/08/Doctors-circle.png'}}
           />
         </View>
       </View>
@@ -62,7 +99,7 @@ const TherapistProfileScreen = ({ route, navigation }) => {
       </View>
       <View style={styles.info3}>
         <Text style={styles.aboutText}>About Therapist</Text>
-        <Text style={styles.about}>{therapist.bio}</Text>
+        <Text style={styles.about}>{therapist.bio || 'Your bio details go here.'}</Text>
       </View>
       <View style={styles.info4}>
         <View style={styles.contactBox}>
@@ -82,24 +119,27 @@ const TherapistProfileScreen = ({ route, navigation }) => {
           />
         </View>
       </View>
-      <View style={{ paddingHorizontal: 20, paddingBottom: 30, gap: 12 }}>
-        <Button
-          mode="contained"
-          color={colors.secondary}
-          style={{ borderRadius: 12 }}
-          onPress={() => navigation.navigate('BookAppointment', { therapist })}
-        >
-          <Text style={{ color: colors.white, fontWeight: '700' }}>Book Appointment</Text>
-        </Button>
-        <Button
-          mode="outlined"
-          color={colors.secondary}
-          style={{ borderRadius: 12 }}
-          onPress={() => navigation.navigate('Appointments')}
-        >
-          <Text style={{ color: colors.secondary, fontWeight: '600' }}>My Appointments</Text>
-        </Button>
-      </View>
+
+      {!isSelf && (
+        <View style={{ paddingHorizontal: 20, paddingBottom: 30, gap: 12 }}>
+          <Button
+            mode="contained"
+            color={colors.secondary}
+            style={{ borderRadius: 12 }}
+            onPress={() => navigation.navigate('BookAppointment', { therapist })}
+          >
+            <Text style={{ color: colors.white, fontWeight: '700' }}>Book Appointment</Text>
+          </Button>
+          <Button
+            mode="outlined"
+            color={colors.secondary}
+            style={{ borderRadius: 12 }}
+            onPress={() => navigation.navigate('Appointments')}
+          >
+            <Text style={{ color: colors.secondary, fontWeight: '600' }}>My Appointments</Text>
+          </Button>
+        </View>
+      )}
     </ScrollView>
   );
 };
@@ -114,7 +154,6 @@ const styles = StyleSheet.create({
   background: {
     backgroundColor: colors.primary,
     borderBottomEndRadius: 180,
-    // borderBottomStartRadius:300,
     width: '100%',
     height: 150,
     marginBottom: 30,
@@ -133,7 +172,6 @@ const styles = StyleSheet.create({
     width: 110,
     height: 110,
     position: 'relative',
-    // left:'35%',
     top: '25%',
     borderRadius: 62,
     display: 'flex',

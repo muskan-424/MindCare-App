@@ -93,6 +93,68 @@ router.get('/therapist/me', auth, async (req, res) => {
   }
 });
 
+// GET /api/appointments/open — therapist sees unassigned requests
+router.get('/open', auth, async (req, res) => {
+  try {
+    const allowedRoles = ['therapist', 'clinician', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Access denied: Clinician role required' });
+    }
+
+    const Therapist = require('../models/Therapist');
+    const listing = await Therapist.findOne({ userId: req.user.id }).lean();
+    if (!listing) return res.json([]);
+
+    // Fetch awaiting_admin appointments that match therapist's speciality or 'Any'
+    const query = {
+      status: 'awaiting_admin',
+      $or: [
+        { requestedSpeciality: listing.specialisation },
+        { requestedSpeciality: 'Any' },
+        { requestedSpeciality: '' },
+      ]
+    };
+
+    const appointments = await Appointment.find(query)
+      .populate('user', 'name email age gender')
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(appointments);
+  } catch (err) {
+    console.error('Open appointments fetch error:', err.message);
+    res.status(500).json({ error: 'Failed to load open requests' });
+  }
+});
+
+// POST /api/appointments/:id/claim — therapist claims an unassigned request
+router.post('/:id/claim', auth, async (req, res) => {
+  try {
+    const allowedRoles = ['therapist', 'clinician', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Access denied: Clinician role required' });
+    }
+
+    const Therapist = require('../models/Therapist');
+    const listing = await Therapist.findOne({ userId: req.user.id }).lean();
+    if (!listing) return res.status(403).json({ error: 'No therapist profile linked.' });
+
+    const appt = await Appointment.findOne({ _id: req.params.id, status: 'awaiting_admin' });
+    if (!appt) return res.status(404).json({ error: 'Request not found or already claimed.' });
+
+    appt.therapist = listing._id;
+    appt.date = appt.preferredDates?.length > 0 ? appt.preferredDates[0] : new Date().toISOString().split('T')[0];
+    appt.timeSlot = appt.preferredTime && appt.preferredTime !== 'No time preference' ? appt.preferredTime : 'TBD';
+    appt.status = 'confirmed';
+    
+    await appt.save();
+    res.json({ success: true, appointment: appt });
+  } catch (err) {
+    console.error('Claim appointment error:', err.message);
+    res.status(500).json({ error: 'Failed to claim request' });
+  }
+});
+
+
 // PATCH /api/appointments/:id/cancel — user cancels own pending request
 router.patch('/:id/cancel', auth, async (req, res) => {
   try {
@@ -106,6 +168,29 @@ router.patch('/:id/cancel', auth, async (req, res) => {
   } catch (err) {
     console.error('Cancel appointment error:', err.message);
     res.status(500).json({ error: 'Failed to cancel appointment' });
+  }
+});
+
+// PATCH /api/appointments/:id/modify — user modifies own pending request
+router.patch('/:id/modify', auth, async (req, res) => {
+  try {
+    const { preferredDates, preferredTime, userNote } = req.body;
+    const appt = await Appointment.findOne({ _id: req.params.id, user: req.user.id });
+    
+    if (!appt) return res.status(404).json({ error: 'Appointment not found' });
+    if (appt.status === 'completed' || appt.status === 'cancelled') {
+      return res.status(400).json({ error: 'Cannot modify a completed or cancelled appointment' });
+    }
+
+    if (preferredDates) appt.preferredDates = preferredDates;
+    if (preferredTime) appt.preferredTime = preferredTime;
+    if (userNote !== undefined) appt.userNote = userNote;
+
+    await appt.save();
+    res.json({ success: true, appointment: appt });
+  } catch (err) {
+    console.error('Modify appointment error:', err.message);
+    res.status(500).json({ error: 'Failed to modify appointment' });
   }
 });
 

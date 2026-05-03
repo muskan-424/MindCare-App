@@ -63,6 +63,12 @@ router.post(
         ADMIN_EMAILS.includes((user.email || '').toLowerCase());
       const role = isAdmin ? 'admin' : (user.role || 'user');
 
+      let therapistListing = null;
+      if (role === 'clinician') {
+        const Therapist = require('../models/Therapist');
+        therapistListing = await Therapist.findOne({ userId: user._id }).lean();
+      }
+
       const payload = {
         user: {
           id: user._id,
@@ -83,6 +89,7 @@ router.post(
           age: user.age,
           gender: user.gender,
           role,
+          specialisation: therapistListing ? therapistListing.specialisation : null,
         },
         profile: {
           _id: profile._id,

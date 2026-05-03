@@ -34,12 +34,14 @@ const TherapistHomeScreen = (props) => {
 
   // For Therapist Role
   const [myPatients, setMyPatients] = useState([]);
+  const [openRequests, setOpenRequests] = useState([]);
   const isTherapist = props.auth.user &&
     (props.auth.user.role === 'therapist' || props.auth.user.role === 'clinician');
 
   useEffect(() => {
     if (isTherapist) {
         fetchMyPatients();
+        fetchOpenRequests();
     } else {
         fetchTherapists();
         fetchCategories();
@@ -54,6 +56,27 @@ const TherapistHomeScreen = (props) => {
       setMyPatients(res.data || []);
     } catch (e) {
       console.warn('Patients fetch error:', e.message);
+    }
+    setLoading(false);
+  };
+
+  const fetchOpenRequests = async () => {
+    try {
+      const res = await api.get('/api/appointments/open');
+      setOpenRequests(res.data || []);
+    } catch (e) {
+      console.warn('Open requests fetch error:', e.message);
+    }
+  };
+
+  const claimRequest = async (id) => {
+    setLoading(true);
+    try {
+      await api.post(`/api/appointments/${id}/claim`);
+      await fetchOpenRequests();
+      await fetchMyPatients();
+    } catch (e) {
+      console.warn('Claim error:', e.message);
     }
     setLoading(false);
   };
@@ -103,7 +126,9 @@ const TherapistHomeScreen = (props) => {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
                     <Text style={styles.heroGreeting}>{greeting}, Dr. {(props.auth.user?.name || '').split(' ')[0]}</Text>
-                    <Text style={styles.heroSub}>Ready to make a difference today?</Text>
+                    <Text style={styles.heroSub}>
+                      {props.auth.user?.specialisation ? `${props.auth.user.specialisation} • ` : ''}Ready to make a difference today?
+                    </Text>
                 </View>
                 <TouchableOpacity onPress={() => props.logout()} style={styles.logoutBtn}>
                     <MaterialCommunityIcons name="logout" size={20} color={colors.primary} />
@@ -161,6 +186,37 @@ const TherapistHomeScreen = (props) => {
                     </TouchableOpacity>
                 </ScrollView>
             </View>
+
+            {openRequests.length > 0 && (
+                <>
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 20}}>
+                        <Text style={[styles.sectionTitle, {marginHorizontal: 0, marginTop: 10}]}>Available Consultations</Text>
+                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 10 }}>
+                        {openRequests.map(req => (
+                            <View key={req._id} style={styles.openRequestCard}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <View>
+                                        <Text style={styles.openReqName}>{req.user?.name}</Text>
+                                        <Text style={styles.openReqSpec}>{req.requestedSpeciality || 'General Session'}</Text>
+                                    </View>
+                                    <View style={styles.openReqBadge}>
+                                        <Text style={styles.openReqBadgeText}>OPEN</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.openReqDetails}>
+                                    <Text style={styles.openReqDate}>{req.preferredDates?.[0] || 'Any Date'}</Text>
+                                    <Text style={styles.openReqTime}>{req.preferredTime || 'Any Time'}</Text>
+                                </View>
+                                <TouchableOpacity style={styles.claimBtn} onPress={() => claimRequest(req._id)}>
+                                    <MaterialCommunityIcons name="hand-back-right" size={16} color="#fff" />
+                                    <Text style={styles.claimBtnText}>Claim Session</Text>
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                    </ScrollView>
+                </>
+            )}
 
             <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 20}}>
                 <Text style={[styles.sectionTitle, {marginHorizontal: 0, marginTop: 10}]}>My Schedule</Text>
@@ -376,5 +432,16 @@ const styles = StyleSheet.create({
   emptyCardTitle: { fontSize: 18, fontWeight: 'bold', color: colors.secondary, marginBottom: 8 },
   emptyCardText: { fontSize: 13, color: colors.gray, textAlign: 'center', lineHeight: 22 },
 
+  // Open Requests Styles
+  openRequestCard: { backgroundColor: '#FFF9C4', borderRadius: 16, padding: 15, marginRight: 15, width: 260, elevation: 2 },
+  openReqName: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  openReqSpec: { fontSize: 12, color: '#666', marginTop: 2 },
+  openReqBadge: { backgroundColor: '#FBC02D', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  openReqBadgeText: { fontSize: 10, color: '#fff', fontWeight: 'bold' },
+  openReqDetails: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, marginBottom: 12 },
+  openReqDate: { fontSize: 12, color: '#444', fontWeight: '500' },
+  openReqTime: { fontSize: 12, color: '#444', fontWeight: '500' },
+  claimBtn: { backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 8, gap: 8 },
+  claimBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
 });
 

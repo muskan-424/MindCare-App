@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Therapist = require('../models/Therapist');
+const { auth } = require('../middleware/auth');
 
 // Seed data used only if the database is empty.
 const SEED_THERAPISTS = [
@@ -94,6 +95,29 @@ router.get('/', async (_req, res) => {
   }
 });
 
+// GET /api/therapists/me
+router.get('/me', auth, async (req, res) => {
+  try {
+    const t = await Therapist.findOne({ userId: req.user.id }).lean();
+    if (!t) return res.status(404).json({ error: 'Therapist profile not found' });
+    res.json({
+      id: String(t._id),
+      name: t.name,
+      specialisation: t.specialisation,
+      img: t.img || 'https://www.allsmilesdentist.com/wp-content/uploads/2017/08/Doctors-circle.png',
+      bio: t.bio || 'Your bio here',
+      email: t.email,
+      contact_no: t.contact_no || '12345678',
+      timing: t.timing || '9:00 AM - 5:00 PM',
+      fee: t.fee || '$50/session',
+      stars: t.stars || 5,
+    });
+  } catch (err) {
+    console.error('Error fetching therapist self:', err.message);
+    res.status(500).json({ error: 'Failed to load therapist profile' });
+  }
+});
+
 // GET /api/therapists/categories — browse-by-type categories (live from backend, fallback to seed)
 router.get('/categories', async (_req, res) => {
   try {
@@ -106,6 +130,12 @@ router.get('/categories', async (_req, res) => {
 });
 
 const TherapistNote = require('../models/TherapistNote');
+const User = require('../models/User');
+const Profile = require('../models/Profile');
+const AssessmentFusionResult = require('../models/AssessmentFusionResult');
+const IssueReport = require('../models/IssueReport');
+const MoodEntry = require('../models/MoodEntry');
+const JournalEntry = require('../models/JournalEntry');
 const { auth } = require('../middleware/auth');
 
 // Seed data ... (already exists)
@@ -130,6 +160,40 @@ router.get('/notes/:userId', auth, async (req, res) => {
     res.json(notes);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch notes' });
+  }
+});
+
+// ── GET /api/therapists/patient/:userId/profile ─────────────────────────────
+// Fetch full clinical profile (AI assessments, reports, moods, journals)
+router.get('/patient/:userId/profile', auth, async (req, res) => {
+  try {
+    if (!['therapist', 'clinician'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Access denied: Clinician only' });
+    }
+
+    const userId = req.params.userId;
+    const [user, profile, fusions, issues, moods, journals] = await Promise.all([
+      User.findById(userId).lean(),
+      Profile.findOne({ userId }).lean(),
+      AssessmentFusionResult.find({ user: userId }).sort({ createdAt: -1 }).lean(),
+      IssueReport.find({ user: userId }).sort({ createdAt: -1 }).lean(),
+      MoodEntry.find({ user: userId }).sort({ date: -1 }).lean(),
+      JournalEntry.find({ user: userId }).sort({ date: -1 }).lean(),
+    ]);
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.json({
+      user: { id: user._id, name: user.name, email: user.email, age: user.age, gender: user.gender },
+      profile,
+      fusions: fusions.map(f => ({ id: String(f._id), riskLevel: f.riskLevel, riskScore: f.riskScore, aiMarkers: f.aiMarkers, recommendations: f.recommendations, createdAt: f.createdAt })),
+      issues: issues.map(i => ({ id: String(i._id), category: i.category, severity: i.severity, riskLevel: i.riskLevel, safetyTriggered: i.safetyTriggered, createdAt: i.createdAt })),
+      moods: moods.map(m => ({ id: String(m._id), rating: m.rating, note: m.note, date: m.date })),
+      journals: journals.map(j => ({ id: String(j._id), title: j.title, contentPreview: j.content?.substring(0, 50) + '...', date: j.date })),
+    });
+  } catch (err) {
+    console.error('Clinician full profile error:', err.message);
+    res.status(500).json({ error: 'Failed to load full profile' });
   }
 });
 

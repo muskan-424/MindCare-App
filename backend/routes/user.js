@@ -21,7 +21,7 @@ router.post(
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    const { name, email, password, age, gender, phone_no, role } = req.body;
+    const { name, email, password, age, gender, phone_no, role, specialisation } = req.body;
 
     try {
       // Check if user already exists
@@ -58,16 +58,27 @@ router.post(
       });
       await profile.save();
 
-      // Auto-link to Therapist listing if one exists with the same email
+      // Create or link Therapist listing if role is clinician
       if (user.role === 'clinician') {
         const Therapist = require('../models/Therapist');
         try {
-          await Therapist.findOneAndUpdate(
-            { email: user.email },
-            { $set: { userId: user._id } }
-          );
+          const existing = await Therapist.findOne({ email: user.email });
+          if (existing) {
+             existing.userId = user._id;
+             if (specialisation) existing.specialisation = specialisation;
+             await existing.save();
+          } else {
+             const newTherapist = new Therapist({
+                name: user.name,
+                email: user.email,
+                specialisation: specialisation || 'Psychologist', // Default fallback
+                userId: user._id,
+                active: true,
+             });
+             await newTherapist.save();
+          }
         } catch (linkErr) {
-          console.error('Auto-link error:', linkErr.message);
+          console.error('Therapist creation/link error:', linkErr.message);
         }
       }
 

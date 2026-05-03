@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList,
-  ActivityIndicator, Alert, RefreshControl,
+  ActivityIndicator, Alert, RefreshControl, Modal, TextInput,
 } from 'react-native';
 import { connect } from 'react-redux';
 import api from '../utils/apiClient';
@@ -30,6 +30,35 @@ const AppointmentsScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState('all');
+
+  const [editingAppt, setEditingAppt] = useState(null);
+  const [modTime, setModTime] = useState('');
+  const [modDates, setModDates] = useState('');
+  const [modNote, setModNote] = useState('');
+
+  const openModify = (appt) => {
+    setEditingAppt(appt);
+    setModTime(appt.preferredTime || '');
+    setModDates((appt.preferredDates || []).join(', '));
+    setModNote(appt.userNote || '');
+  };
+
+  const submitModify = async () => {
+    if (!editingAppt) return;
+    try {
+      const datesArr = modDates.split(',').map(d => d.trim()).filter(Boolean);
+      await api.patch(`/api/appointments/${editingAppt.id}/modify`, {
+        preferredTime: modTime,
+        preferredDates: datesArr,
+        userNote: modNote
+      });
+      setEditingAppt(null);
+      Alert.alert('Success', 'Your request has been updated.');
+      fetchAppointments(true);
+    } catch (e) {
+      Alert.alert('Error', e.response?.data?.error || 'Could not update request.');
+    }
+  };
 
   const fetchAppointments = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -112,9 +141,14 @@ const AppointmentsScreen = ({ navigation }) => {
 
         {/* Actions */}
         {(item.status === 'awaiting_admin' || item.status === 'pending') && (
-          <TouchableOpacity style={styles.cancelBtn} onPress={() => cancelRequest(item.id, item.status)}>
-            <Text style={styles.cancelBtnText}>Cancel Request</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+            <TouchableOpacity style={[styles.cancelBtn, { flex: 1, marginTop: 0 }]} onPress={() => openModify(item)}>
+              <Text style={[styles.cancelBtnText, { color: colors.primary }]}>Modify</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.cancelBtn, { flex: 1, marginTop: 0 }]} onPress={() => cancelRequest(item.id, item.status)}>
+              <Text style={styles.cancelBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
     );
@@ -169,6 +203,49 @@ const AppointmentsScreen = ({ navigation }) => {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchAppointments(true); }} colors={[colors.primary]} />}
         />
       )}
+
+      {/* Editing Modal */}
+      <Modal visible={!!editingAppt} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Modify Request</Text>
+            
+            <Text style={styles.label}>Preferred Dates (comma separated)</Text>
+            <TextInput
+              style={styles.input}
+              value={modDates}
+              onChangeText={setModDates}
+              placeholder="e.g. 2026-05-10, 2026-05-12"
+            />
+
+            <Text style={styles.label}>Preferred Time</Text>
+            <TextInput
+              style={styles.input}
+              value={modTime}
+              onChangeText={setModTime}
+              placeholder="e.g. morning, evening"
+            />
+
+            <Text style={styles.label}>Notes</Text>
+            <TextInput
+              style={[styles.input, { minHeight: 60 }]}
+              value={modNote}
+              onChangeText={setModNote}
+              placeholder="Your extra notes..."
+              multiline
+            />
+
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: colors.gray3 }]} onPress={() => setEditingAppt(null)}>
+                <Text style={styles.modalBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: colors.primary }]} onPress={submitModify}>
+                <Text style={styles.modalBtnText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -213,4 +290,49 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 15, color: colors.gray, textAlign: 'center', marginBottom: 24 },
   newReqBtn: { backgroundColor: colors.secondary, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 24 },
   newReqText: { color: colors.white, fontWeight: '700', fontSize: 15 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    padding: 20,
+    borderRadius: 16,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.secondary,
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.gray,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.gray3,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 16,
+    fontSize: 14,
+    color: colors.secondary,
+  },
+  modalBtn: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalBtnText: {
+    color: colors.white,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
 });

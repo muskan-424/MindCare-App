@@ -5,6 +5,7 @@ import { logScreen } from '../utils/logTouch';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
+import AppointmentsScreen from '../screens/AppointmentsScreen';
 import TrackPlayer from '../screens/TrackPlayer';
 import TrackList from '../screens/TrackList';
 import ChatWithTink from '../screens/ChatWithTink';
@@ -28,6 +29,7 @@ import InstitutionDashboardScreen from '../screens/InstitutionDashboardScreen';
 // import BubbleWrapGame from '../screens/BubbleWrapGame';
 // import PunchGame from '../screens/PunchGame';
 import MultidimensionalIntakeScreen from '../screens/MultidimensionalIntakeScreen';
+import EmotionalFingerprintScreen from '../screens/EmotionalFingerprintScreen';
 
 const HomeStackNavigator = () => {
   return (
@@ -43,8 +45,10 @@ const HomeStackNavigator = () => {
         name="Home"
         component={HomeScreen}
       />
+      <Stack.Screen name="EmotionalFingerprint" component={EmotionalFingerprintScreen} />
       <Stack.Screen name="MultidimensionalIntake" component={MultidimensionalIntakeScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="Appointments" component={AppointmentsScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="Chat" component={ChatWithTink} />
       <Stack.Screen name="CreateMeme" component={CreateMeme} />

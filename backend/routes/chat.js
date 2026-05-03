@@ -9,20 +9,11 @@ const { ChatPromptTemplate, MessagesPlaceholder } = require('@langchain/core/pro
 const { HumanMessage, AIMessage } = require('@langchain/core/messages');
 const { initPinecone } = require('../config/pinecone');
 
-// System prompt instructing Gemini to act as Tink, the empathetic AI assistant
-const SYSTEM_TEMPLATE = `You are "Tink", an empathetic, supportive, and knowledgeable AI mental health assistant for the MindCare app. 
-Your goal is to provide emotional support, listen to the user, and answer questions based on verified knowledge.
+const SYSTEM_TEMPLATE = `You are "Tink", a supportive mental health assistant for the MindCare app.
+Be compassionate, validating, and concise. Avoid medical advice.
+If asked about app features, refer to the context below.
 
-CRITICAL INSTRUCTIONS:
-1. Always be compassionate, validating, and non-judgmental.
-2. If asked about the MindCare app (features, tracking, how it works), use the provided context from the retrieval tool first.
-3. If the user asks a factual question (e.g., statistics, current events, recent therapies), use the Tavily Search tool to find accurate information.
-4. Provide structured, high-quality responses. Avoid hallucinations—if you don't know something, say so or use the search tool.
-5. You are an AI assistant, NOT a licensed medical professional. If a user threatens self-harm or deep depression, gently suggest they seek professional help or talk to a trusted person. Keep responses relatively concise for a mobile app.
-
-App Context or Retrieved Context:
-{context}
-`;
+Context: {context}`;
 
 // Helper: Convert frontend history format [{text: "", isUser: true}] to LangChain message format (ensure no undefined)
 const formatHistory = (history) => {
@@ -103,45 +94,23 @@ router.post('/', async (req, res) => {
       console.warn("Pinecone not fully configured or failed. Falling back to default app context.", pineconeErr.message);
     }
 
-    // 4. Initialize Tools (Tavily)
-    let tools = [];
-    try {
-      if (process.env.TAVILY_API_KEY && process.env.TAVILY_API_KEY !== 'your_tavily_api_key_here') {
-        const searchTool = new TavilySearch({
-          maxResults: 2,
-          apiKey: process.env.TAVILY_API_KEY,
-        });
-        tools.push(searchTool);
-      }
-    } catch (tavilyErr) {
-      console.warn("Tavily initialization failed.", tavilyErr.message);
+    // 4. Format chat history (keep only last 4 messages to save tokens)
+    let chatHistory = formatHistory(history || []);
+    if (chatHistory.length > 4) {
+      chatHistory = chatHistory.slice(chatHistory.length - 4);
     }
-
-    // 5. Create Agent Prompt
-    const prompt = ChatPromptTemplate.fromMessages([
-      ["system", SYSTEM_TEMPLATE],
-      new MessagesPlaceholder("chat_history"),
-      ["human", "{input}"],
-    ]);
-
-    // Format chat history (safe strings only)
-    const chatHistory = formatHistory(history || []);
+    
     const safeContext = (context != null && typeof context === 'string') ? context : '';
     const safeInput = (message != null && typeof message === 'string') ? message : String(message || '');
 
-    // 6. Execute Chain/Agent
+    // 5. Execute Lightweight Chain (No Heavy Agents)
     let responseText = '';
-
-    if (tools.length > 0) {
-      const agent = await createToolCallingAgent({ llm, tools, prompt });
-      const agentExecutor = new AgentExecutor({ agent, tools });
-      const result = await agentExecutor.invoke({
-        input: safeInput,
-        chat_history: chatHistory,
-        context: safeContext,
-      });
-      responseText = (result && (typeof result.output === 'string' ? result.output : result.output?.trim?.())) || '';
-    } else {
+    try {
+      const prompt = ChatPromptTemplate.fromMessages([
+        ["system", SYSTEM_TEMPLATE],
+        new MessagesPlaceholder("chat_history"),
+        ["human", "{input}"],
+      ]);
       const chain = prompt.pipe(llm);
       const result = await chain.invoke({
         input: safeInput,
@@ -150,6 +119,8 @@ router.post('/', async (req, res) => {
       });
       const content = result?.content;
       responseText = typeof content === 'string' ? content : (Array.isArray(content) ? content.map(c => typeof c === 'string' ? c : (c && c.text) || '').join('') : '');
+    } catch (llmErr) {
+      console.warn("Langchain standard pipe failed, falling back to direct REST:", llmErr.message);
     }
 
     if (!responseText.trim()) {

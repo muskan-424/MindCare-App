@@ -29,7 +29,8 @@ const Signup = props => {
     gender: '',
     password: '',
     password2: '',
-    isClinician: false
+    isClinician: false,
+    specialisation: 'Psychologist'
   });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -88,6 +89,7 @@ const Signup = props => {
         gender: state.gender,
         phone_no: state.phone_no.replace(/\D/g, ''),
         role: state.isClinician ? 'clinician' : 'user',
+        specialisation: state.isClinician ? state.specialisation : '',
       });
       // Success: auth state updates and user is navigated; confirmation shows on Home
     } catch (err) {
@@ -265,6 +267,26 @@ const Signup = props => {
                 thumbColor={state.isClinician ? colors.white : '#f4f3f4'}
               />
             </View>
+            {state.isClinician && (
+              <View style={styles.specialisationContainer}>
+                <Text style={styles.specialisationTitle}>Select your role:</Text>
+                {['Psychologist', 'Psychiatrist', 'Counsellor', 'Social Worker'].map(role => (
+                  <TouchableOpacity
+                    key={role}
+                    style={[
+                      styles.specChip,
+                      state.specialisation === role && styles.specChipActive
+                    ]}
+                    onPress={() => setState({ ...state, specialisation: role })}
+                  >
+                    <Text style={[
+                      styles.specChipText,
+                      state.specialisation === role && styles.specChipTextActive
+                    ]}>{role}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
             <TouchableOpacity onPress={handleSignUp} disabled={loading}>
               <View style={[styles.submitButton, loading && styles.submitButtonDisabled]}>
@@ -412,5 +434,39 @@ const styles = StyleSheet.create({
     color: colors.secondary,
     fontWeight: '600',
     fontSize: 14,
+  },
+  specialisationContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 15,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  specialisationTitle: {
+    width: '100%',
+    color: colors.secondary,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    fontSize: 14,
+  },
+  specChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.gray,
+    backgroundColor: '#f5f5f5',
+  },
+  specChipActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+  },
+  specChipText: {
+    fontSize: 12,
+    color: colors.gray,
+  },
+  specChipTextActive: {
+    color: colors.white,
+    fontWeight: 'bold',
   }
 });
