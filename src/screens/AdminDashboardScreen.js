@@ -2504,136 +2504,138 @@ const UsersTab = () => {
       </View>
 
       <View style={ss.usersLayout}>
-        {/* User List Panel */}
-        <View style={ss.userListPanel}>
-          <Text style={ss.userListTitle}>Users ({users.length})</Text>
-        <FlatList
-          data={users.filter(u => {
-          if (!activeFilter || activeFilter === 'Total Accounts') return true;
-          if (activeFilter === 'Patients') return u.role === 'user';
-          if (activeFilter === 'Clinicians') return u.role === 'clinician';
-          if (activeFilter === 'Suspended') return !!u.suspended;
-          return true;
-        })}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[ss.userListItem, selected?.id === item.id && ss.userListItemActive]}
-              onPress={() => selectUser(item)}
-              activeOpacity={0.8}
-            >
-              <View style={ss.userListAvatar}>
-                <Text style={ss.userListAvatarText}>{item.name?.charAt(0)}</Text>
-              </View>
-              <View style={{ flex: 1, marginLeft: 8 }}>
-                <Text style={[ss.userListName, selected?.id === item.id && { color: D.textPrimary }]}>{item.name}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                  {item.suspended && (
-                    <View style={[ss.miniTag, { backgroundColor: D.danger + '22', borderColor: D.danger + '55', marginRight: 4 }]}>
-                      <Text style={[ss.miniTagText, { color: D.danger }]}>SUSPENDED</Text>
-                    </View>
-                  )}
-                  <View style={[ss.miniTag, { backgroundColor: roleInfo(item.role).color + '22', borderColor: roleInfo(item.role).color + '44' }]}>
-                    <Text style={[ss.miniTagText, { color: roleInfo(item.role).color }]}>{item.role || 'user'}</Text>
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-          )}
-          ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: D.borderColor }} />}
-        />
-      </View>
-
-      {/* Detail Panel */}
-      <View style={ss.detailPanel}>
+        {/* User List Panel (Full Width if No User Selected) */}
         {!selected ? (
-          <View style={ss.loadingContainer}>
-            <MaterialIcons name="person-outline" size={40} color={D.textMuted} />
-            <Text style={[ss.loadingText, { marginTop: 10 }]}>Select a user to view details</Text>
+          <View style={[ss.userListPanel, { width: '100%', borderRightWidth: 0 }]}>
+            <Text style={ss.userListTitle}>Users ({users.length})</Text>
+            <FlatList
+              data={users.filter(u => {
+                if (!activeFilter || activeFilter === 'Total Accounts') return true;
+                if (activeFilter === 'Patients') return u.role === 'user';
+                if (activeFilter === 'Clinicians') return u.role === 'clinician';
+                if (activeFilter === 'Suspended') return !!u.suspended;
+                return true;
+              })}
+              keyExtractor={item => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[ss.userListItem, selected?.id === item.id && ss.userListItemActive]}
+                  onPress={() => selectUser(item)}
+                  activeOpacity={0.8}
+                >
+                  <View style={ss.userListAvatar}>
+                    <Text style={ss.userListAvatarText}>{item.name?.charAt(0)}</Text>
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 8 }}>
+                    <Text style={[ss.userListName, selected?.id === item.id && { color: D.textPrimary }]}>{item.name}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                      {item.suspended && (
+                        <View style={[ss.miniTag, { backgroundColor: D.danger + '22', borderColor: D.danger + '55', marginRight: 4 }]}>
+                          <Text style={[ss.miniTagText, { color: D.danger }]}>SUSPENDED</Text>
+                        </View>
+                      )}
+                      <View style={[ss.miniTag, { backgroundColor: roleInfo(item.role).color + '22', borderColor: roleInfo(item.role).color + '44' }]}>
+                        <Text style={[ss.miniTagText, { color: roleInfo(item.role).color }]}>{item.role || 'user'}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: D.borderColor }} />}
+            />
           </View>
         ) : (
-          <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 30 }}>
-            {/* User Header */}
-            <View style={ss.userDetailHeader}>
-              <View style={ss.userDetailAvatar}>
-                <Text style={ss.userDetailAvatarText}>{selected.name?.charAt(0)}</Text>
-              </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={ss.detailName}>{selected.name}</Text>
-                <Text style={ss.detailEmail}>{selected.email}</Text>
-                <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
-                  <View style={[ss.miniTag, { backgroundColor: roleInfo(selected.role).color + '22', borderColor: roleInfo(selected.role).color + '55' }]}>
-                    <MaterialIcons name={roleInfo(selected.role).icon} size={10} color={roleInfo(selected.role).color} style={{ marginRight: 3 }} />
-                    <Text style={[ss.miniTagText, { color: roleInfo(selected.role).color }]}>{selected.role || 'user'}</Text>
-                  </View>
-                  {selected.suspended && (
-                    <View style={[ss.miniTag, { backgroundColor: D.danger + '22', borderColor: D.danger + '55' }]}>
-                      <Text style={[ss.miniTagText, { color: D.danger }]}>SUSPENDED</Text>
+          /* Detail Panel (Full Width when User Selected) */
+          <View style={[ss.detailPanel, { flex: 1 }]}>
+            <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 30 }}>
+              {/* Back Button */}
+              <TouchableOpacity onPress={() => setSelected(null)} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                <MaterialIcons name="arrow-back" size={18} color={D.textSecondary} style={{ marginRight: 6 }} />
+                <Text style={{ fontSize: 13, fontWeight: '700', color: D.textSecondary }}>Back to users list</Text>
+              </TouchableOpacity>
+
+              {/* User Header */}
+              <View style={ss.userDetailHeader}>
+                <View style={ss.userDetailAvatar}>
+                  <Text style={ss.userDetailAvatarText}>{selected.name?.charAt(0)}</Text>
+                </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={ss.detailName}>{selected.name}</Text>
+                  <Text style={ss.detailEmail}>{selected.email}</Text>
+                  <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+                    <View style={[ss.miniTag, { backgroundColor: roleInfo(selected.role).color + '22', borderColor: roleInfo(selected.role).color + '55' }]}>
+                      <MaterialIcons name={roleInfo(selected.role).icon} size={10} color={roleInfo(selected.role).color} style={{ marginRight: 3 }} />
+                      <Text style={[ss.miniTagText, { color: roleInfo(selected.role).color }]}>{selected.role || 'user'}</Text>
                     </View>
-                  )}
+                    {selected.suspended && (
+                      <View style={[ss.miniTag, { backgroundColor: D.danger + '22', borderColor: D.danger + '55' }]}>
+                        <Text style={[ss.miniTagText, { color: D.danger }]}>SUSPENDED</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
               </View>
-            </View>
 
-            {/* Action Buttons */}
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+              {/* Action Buttons */}
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+                <TouchableOpacity
+                  style={[ss.actionButton, { flex: 1, backgroundColor: D.surfaceElevated, borderWidth: 1, borderColor: D.borderColor }]}
+                  onPress={() => { setRoleTarget(selected); setRoleModal(true); }}
+                  activeOpacity={0.8}
+                >
+                  <MaterialIcons name="manage-accounts" size={14} color={D.accent} style={{ marginRight: 5 }} />
+                  <Text style={[ss.actionButtonText, { color: D.accent }]}>Change Role</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[ss.actionButton, { flex: 1, backgroundColor: selected.suspended ? D.success + '22' : D.danger + '22', borderWidth: 1, borderColor: selected.suspended ? D.success + '55' : D.danger + '55' }]}
+                  onPress={() => toggleSuspend(selected)}
+                  disabled={suspendLoading}
+                  activeOpacity={0.8}
+                >
+                  <MaterialIcons name={selected.suspended ? 'lock-open' : 'lock'} size={14} color={selected.suspended ? D.success : D.danger} style={{ marginRight: 5 }} />
+                  <Text style={[ss.actionButtonText, { color: selected.suspended ? D.success : D.danger }]}>
+                    {selected.suspended ? 'Reinstate' : 'Suspend'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
               <TouchableOpacity
-                style={[ss.actionButton, { flex: 1, backgroundColor: D.surfaceElevated, borderWidth: 1, borderColor: D.borderColor }]}
-                onPress={() => { setRoleTarget(selected); setRoleModal(true); }}
+                style={[ss.actionButton, { backgroundColor: '#3498DB', marginBottom: 14 }]}
+                onPress={fetchFullProfile}
                 activeOpacity={0.8}
               >
-                <MaterialIcons name="manage-accounts" size={14} color={D.accent} style={{ marginRight: 5 }} />
-                <Text style={[ss.actionButtonText, { color: D.accent }]}>Change Role</Text>
+                <MaterialIcons name="analytics" size={14} color="#fff" style={{ marginRight: 5 }} />
+                <Text style={[ss.actionButtonText, { color: '#fff' }]}>View Full Clinical Profile</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[ss.actionButton, { flex: 1, backgroundColor: selected.suspended ? D.success + '22' : D.danger + '22', borderWidth: 1, borderColor: selected.suspended ? D.success + '55' : D.danger + '55' }]}
-                onPress={() => toggleSuspend(selected)}
-                disabled={suspendLoading}
-                activeOpacity={0.8}
-              >
-                <MaterialIcons name={selected.suspended ? 'lock-open' : 'lock'} size={14} color={selected.suspended ? D.success : D.danger} style={{ marginRight: 5 }} />
-                <Text style={[ss.actionButtonText, { color: selected.suspended ? D.success : D.danger }]}>
-                  {selected.suspended ? 'Reinstate' : 'Suspend'}
-                </Text>
-              </TouchableOpacity>
-            </View>
 
-            <TouchableOpacity
-              style={[ss.actionButton, { backgroundColor: '#3498DB', marginBottom: 14 }]}
-              onPress={fetchFullProfile}
-              activeOpacity={0.8}
-            >
-              <MaterialIcons name="analytics" size={14} color="#fff" style={{ marginRight: 5 }} />
-              <Text style={[ss.actionButtonText, { color: '#fff' }]}>View Full Clinical Profile</Text>
-            </TouchableOpacity>
-
-            <Text style={ss.detailSectionLabel}>AI Assessments</Text>
-            {loadingDetails ? <ActivityIndicator color={D.primary} style={{ marginTop: 8 }} /> :
-              issues.length === 0 ? <Text style={ss.emptyStateText}>No assessments yet.</Text> :
-                issues.map(r => (
-                  <View key={r.id} style={[ss.detailCard, r.riskLevel && { borderLeftWidth: 3, borderLeftColor: RISK_COLORS[r.riskLevel] }]}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={ss.detailCardDate}>{new Date(r.createdAt).toLocaleString()}</Text>
-                      {r.adminVerified && <Text style={{ fontSize: 10, color: D.success, fontWeight: '700' }}>VERIFIED</Text>}
+              <Text style={ss.detailSectionLabel}>AI Assessments</Text>
+              {loadingDetails ? <ActivityIndicator color={D.primary} style={{ marginTop: 8 }} /> :
+                issues.length === 0 ? <Text style={ss.emptyStateText}>No assessments yet.</Text> :
+                  issues.map(r => (
+                    <View key={r.id} style={[ss.detailCard, r.riskLevel && { borderLeftWidth: 3, borderLeftColor: RISK_COLORS[r.riskLevel] }]}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <Text style={ss.detailCardDate}>{new Date(r.createdAt).toLocaleString()}</Text>
+                        {r.adminVerified && <Text style={{ fontSize: 10, color: D.success, fontWeight: '700' }}>VERIFIED</Text>}
+                      </View>
+                      <Text style={ss.detailCardMeta}>Category: <Text style={{ color: D.primaryLight }}>{r.category}</Text> · Risk: <Text style={{ color: RISK_COLORS[r.riskLevel] }}>{r.riskLevel}</Text></Text>
+                      {r.adminNote ? <Text style={[ss.detailCardMeta, { color: D.primary, marginTop: 4 }]}>Note: {r.adminNote}</Text> : null}
                     </View>
-                    <Text style={ss.detailCardMeta}>Category: <Text style={{ color: D.primaryLight }}>{r.category}</Text> · Risk: <Text style={{ color: RISK_COLORS[r.riskLevel] }}>{r.riskLevel}</Text></Text>
-                    {r.adminNote ? <Text style={[ss.detailCardMeta, { color: D.primary, marginTop: 4 }]}>Note: {r.adminNote}</Text> : null}
-                  </View>
-                ))
-            }
+                  ))
+              }
 
-            <Text style={ss.detailSectionLabel}>Mood History</Text>
-            {loadingDetails ? <ActivityIndicator color={D.primary} style={{ marginTop: 8 }} /> :
-              moods.length === 0 ? <Text style={ss.emptyStateText}>No mood entries yet.</Text> :
-                moods.map(m => (
-                  <View key={m.id} style={ss.detailCard}>
-                    <Text style={ss.detailCardDate}>{new Date(m.date).toLocaleDateString()}</Text>
-                    <Text style={ss.detailCardMeta}>Rating: <Text style={{ color: D.primaryLight }}>{m.rating}</Text></Text>
-                    {m.note ? <Text style={ss.detailCardMeta}>Note: {m.note}</Text> : null}
-                  </View>
-                ))
-            }
-          </ScrollView>
+              <Text style={ss.detailSectionLabel}>Mood History</Text>
+              {loadingDetails ? <ActivityIndicator color={D.primary} style={{ marginTop: 8 }} /> :
+                moods.length === 0 ? <Text style={ss.emptyStateText}>No mood entries yet.</Text> :
+                  moods.map(m => (
+                    <View key={m.id} style={ss.detailCard}>
+                      <Text style={ss.detailCardDate}>{new Date(m.date).toLocaleDateString()}</Text>
+                      <Text style={ss.detailCardMeta}>Rating: <Text style={{ color: D.primaryLight }}>{m.rating}</Text></Text>
+                      {m.note ? <Text style={ss.detailCardMeta}>Note: {m.note}</Text> : null}
+                    </View>
+                  ))
+              }
+            </ScrollView>
+          </View>
         )}
       </View>
     </View>
