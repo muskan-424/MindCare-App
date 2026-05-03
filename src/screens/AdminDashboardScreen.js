@@ -2954,6 +2954,27 @@ const AdminDashboardScreen = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState('pending');
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  if (!isDarkMode) {
+    D.bg = '#F4F6F9';
+    D.surface = '#FFFFFF';
+    D.surfaceElevated = '#F1F3F5';
+    D.surfaceBorder = '#E5E9F0';
+    D.textPrimary = '#111111';
+    D.textSecondary = '#555555';
+    D.textMuted = '#777777';
+    D.borderColor = '#D8DEE9';
+  } else {
+    D.bg = '#0F1117';
+    D.surface = '#1A1D27';
+    D.surfaceElevated = '#22263A';
+    D.surfaceBorder = '#2A2E45';
+    D.textPrimary = '#EAEDF4';
+    D.textSecondary = '#8891AB';
+    D.textMuted = '#545B76';
+    D.borderColor = '#2A2E45';
+  }
 
   // ── Profile Edit state ──
   const [profileModal, setProfileModal] = useState(false);
@@ -2963,6 +2984,7 @@ const AdminDashboardScreen = () => {
   const [profileConfirm, setProfileConfirm] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileShowPw, setProfileShowPw] = useState(false);
+
 
   const saveProfile = async () => {
     if (profilePassword && profilePassword !== profileConfirm) {
@@ -3035,6 +3057,13 @@ const AdminDashboardScreen = () => {
           <View style={ss.headerActions}>
             <TouchableOpacity
               style={ss.headerIconBtn}
+              onPress={() => setIsDarkMode(!isDarkMode)}
+              activeOpacity={0.7}
+            >
+              <MaterialIcons name={isDarkMode ? 'wb-sunny' : 'brightness-2'} size={19} color={D.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={ss.headerIconBtn}
               onPress={() => setProfileModal(true)}
               activeOpacity={0.7}
             >
@@ -3045,6 +3074,7 @@ const AdminDashboardScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
+
 
         {/* Profile Edit Modal */}
         <Modal visible={profileModal} transparent animationType="slide">

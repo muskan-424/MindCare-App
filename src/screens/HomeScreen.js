@@ -111,6 +111,8 @@ const HomeScreen = props => {
   const [notificationsVisible, setNotificationsVisible] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
 
   const fetchNotifications = async () => {
     setLoadingNotifications(true);
@@ -235,8 +237,8 @@ const HomeScreen = props => {
   };
 
   return (
-    <ScrollView>
-      <View style={styles.container}>
+    <ScrollView style={{ backgroundColor: isDarkMode ? '#121212' : '#FFFFFF' }}>
+      <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#FFFFFF' }]}>
         {props.auth.welcomeMessage === 'login' && (
           <View style={styles.welcomeBanner}>
             <Text style={styles.welcomeText}>✓ Login successful! Welcome back.</Text>
@@ -247,12 +249,23 @@ const HomeScreen = props => {
             <Text style={styles.welcomeText}>✓ Account created successfully! Welcome to MindCare.</Text>
           </View>
         )}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: isDarkMode ? '#1C2030' : colors.primary }]}>
           <View>
             <Text style={styles.helloText}>Hello !</Text>
             <Text style={styles.nameText}>{props.auth.profile.name}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 15 }}>
+            <TouchableOpacity
+              onPress={() => setIsDarkMode(!isDarkMode)}
+              style={{ marginRight: 8, padding: 8 }}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons
+                name={isDarkMode ? 'weather-sunny' : 'weather-night'}
+                size={28}
+                color={colors.white}
+              />
+            </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setNotificationsVisible(true)}
               style={{ marginRight: 8, padding: 8 }}
@@ -273,6 +286,7 @@ const HomeScreen = props => {
             </TouchableOpacity>
           </View>
         </View>
+
 
         {/* Notifications Modal */}
         <Modal
@@ -406,32 +420,32 @@ const HomeScreen = props => {
         </View>
 
         <View style={styles.selfHelpContainer}>
-          <Text style={styles.selfHelpTitle}>Self-help</Text>
+          <Text style={[styles.selfHelpTitle, { color: isDarkMode ? '#8CC063' : colors.secondary }]}>Self-help</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selfHelpScroll}>
             {selfHelpTiles.map(opt => (
               <TrackedTouchable
                 key={opt.id}
                 eventName={`Home_SelfHelp_${opt.id}`}
-                style={styles.selfHelpCard}
+                style={[styles.selfHelpCard, { backgroundColor: isDarkMode ? '#1C2030' : '#F8F9FA' }]}
                 onPress={() => props.navigation.navigate(opt.screen)}
               >
                 <Image source={{ uri: opt.icon }} style={styles.selfHelpIcon} />
-                <Text style={styles.selfHelpLabel} numberOfLines={2}>{opt.label}</Text>
+                <Text style={[styles.selfHelpLabel, { color: isDarkMode ? '#EAEDF4' : '#111' }]} numberOfLines={2}>{opt.label}</Text>
               </TrackedTouchable>
             ))}
           </ScrollView>
         </View>
 
         <View style={styles.quoteContainer}>
-          <Text style={styles.quoteText}>Quote of the day</Text>
-          <View style={styles.quote}>
-            <Text style={{ fontSize: 17 }}>
+          <Text style={[styles.quoteText, { color: isDarkMode ? '#EAEDF4' : '#111' }]}>Quote of the day</Text>
+          <View style={[styles.quote, { backgroundColor: isDarkMode ? '#D4A017' : '#face4b' }]}>
+            <Text style={{ fontSize: 17, color: '#111' }}>
               {props.quote?.quote?.trim() || 'Be yourself no matter what they say!'}
             </Text>
           </View>
         </View>
         <View style={styles.tracksContainer}>
-          <Text style={styles.trackTitle}>Mindful Content</Text>
+          <Text style={[styles.trackTitle, { color: isDarkMode ? '#8CC063' : colors.secondary }]}>Mindful Content</Text>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipContainer}>
             {contentCategories.map(cat => (

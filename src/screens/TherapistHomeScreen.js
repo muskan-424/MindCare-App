@@ -31,6 +31,8 @@ const TherapistHomeScreen = (props) => {
   const [therapists, setTherapists] = useState(localData);
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
   const [loading, setLoading] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
 
   // For Therapist Role
   const [myPatients, setMyPatients] = useState([]);
@@ -120,9 +122,9 @@ const TherapistHomeScreen = (props) => {
     const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : colors.cream }]}>
         {/* HERO HEADER */}
-        <View style={styles.profHeader}>
+        <View style={[styles.profHeader, { backgroundColor: isDarkMode ? '#1C2030' : colors.primary }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
                     <Text style={styles.heroGreeting}>{greeting}, Dr. {(props.auth.user?.name || '').split(' ')[0]}</Text>
@@ -130,10 +132,14 @@ const TherapistHomeScreen = (props) => {
                       {props.auth.user?.specialisation ? `${props.auth.user.specialisation} • ` : ''}Ready to make a difference today?
                     </Text>
                 </View>
+                <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={[styles.logoutBtn, { marginRight: 8 }]}>
+                    <MaterialCommunityIcons name={isDarkMode ? 'weather-sunny' : 'weather-night'} size={20} color={colors.primary} />
+                </TouchableOpacity>
                 <TouchableOpacity onPress={() => props.logout()} style={styles.logoutBtn}>
                     <MaterialCommunityIcons name="logout" size={20} color={colors.primary} />
                 </TouchableOpacity>
             </View>
+
 
             {/* LIVE OPERATIONAL STATS */}
             <View style={styles.metricsRow}>
@@ -282,16 +288,21 @@ const TherapistHomeScreen = (props) => {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : colors.cream }]}>
+      <View style={[styles.header, { backgroundColor: isDarkMode ? '#1C2030' : colors.primary }]}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View>
                 <Text style={styles.headerTitle}>Consultation</Text>
                 <Text style={styles.headerSubtitle}>Talk to a professional</Text>
             </View>
-            <TouchableOpacity onPress={() => props.logout()}>
-                <MaterialCommunityIcons name="logout" size={24} color={colors.white} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={{ marginRight: 12 }}>
+                    <MaterialCommunityIcons name={isDarkMode ? 'weather-sunny' : 'weather-night'} size={24} color={colors.white} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => props.logout()}>
+                    <MaterialCommunityIcons name="logout" size={24} color={colors.white} />
+                </TouchableOpacity>
+            </View>
         </View>
         <View style={styles.searchWrap}>
           <Searchbar

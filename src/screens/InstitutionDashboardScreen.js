@@ -15,6 +15,8 @@ const InstitutionDashboardScreen = ({ route, navigation }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
 
   const loadReport = useCallback(async () => {
     try {
@@ -48,17 +50,21 @@ const InstitutionDashboardScreen = ({ route, navigation }) => {
   if (!data) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F8F9FA' }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: isDarkMode ? '#1C2030' : '#1E1E2C' }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <AntDesign name="arrowleft" size={26} color={colors.white} />
         </TouchableOpacity>
-        <View style={{ marginLeft: 15 }}>
+        <View style={{ marginLeft: 15, flex: 1 }}>
           <Text style={styles.headerTitle}>{data.institutionName}</Text>
           <Text style={styles.headerSub}>Institution Oversight Dashboard</Text>
         </View>
+        <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)}>
+          <MaterialCommunityIcons name={isDarkMode ? 'weather-sunny' : 'weather-night'} size={24} color={colors.white} />
+        </TouchableOpacity>
       </View>
+
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
