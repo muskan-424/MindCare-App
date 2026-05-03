@@ -356,7 +356,7 @@ router.get('/appointments', adminAuth, async (req, res) => {
 // Admin checks which slots are free for a therapist on a specific date
 router.get('/therapist-availability', adminAuth, async (req, res) => {
   try {
-    const { therapistId, date } = req.query;
+    const { therapistId, date, appointmentId } = req.query;
     if (!therapistId || !date) {
       return res.status(400).json({ error: 'therapistId and date are required' });
     }
@@ -366,7 +366,36 @@ router.get('/therapist-availability', adminAuth, async (req, res) => {
 
     // Generate all slots from therapist timing
     const { generateSlots } = require('./appointments');
-    const allSlots = generateSlots(therapist.timing);
+    let allSlots = generateSlots(therapist.timing);
+
+    function localParseTime(str) {
+      if (!str) return 0;
+      const [time, period] = str.split(' ');
+      if (!time || !period) return 0;
+      let [h, m] = time.split(':').map(Number);
+      if (period === 'PM' && h !== 12) h += 12;
+      if (period === 'AM' && h === 12) h = 0;
+      return h * 60 + (m || 0);
+    }
+
+    if (appointmentId) {
+      const appt = await Appointment.findById(appointmentId).lean();
+      if (appt && appt.preferredTime && appt.preferredTime !== 'any') {
+        const morningSlots = ['8:00 AM', '8:30 AM', '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM'];
+        const afternoonSlots = ['12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM'];
+        const eveningSlots = ['5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM', '8:30 PM', '9:00 PM'];
+
+        let extraSlots = [];
+        const timePref = appt.preferredTime.toLowerCase();
+        if (timePref.includes('morning')) extraSlots = morningSlots;
+        else if (timePref.includes('afternoon')) extraSlots = afternoonSlots;
+        else if (timePref.includes('evening')) extraSlots = eveningSlots;
+
+        const slotSet = new Set(allSlots);
+        extraSlots.forEach(s => slotSet.add(s));
+        allSlots = [...slotSet].sort((a, b) => localParseTime(a) - localParseTime(b));
+      }
+    }
 
     // Find already-booked slots for this therapist/date
     const booked = await Appointment.find({

@@ -175,7 +175,11 @@ const PendingTab = () => {
     try {
       const res = await api.get('/api/admin/therapist-availability', {
         ...H,
-        params: { therapistId: assignTherapist.id, date: assignDate },
+        params: {
+          therapistId: assignTherapist.id,
+          date: assignDate,
+          appointmentId: assignTarget?.id || assignTarget?._id
+        },
       });
       setAvailableSlots(res.data.available || []);
     } catch (e) {
