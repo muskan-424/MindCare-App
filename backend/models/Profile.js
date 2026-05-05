@@ -55,8 +55,10 @@ const ProfileSchema = new mongoose.Schema(
     stressLevel: { type: Number, default: 3 },
     activityLevel: { type: Number, default: 3 },
     socialInteraction: { type: Number, default: 3 },
+    profilePic: { type: String, default: '' },
   },
   { timestamps: true }
+
 );
 
 module.exports = mongoose.model('Profile', ProfileSchema);

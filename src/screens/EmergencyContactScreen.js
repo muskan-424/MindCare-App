@@ -9,16 +9,17 @@ import { colors } from '../constants/theme';
 
 const RELATIONSHIPS = ['Parent', 'Sibling', 'Partner', 'Friend', 'Roommate', 'Relative', 'Other'];
 const REACH_OPTIONS = [
-  { id: 'call', label: '📞 Call', hint: 'Phone call only' },
-  { id: 'whatsapp', label: '💬 WhatsApp', hint: 'WhatsApp message' },
-  { id: 'both', label: '📞💬 Both', hint: 'Call or WhatsApp' },
+  { id: 'call', label: 'Call', hint: 'Phone call only' },
+  { id: 'whatsapp', label: 'WhatsApp', hint: 'WhatsApp message' },
+  { id: 'both', label: 'Both', hint: 'Call or WhatsApp' },
 ];
 
 const STATUS_CONFIG = {
-  awaiting_admin: { color: '#FFB74D', icon: '⏳', label: 'Pending Verification', hint: 'Admin is reviewing your submission.' },
-  verified:       { color: '#81C784', icon: '✅', label: 'Verified & Active', hint: 'Your contact will be reached in a life-threatening emergency.' },
-  rejected:       { color: '#E57373', icon: '❌', label: 'Not Approved', hint: 'Admin could not verify this contact. Please update and resubmit.' },
+  awaiting_admin: { color: '#FFB74D', icon: 'Pending', label: 'Pending Verification', hint: 'Admin is reviewing your submission.' },
+  verified:       { color: '#81C784', icon: 'Verified', label: 'Verified & Active', hint: 'Your contact will be reached in a life-threatening emergency.' },
+  rejected:       { color: '#E57373', icon: 'Rejected', label: 'Not Approved', hint: 'Admin could not verify this contact. Please update and resubmit.' },
 };
+
 
 const EmergencyContactScreen = ({ navigation }) => {
   const [existing, setExisting] = useState(null);
@@ -64,7 +65,7 @@ const EmergencyContactScreen = ({ navigation }) => {
     if (!consentGiven) { Alert.alert('Consent Required', 'You must give consent before saving an emergency contact.'); return; }
 
     Alert.alert(
-      '🛡️ Save Emergency Contact',
+      'Save Emergency Contact',
       `You're submitting ${name} (${relationship}) as your emergency contact.\n\nAdmin will verify this and they will ONLY be contacted in a life-threatening emergency. Continue?`,
       [
         { text: 'Cancel', style: 'cancel' },
@@ -134,7 +135,7 @@ const EmergencyContactScreen = ({ navigation }) => {
 
         {/* How it works */}
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>🆘 How this works</Text>
+          <Text style={styles.infoTitle}>How this works</Text>
           <Text style={styles.infoText}>
             Add a trusted person's contact. If you're ever in a life-threatening crisis, our admin team can reach out to them directly — with your consent. This is a human-reviewed safety net.
           </Text>
@@ -156,11 +157,12 @@ const EmergencyContactScreen = ({ navigation }) => {
               <View style={styles.contactPreview}>
                 <Text style={styles.contactName}>{existing.name}</Text>
                 <Text style={styles.contactRel}>{existing.relationship}</Text>
-                <Text style={styles.contactPhone}>📞 {existing.phoneMasked}</Text>
+                <Text style={styles.contactPhone}>Phone: {existing.phoneMasked}</Text>
                 <Text style={styles.contactReach}>Preferred: {existing.reachVia}</Text>
                 {existing.callLogCount > 0 && (
-                  <Text style={styles.callLogText}>📋 Used {existing.callLogCount} time{existing.callLogCount !== 1 ? 's' : ''}</Text>
+                  <Text style={styles.callLogText}>Used {existing.callLogCount} time{existing.callLogCount !== 1 ? 's' : ''}</Text>
                 )}
+
               </View>
 
               {existing.status === 'rejected' && existing.rejectionReason ? (
@@ -175,10 +177,10 @@ const EmergencyContactScreen = ({ navigation }) => {
 
               <View style={styles.actionRow}>
                 <TouchableOpacity style={styles.editBtn} onPress={() => setEditing(true)}>
-                  <Text style={styles.editBtnText}>✏️ Update Contact</Text>
+                  <Text style={styles.editBtnText}>Update Contact</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.removeBtn} onPress={removeContact} disabled={deleting}>
-                  {deleting ? <ActivityIndicator size="small" color="#E57373" /> : <Text style={styles.removeBtnText}>🗑️ Remove</Text>}
+                  {deleting ? <ActivityIndicator size="small" color="#E57373" /> : <Text style={styles.removeBtnText}>Remove</Text>}
                 </TouchableOpacity>
               </View>
             </View>
@@ -275,7 +277,7 @@ const EmergencyContactScreen = ({ navigation }) => {
 
         {/* Privacy note */}
         <View style={styles.privacyCard}>
-          <Text style={styles.privacyTitle}>🔒 Privacy</Text>
+          <Text style={styles.privacyTitle}>Privacy</Text>
           <Text style={styles.privacyText}>
             Your contact's full phone number is{' '}
             <Text style={{ fontWeight: '700' }}>never stored in plaintext accessible to any user</Text>.

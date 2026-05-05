@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Alert, RefreshControl, Modal
+  ActivityIndicator, Alert, RefreshControl, Modal, Dimensions
 } from 'react-native';
+import { LineChart } from 'react-native-chart-kit';
 import api from '../utils/apiClient';
 import { colors } from '../constants/theme';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -154,6 +155,35 @@ const TherapistPatientHistoryScreen = ({ route, navigation }) => {
               <ScrollView style={styles.modalScroll}>
                 <View style={styles.profileSection}>
                   <Text style={styles.sectionTitle}>AI Assessments (Quad-Modal)</Text>
+                  
+                  {fullProfile.fusions?.length > 0 && (
+                    <View style={{ marginVertical: 15 }}>
+                      <Text style={[styles.sectionTitle, { fontSize: 13, color: '#2D3436' }]}>📈 Emotional Fingerprint Trend</Text>
+                      <LineChart
+                        data={{
+                          labels: fullProfile.fusions.slice(-5).map((f, i) => `#${i + 1}`),
+                          datasets: [{ data: fullProfile.fusions.slice(-5).map(f => Number(f.riskScore * 100)) }]
+                        }}
+                        width={Dimensions.get('window').width - 70}
+                        height={180}
+                        yAxisLabel=""
+                        yAxisSuffix="%"
+                        chartConfig={{
+                          backgroundColor: '#ffffff',
+                          backgroundGradientFrom: '#ffffff',
+                          backgroundGradientTo: '#ffffff',
+                          decimalPlaces: 0,
+                          color: (opacity = 1) => `rgba(92, 58, 182, ${opacity})`,
+                          labelColor: (opacity = 1) => `rgba(60, 64, 72, ${opacity})`,
+                          style: { borderRadius: 16 },
+                          propsForDots: { r: "5", strokeWidth: "2", stroke: "#5c3ab6" }
+                        }}
+                        bezier
+                        style={{ marginVertical: 8, borderRadius: 16 }}
+                      />
+                    </View>
+                  )}
+
                   {fullProfile.fusions?.length === 0 && <Text style={styles.emptyText}>No AI assessments found.</Text>}
                   {fullProfile.fusions?.map(f => (
                     <View key={f.id} style={styles.dataCard}>

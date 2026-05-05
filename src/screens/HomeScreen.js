@@ -39,7 +39,7 @@ const FALLBACK_SELF_HELP = [
 ];
 
 const FALLBACK_CONTENT_CATEGORIES = [
-  { id: 'recommended', label: '⭐ Recommended' },
+  { id: 'recommended', label: 'Recommended' },
   { id: 'meditation', label: 'Meditation' },
   { id: 'motivation', label: 'Motivation' },
   { id: 'sleep', label: 'Sleep Stories' },
@@ -140,7 +140,7 @@ const HomeScreen = props => {
         if (res.data?.contentCategories?.length) {
             const serverCats = res.data.contentCategories;
             const hasRec = serverCats.find(c => c.id === 'recommended');
-            setContentCategories(hasRec ? serverCats : [{ id: 'recommended', label: '⭐ Recommended' }, ...serverCats]);
+            setContentCategories(hasRec ? serverCats : [{ id: 'recommended', label: 'Recommended' }, ...serverCats]);
         }
         const alertRes = await api.get('/api/issues/burnout-alert').catch(() => ({}));
         if (alertRes.data?.active) setBurnoutAlert(alertRes.data.alert);
@@ -250,9 +250,9 @@ const HomeScreen = props => {
           </View>
         )}
         <View style={[styles.header, { backgroundColor: isDarkMode ? '#1C2030' : colors.primary }]}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.helloText}>Hello !</Text>
-            <Text style={styles.nameText}>{props.auth.profile.name}</Text>
+            <Text style={styles.nameText} numberOfLines={1} ellipsizeMode="tail">{props.auth.profile.name}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 15 }}>
             <TouchableOpacity
@@ -279,7 +279,8 @@ const HomeScreen = props => {
               }}>
               <View style={[styles.avatar, { marginTop: 0, marginLeft: 0 }]}>
                 <Image
-                  source={getAvatarForGender(props.auth.profile.gender)}
+                  source={props.auth.profile.profilePic ? { uri: props.auth.profile.profilePic } : getAvatarForGender(props.auth.profile.gender)}
+
                   style={{ width: 60, height: 60, borderRadius: 30 }}
                 />
               </View>
@@ -515,8 +516,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 40 : 25,
     paddingBottom: 20,
     borderBottomLeftRadius: 120,
     elevation: 10,
@@ -558,7 +561,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   nameText: {
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: 'bold',
     flexDirection: 'column',
     color: colors.white,

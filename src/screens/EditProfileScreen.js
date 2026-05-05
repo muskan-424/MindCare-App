@@ -63,6 +63,8 @@ const Profile = props => {
   const [phone, setPhone] = useState(props.auth.profile.phone_no);
   const [age, setAge] = useState(props.auth.profile.age);
 
+  const [profilePic, setProfilePic] = useState(props.auth.profile.profilePic || '');
+
   const submitHandler = () => {
     props.updateUser(
       fullname,
@@ -71,9 +73,11 @@ const Profile = props => {
       age,
       checked,
       selectedConcerns,
+      profilePic,
       props.auth.user._id,
     );
   };
+
 
   return (
     <KeyboardAvoidingView
@@ -97,7 +101,8 @@ const Profile = props => {
           <View style={styles.dpCover}>
             <Image
               style={{ width: 90, height: 90, borderRadius: 45 }}
-              source={getAvatarForGender(checked)}
+              source={profilePic ? { uri: profilePic } : getAvatarForGender(checked)}
+
             />
           </View>
           <Entypo
@@ -108,6 +113,26 @@ const Profile = props => {
           />
         </View>
         <View>
+          <View style={styles.inputBox}>
+            <AntDesign
+              name="picture"
+              size={24}
+              color={colors.secondary}
+              style={{ position: 'relative', left: 20 }}
+            />
+            <TextInput
+              style={styles.input}
+              theme={{ colors: { primary: colors.secondary } }}
+              underlineColor={colors.secondary}
+              selectionColor={colors.secondary}
+              mode="flat"
+              dense={true}
+              label="Profile Photo URL"
+              value={profilePic}
+              onChangeText={text => setProfilePic(text)}
+            />
+          </View>
+
           <View style={styles.inputBox}>
             <AntDesign
               name="user"
@@ -127,6 +152,7 @@ const Profile = props => {
               onChangeText={text => setFullname(text)}
             />
           </View>
+
 
           <View style={styles.inputBox}>
             <MaterialCommunityIcons

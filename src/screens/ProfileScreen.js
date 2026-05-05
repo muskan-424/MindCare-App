@@ -100,7 +100,8 @@ const ProfileScreen = props => {
         <View style={styles.dpCover}>
           <Image
             style={{width: 100, height: 100, borderRadius: 50}}
-            source={getAvatarForGender(props.auth.profile.gender)}
+            source={props.auth.profile.profilePic ? { uri: props.auth.profile.profilePic } : getAvatarForGender(props.auth.profile.gender)}
+
           />
         </View>
       </View>
@@ -279,8 +280,9 @@ const ProfileScreen = props => {
         <TouchableOpacity
           style={styles.deleteBtn}
           onPress={() => setDeleteModalVisible(true)}>
-          <Text style={styles.deleteBtnText}>Delete Account (GDPR)</Text>
+          <Text style={styles.deleteBtnText}>Delete Account</Text>
         </TouchableOpacity>
+
       </View>
 
       <Modal visible={deleteModalVisible} transparent animationType="slide">
@@ -288,7 +290,7 @@ const ProfileScreen = props => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Request Account Deletion</Text>
             <Text style={styles.modalText}>
-              In compliance with GDPR, your request will be reviewed. Once approved, all your personal data including risk reports, mood entries, and wellness plans will be permanently purged from our servers.
+              Your request will be reviewed. Once approved, all your personal data including risk reports, mood entries, and wellness plans will be permanently purged from our servers.
             </Text>
             <TextInput
               style={styles.modalInput}

@@ -26,14 +26,15 @@ export const updateConcerns = (concerns, uid) => async dispatch => {
   }
 };
 
-export const updateUser=(name,email,phone_no,age,gender,concerns, uid)=> async dispatch=>{
+export const updateUser=(name,email,phone_no,age,gender,concerns, profilePic, uid)=> async dispatch=>{
   const config = {
     headers: {
       'Content-Type': 'application/json'
     }
   };
 
-  const body = JSON.stringify({ name,email,phone_no,age,gender,concerns, uid });
+  const body = JSON.stringify({ name,email,phone_no,age,gender,concerns, profilePic, uid });
+
   try {
     const res = await api.post(
       '/api/profile/edit-profile',

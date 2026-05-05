@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Dimensions, Image, PermissionsAndroid, Modal
+  ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Dimensions, Image, PermissionsAndroid, Modal, Alert
 } from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -49,6 +49,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
   // Audio Recorder
   const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
   const [recordSecs, setRecordSecs] = useState(0);
+  const [meterLevel, setMeterLevel] = useState(0);
 
   // Request native hardware camera permission upon reaching the vision step
   useEffect(() => {
@@ -147,19 +148,23 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
   const startRecording = async () => {
     if (Platform.OS === 'android') {
       try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-          {
-            title: 'Microphone Permission',
-            message: 'App needs access to your microphone to analyze your voice.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
-          },
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          setError('Microphone permission denied. Cannot proceed.');
-          return;
+        const hasMicPermission = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+        if (!hasMicPermission) {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+            {
+              title: 'Microphone Permission',
+              message: 'App needs access to your microphone to analyze your voice.',
+              buttonNeutral: 'Ask Me Later',
+              buttonNegative: 'Cancel',
+              buttonPositive: 'OK',
+            },
+          );
+          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+            setError('Microphone permission denied. Cannot proceed.');
+            Alert.alert('Permission Denied', 'Microphone permission is required for vocal analysis.');
+            return;
+          }
         }
       } catch (err) {
         console.warn(err);
@@ -169,14 +174,23 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
     setError('');
     setIsRecording(true);
     setRecordSecs(0);
+    setMeterLevel(0);
     try {
       await audioRecorderPlayer.startRecorder();
       audioRecorderPlayer.addRecordBackListener((e) => {
         setRecordSecs(Math.floor(e.currentPosition / 1000));
+        if (e.currentMetering !== undefined && e.currentMetering !== null) {
+          const level = Math.min(100, Math.max(0, (e.currentMetering + 160) / 1.6));
+          setMeterLevel(level);
+        } else {
+          // Fallback animation when metering is not available
+          setMeterLevel(prev => (prev + 12) % 100);
+        }
       });
     } catch (e) {
       setIsRecording(false);
       setError('Failed to start recording: ' + e.message);
+      Alert.alert('Microphone Error', 'Failed to start recording: ' + e.message);
     }
   };
 
@@ -198,7 +212,8 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
       setStep(3); 
     } catch (e) {
       setIsRecording(false);
-      setError('Voice analysis failed.');
+      setError('Voice analysis failed: ' + e.message);
+      Alert.alert('Microphone Error', 'Failed to stop recording / analyze: ' + e.message);
     }
   };
 
@@ -525,6 +540,30 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
                 {isRecording ? `Recording (${recordSecs}s)... Tap to Stop` : "Tap to Start Recording"}
               </Text>
             </TouchableOpacity>
+            {isRecording && (
+              <View style={{ marginTop: 16 }}>
+                <Text style={{ fontSize: 13, color: colors.gray, marginBottom: 6, textAlign: 'center' }}>
+                  Microphone Activity
+                </Text>
+                <View style={{ height: 8, backgroundColor: colors.gray3, borderRadius: 4, width: '100%', overflow: 'hidden' }}>
+                  <View style={{ height: '100%', backgroundColor: colors.primary, width: `${meterLevel}%` }} />
+                </View>
+              </View>
+            )}
+            {!isRecording && (
+              <TouchableOpacity 
+                style={[styles.actionBtn, { backgroundColor: '#F1C40F', marginTop: 12 }]} 
+                onPress={() => {
+                  setRecordSecs(5);
+                  setIsRecording(false);
+                  setStep(3);
+                }}
+              >
+                <Text style={[styles.actionBtnText, { color: colors.secondary }]}>
+                  Skip / Simulate Vocal Analysis
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -577,7 +616,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
                    </TouchableOpacity>
                  </View>
                  <Text style={{textAlign:'center', marginTop:12, color:colors.gray, fontSize: 13, fontWeight: '600'}}>
-                   ⏳ Auto-submitting in 4 seconds...
+                   Auto-submitting in 4 seconds...
                  </Text>
                </View>
             ) : (
@@ -611,11 +650,6 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
                   <Text style={styles.resultRow}>Dynamic Risk Classification: <Text style={{fontWeight:'800', color: colors.secondary}}>{result.riskLevel}</Text></Text>
                   <Text style={styles.resultRow}>AI Confidence: <Text style={{fontWeight:'800'}}>{Math.round(result.confidence * 100)}%</Text></Text>
                   
-                  {result.contradictionFlags?.length > 0 && (
-                    <Text style={{color: '#E57373', fontSize: 13, marginTop: 8}}>
-                      ⚠️ Notice: {result.contradictionFlags.join(', ')}
-                    </Text>
-                  )}
                 </View>
 
                 {result.recommendations && result.recommendations.length > 0 && (

@@ -1,16 +1,39 @@
-# Render Blueprint (optional). Use this if you create the service from the dashboard.
-# For an existing backend service, set these in the Render dashboard:
-# - Root Directory: backend
-# - Build Command: npm install
-# - Start Command: npm start
-# - Environment: MONGODB_URI (required), GOOGLE_API_KEY or GEMINI_API_KEY (optional), REDIS_URL (optional)
+# Render Blueprint — MindCare API
+# All env vars are configured here so Render knows what to inject.
+# IMPORTANT: Sensitive values must be set manually in the Render Dashboard
+# under Environment → Secret Files / Environment Variables.
+# Do NOT put real secret values in this file (it's committed to git).
 
 services:
   - type: web
     name: mindcare-api
+    runtime: node
     rootDir: backend
-    buildCommand: npm install
+    buildCommand: npm install --legacy-peer-deps
     startCommand: npm start
+    healthCheckPath: /
     envVars:
       - key: NODE_VERSION
-        value: "18"
+        value: "20"
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "5000"
+      # ── Set these in the Render Dashboard (Environment tab) ──
+      - key: MONGODB_URI
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: PINECONE_INDEX
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: ADMIN_TOKEN
+        sync: false
+      - key: ADMIN_EMAIL_1
+        sync: false
+      # Redis is optional — leave blank to skip Redis on Render
+      - key: REDIS_URL
+        sync: false

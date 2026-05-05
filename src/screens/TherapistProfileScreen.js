@@ -1,14 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import {StyleSheet, Text, View, Image, ScrollView, ActivityIndicator} from 'react-native';
-import {colors, fonts} from '../constants/theme';
+import {
+  StyleSheet, Text, View, Image, ScrollView, ActivityIndicator,
+  TouchableOpacity, Modal, TextInput, Alert,
+} from 'react-native';
+import { colors, fonts } from '../constants/theme';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import api from '../utils/apiClient';
-import {Button} from 'react-native-paper';
+import { Button } from 'react-native-paper';
 
 const TherapistProfileScreen = ({ route, navigation }) => {
   const [therapist, setTherapist] = useState(route?.params?.therapist || null);
   const [loading, setLoading] = useState(!route?.params?.therapist);
+
+  // Edit fields
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editSpec, setEditSpec] = useState('');
+  const [editTiming, setEditTiming] = useState('');
+  const [editFee, setEditFee] = useState('');
+  const [editBio, setEditBio] = useState('');
+  const [editImg, setEditImg] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editContact, setEditContact] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!therapist) {
@@ -21,10 +37,44 @@ const TherapistProfileScreen = ({ route, navigation }) => {
       setLoading(true);
       const res = await api.get('/api/therapists/me');
       setTherapist(res.data);
+      setEditName(res.data.name || '');
+      setEditSpec(res.data.specialisation || '');
+      setEditTiming(res.data.timing || '');
+      setEditFee(res.data.fee || '');
+      setEditBio(res.data.bio || '');
+      setEditImg(res.data.img || '');
+      setEditEmail(res.data.email || '');
+      setEditContact(res.data.contact_no || '');
     } catch (err) {
       console.error('Error fetching therapist self profile:', err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const submitEdit = async () => {
+    if (!editName.trim() || !editSpec.trim()) {
+      return Alert.alert('Required', 'Name and Specialisation are required.');
+    }
+    try {
+      setSubmitting(true);
+      const res = await api.put('/api/therapists/me', {
+        name: editName.trim(),
+        specialisation: editSpec.trim(),
+        timing: editTiming.trim(),
+        fee: editFee.trim(),
+        bio: editBio.trim(),
+        img: editImg.trim(),
+        email: editEmail.trim(),
+        contact_no: editContact.trim(),
+      });
+      setTherapist(res.data);
+      setEditModalVisible(false);
+      Alert.alert('Success', 'Profile updated successfully!');
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.error || 'Failed to update profile.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -67,14 +117,23 @@ const TherapistProfileScreen = ({ route, navigation }) => {
           name="arrowleft"
           size={32}
           color="white"
-          style={{position: 'absolute', top: 25, left: 20}}
+          style={{ position: 'absolute', top: 25, left: 20 }}
           onPress={() => navigation.goBack()}
         />
         <Text style={styles.profileText}>{isSelf ? 'My Clinician Profile' : 'Therapist Profile'}</Text>
+        {isSelf && (
+          <FontAwesome5
+            name="edit"
+            size={24}
+            color="white"
+            style={{ position: 'absolute', top: 25, right: 20 }}
+            onPress={() => setEditModalVisible(true)}
+          />
+        )}
         <View style={styles.dpCover}>
           <Image
-            style={{width: 100, height: 100, borderRadius: 62}}
-            source={{uri: therapist.img || 'https://www.allsmilesdentist.com/wp-content/uploads/2017/08/Doctors-circle.png'}}
+            style={{ width: 100, height: 100, borderRadius: 62 }}
+            source={{ uri: therapist.img || 'https://www.allsmilesdentist.com/wp-content/uploads/2017/08/Doctors-circle.png' }}
           />
         </View>
       </View>
@@ -140,6 +199,98 @@ const TherapistProfileScreen = ({ route, navigation }) => {
           </Button>
         </View>
       )}
+
+      {/* Edit Profile Modal */}
+      <Modal visible={editModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <ScrollView contentContainerStyle={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit Clinician Profile</Text>
+            
+            <Text style={styles.label}>Full Name</Text>
+            <TextInput
+              style={styles.input}
+              value={editName}
+              onChangeText={setEditName}
+              placeholder="Full Name"
+            />
+
+            <Text style={styles.label}>Profile Photo URL</Text>
+            <TextInput
+              style={styles.input}
+              value={editImg}
+              onChangeText={setEditImg}
+              placeholder="e.g. https://domain.com/photo.png"
+            />
+
+            <Text style={styles.label}>Specialisation</Text>
+            <TextInput
+              style={styles.input}
+              value={editSpec}
+              onChangeText={setEditSpec}
+              placeholder="e.g. Clinical Psychologist"
+            />
+
+            <Text style={styles.label}>Bio</Text>
+            <TextInput
+              style={[styles.input, { minHeight: 60, textAlignVertical: 'top' }]}
+              value={editBio}
+              onChangeText={setEditBio}
+              placeholder="Tell patients about yourself..."
+              multiline
+            />
+
+            <Text style={styles.label}>Work Timings</Text>
+            <TextInput
+              style={styles.input}
+              value={editTiming}
+              onChangeText={setEditTiming}
+              placeholder="e.g. 9:00 AM - 5:00 PM"
+            />
+
+            <Text style={styles.label}>Consultation Fee</Text>
+            <TextInput
+              style={styles.input}
+              value={editFee}
+              onChangeText={setEditFee}
+              placeholder="e.g. $50/session"
+            />
+
+            <Text style={styles.label}>Contact Email</Text>
+            <TextInput
+              style={styles.input}
+              value={editEmail}
+              onChangeText={setEditEmail}
+              placeholder="Email address"
+            />
+
+            <Text style={styles.label}>Contact Phone</Text>
+            <TextInput
+              style={styles.input}
+              value={editContact}
+              onChangeText={setEditContact}
+              placeholder="Phone number"
+              keyboardType="phone-pad"
+            />
+
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.gray3 }]}
+                onPress={() => setEditModalVisible(false)}
+                disabled={submitting}
+              >
+                <Text style={styles.modalBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.primary }]}
+                onPress={submitEdit}
+                disabled={submitting}
+              >
+                {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.modalBtnText}>Save</Text>}
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -252,5 +403,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 5,
     paddingHorizontal: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    padding: 20,
+    borderRadius: 16,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.secondary,
+    marginBottom: 14,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.gray,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.gray3,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 12,
+    fontSize: 14,
+    color: colors.secondary,
+  },
+  modalBtn: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalBtnText: {
+    color: colors.white,
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });

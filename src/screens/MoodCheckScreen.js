@@ -8,11 +8,11 @@ import { colors, sizes } from '../constants/theme';
 import api from '../utils/apiClient';
 
 const MOODS = [
-  { id: 'great', emoji: '😊', label: 'Great', rating: 10 },
-  { id: 'good', emoji: '🙂', label: 'Good', rating: 8 },
-  { id: 'okay', emoji: '😐', label: 'Okay', rating: 5 },
-  { id: 'low', emoji: '😔', label: 'Low', rating: 3 },
-  { id: 'anxious', emoji: '😰', label: 'Anxious', rating: 2 },
+  { id: 'great', label: 'Great', rating: 10 },
+  { id: 'good', label: 'Good', rating: 8 },
+  { id: 'okay', label: 'Okay', rating: 5 },
+  { id: 'low', label: 'Low', rating: 3 },
+  { id: 'anxious', label: 'Anxious', rating: 2 },
 ];
 
 const MoodCheckScreen = ({ navigation }) => {
@@ -43,11 +43,11 @@ const MoodCheckScreen = ({ navigation }) => {
   };
 
   const message = selected === 'great' || selected === 'good'
-    ? 'Glad you\'re doing well. Keep taking care of yourself. 🌟'
+    ? "Glad you're doing well. Keep taking care of yourself."
     : selected === 'okay'
-      ? 'Some days are like that. Be gentle with yourself. 💙'
+      ? 'Some days are like that. Be gentle with yourself.'
       : selected
-        ? 'Thanks for checking in. You can talk to Tink or reach out to someone you trust. 💜'
+        ? 'Thanks for checking in. You can talk to Tink or reach out to someone you trust.'
         : '';
 
   return (
@@ -66,7 +66,6 @@ const MoodCheckScreen = ({ navigation }) => {
             onPress={() => handleSelect(m.id)}
             disabled={loading}
           >
-            <Text style={styles.moodEmoji}>{m.emoji}</Text>
             <Text style={[styles.moodLabel, selected === m.id && styles.moodLabelActive]}>{m.label}</Text>
           </TouchableOpacity>
         ))}
@@ -89,7 +88,7 @@ const MoodCheckScreen = ({ navigation }) => {
             style={styles.talkBtn}
             onPress={() => { navigation.navigate('Chat', { name: 'Tink' }); }}
           >
-            <Text style={styles.talkBtnText}>Talk to Tink 💬</Text>
+            <Text style={styles.talkBtnText}>Talk to Tink</Text>
           </TouchableOpacity>
         </View>
       ) : null}
@@ -109,8 +108,7 @@ const styles = StyleSheet.create({
   moodRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 28 },
   moodBtn: { width: '30%', backgroundColor: colors.white, borderRadius: 14, padding: 16, alignItems: 'center', marginBottom: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 },
   moodBtnActive: { backgroundColor: colors.accent, borderWidth: 2, borderColor: colors.primary },
-  moodEmoji: { fontSize: 36, marginBottom: 6 },
-  moodLabel: { fontSize: 13, fontWeight: '600', color: colors.secondary },
+  moodLabel: { fontSize: 14, fontWeight: '600', color: colors.secondary },
   moodLabelActive: { color: colors.secondary },
   submitBtn: { alignSelf: 'center', paddingVertical: 14, paddingHorizontal: 40, backgroundColor: colors.secondary, borderRadius: 24, marginTop: 10 },
   submitBtnText: { color: colors.white, fontWeight: '700', fontSize: 16 },

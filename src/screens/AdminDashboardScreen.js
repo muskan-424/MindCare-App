@@ -2484,15 +2484,15 @@ const UsersTab = () => {
               onPress={() => setActiveFilter(activeFilter === s.label || s.label.includes('Total') || s.label.includes('All') ? null : s.label)}
               style={[
                 ss.statTile, 
-                { borderTopColor: s.color, height: 80, paddingVertical: 8 },
+                { borderTopColor: s.color },
                 activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
               ]}
             >
-              <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A', width: 30, height: 30 }]}>
-                <MaterialIcons name={s.icon} size={16} color={s.color} />
+              <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
+                <MaterialIcons name={s.icon} size={18} color={s.color} />
               </View>
-              <Text style={[ss.statValue, { fontSize: 16, marginTop: 2 }]}>{s.value}</Text>
-              <Text style={[ss.statLabel, { fontSize: 9 }]}>{s.label}</Text>
+              <Text style={ss.statValue}>{s.value}</Text>
+              <Text style={ss.statLabel}>{s.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -2638,7 +2638,6 @@ const UsersTab = () => {
           </View>
         )}
       </View>
-    </View>
 
     {/* Role Change Modal */}
     <Modal visible={roleModal} transparent animationType="slide">
@@ -2988,6 +2987,7 @@ const AdminDashboardScreen = () => {
   const [profileEmail, setProfileEmail] = useState('');
   const [profilePassword, setProfilePassword] = useState('');
   const [profileConfirm, setProfileConfirm] = useState('');
+  const [profilePic, setProfilePic] = useState('');
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileShowPw, setProfileShowPw] = useState(false);
 
@@ -2998,7 +2998,7 @@ const AdminDashboardScreen = () => {
     }
     setProfileSaving(true);
     try {
-      const body = { name: profileName.trim(), email: profileEmail.trim() };
+      const body = { name: profileName.trim(), email: profileEmail.trim(), profilePic: profilePic.trim() };
       if (profilePassword) body.password = profilePassword;
       await api.patch('/api/admin/profile', body, H);
       Alert.alert('Saved', 'Profile updated successfully.');
@@ -3010,6 +3010,7 @@ const AdminDashboardScreen = () => {
     }
     setProfileSaving(false);
   };
+
   const [feed, setFeed] = useState([]);
   const [loadingFeed, setLoadingFeed] = useState(false);
   const [error, setError] = useState('');
@@ -3051,7 +3052,7 @@ const AdminDashboardScreen = () => {
 
   return (
     <View style={ss.container}>
-      <StatusBar barStyle="light-content" backgroundColor={D.surface} />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={D.surface} />
 
       {/* Header */}
       <View style={ss.header}>
@@ -3097,13 +3098,27 @@ const AdminDashboardScreen = () => {
               {/* Avatar preview */}
               <View style={ss.profileAvatarRow}>
                 <View style={ss.profileAvatar}>
-                  <Text style={ss.profileAvatarText}>{profileName?.charAt(0)?.toUpperCase() || 'A'}</Text>
+                  {profilePic ? (
+                    <Image source={{ uri: profilePic }} style={{ width: 44, height: 44, borderRadius: 22 }} />
+                  ) : (
+                    <Text style={ss.profileAvatarText}>{profileName?.charAt(0)?.toUpperCase() || 'A'}</Text>
+                  )}
                 </View>
                 <View style={{ marginLeft: 14 }}>
                   <Text style={ss.profileAvatarName}>{profileName || 'Admin'}</Text>
                   <Text style={ss.profileAvatarRole}>Administrator</Text>
                 </View>
               </View>
+
+              <Text style={ss.modalLabel}>Profile Photo URL</Text>
+              <TextInput
+                style={ss.modalInput}
+                value={profilePic}
+                onChangeText={setProfilePic}
+                placeholder="e.g. https://domain.com/photo.png"
+                placeholderTextColor={D.textMuted}
+                autoCapitalize="none"
+              />
 
               <Text style={ss.modalLabel}>Display Name</Text>
               <TextInput
@@ -3113,6 +3128,7 @@ const AdminDashboardScreen = () => {
                 placeholder="Your name"
                 placeholderTextColor={D.textMuted}
               />
+
 
               <Text style={ss.modalLabel}>Email</Text>
               <TextInput
@@ -3260,7 +3276,7 @@ const AdminDashboardScreen = () => {
 export default AdminDashboardScreen;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const ss = StyleSheet.create({
+const getSs = () => ({
   container: { flex: 1, backgroundColor: D.bg },
 
   // Header
@@ -3522,3 +3538,10 @@ const ss = StyleSheet.create({
   notifTitle: { fontSize: 15, fontWeight: '700', color: D.textPrimary, marginBottom: 4 },
   notifBody: { fontSize: 13, color: D.textSecondary, lineHeight: 19 },
 });
+
+const ss = new Proxy({}, {
+  get(target, prop) {
+    return getSs()[prop];
+  }
+});
+

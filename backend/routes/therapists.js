@@ -73,22 +73,51 @@ async function ensureSeeded() {
 // GET /api/therapists
 router.get('/', async (_req, res) => {
   try {
-    await ensureSeeded();
-    const therapists = await Therapist.find({ active: true }).sort({ name: 1 }).lean();
-    res.json(
-      therapists.map(t => ({
-        id: String(t._id),
-        name: t.name,
-        specialisation: t.specialisation,
-        img: t.img,
-        bio: t.bio,
-        email: t.email,
-        contact_no: t.contact_no,
-        timing: t.timing,
-        fee: t.fee,
-        stars: t.stars,
-      }))
-    );
+    const User = require('../models/User');
+    const clinicians = await User.find({ role: { $in: ['clinician', 'therapist'] } }).lean();
+    const therapists = await Therapist.find({ active: true }).lean();
+
+    const results = [];
+    const seenEmails = new Set();
+
+    therapists.forEach(t => {
+      const isSeeded = ['Dr. Brain Wofe', 'Dr. Selkon Kane', 'Dr. SN Mohanty', 'Kate Williams'].includes(t.name);
+      if (!isSeeded && t.email) {
+        seenEmails.add(t.email.toLowerCase());
+        results.push({
+          id: String(t._id),
+          name: t.name,
+          specialisation: t.specialisation || 'Mental Health Professional',
+          img: t.img || 'https://www.allsmilesdentist.com/wp-content/uploads/2017/08/Doctors-circle.png',
+          bio: t.bio || 'Licensed clinician specializing in mental wellness.',
+          email: t.email,
+          contact_no: t.contact_no || '',
+          timing: t.timing || '9:00 AM - 5:00 PM',
+          fee: t.fee || '$15/session',
+          stars: t.stars || 5,
+        });
+      }
+    });
+
+    clinicians.forEach(u => {
+      if (!seenEmails.has(u.email.toLowerCase())) {
+        seenEmails.add(u.email.toLowerCase());
+        results.push({
+          id: String(u._id),
+          name: u.name || 'Professional Clinician',
+          specialisation: u.role === 'clinician' ? 'Clinical Psychologist' : 'Psychiatrist',
+          img: 'https://www.allsmilesdentist.com/wp-content/uploads/2017/08/Doctors-circle.png',
+          bio: 'Licensed mental health professional dedicated to patient care and wellness.',
+          email: u.email,
+          contact_no: u.contact_no || '',
+          timing: '9:00 AM - 5:00 PM',
+          fee: '$15/session',
+          stars: 5,
+        });
+      }
+    });
+
+    res.json(results.sort((a, b) => a.name.localeCompare(b.name)));
   } catch (err) {
     console.error('Error fetching therapists:', err.message);
     res.status(500).json({ error: 'Failed to load therapists' });
@@ -133,6 +162,31 @@ router.get('/me', auth, async (req, res) => {
     res.status(500).json({ error: 'Failed to load therapist profile' });
   }
 });
+
+// PUT /api/therapists/me - update therapist self profile
+router.put('/me', auth, async (req, res) => {
+  try {
+    const { name, specialisation, bio, email, contact_no, timing, fee, img } = req.body;
+    let t = await Therapist.findOne({ userId: req.user.id });
+    if (!t) {
+      t = new Therapist({ userId: req.user.id });
+    }
+    if (name !== undefined) t.name = name;
+    if (specialisation !== undefined) t.specialisation = specialisation;
+    if (bio !== undefined) t.bio = bio;
+    if (email !== undefined) t.email = email;
+    if (contact_no !== undefined) t.contact_no = contact_no;
+    if (timing !== undefined) t.timing = timing;
+    if (fee !== undefined) t.fee = fee;
+    if (img !== undefined) t.img = img;
+    await t.save();
+    res.json(t);
+  } catch (err) {
+    console.error('Error updating therapist self:', err.message);
+    res.status(500).json({ error: 'Failed to update therapist profile' });
+  }
+});
+
 
 // GET /api/therapists/categories — browse-by-type categories (live from backend, fallback to seed)
 router.get('/categories', async (_req, res) => {

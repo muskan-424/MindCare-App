@@ -16,11 +16,11 @@ const STATUS_COLORS = {
 };
 
 const STATUS_CONFIG = {
-  awaiting_admin: { icon: '👀', label: 'Under Admin Review', hint: 'Admin is checking therapist availability for you.' },
-  pending:        { icon: '⏳', label: 'Pending Confirmation', hint: 'Therapist assigned. Awaiting final confirmation.' },
-  confirmed:      { icon: '✅', label: 'Confirmed!', hint: 'Your session is set. See details below.' },
-  cancelled:      { icon: '❌', label: 'Cancelled', hint: 'This appointment was cancelled.' },
-  completed:      { icon: '🏁', label: 'Completed', hint: 'Session completed. Hope it helped! 💙' },
+  awaiting_admin: { icon: '', label: 'Under Admin Review', hint: 'Admin is checking therapist availability for you.' },
+  pending:        { icon: '', label: 'Pending Confirmation', hint: 'Therapist assigned. Awaiting final confirmation.' },
+  confirmed:      { icon: '', label: 'Confirmed!', hint: 'Your session is set. See details below.' },
+  cancelled:      { icon: '', label: 'Cancelled', hint: 'This appointment was cancelled.' },
+  completed:      { icon: '', label: 'Completed', hint: 'Session completed. Hope it helped!' },
 };
 
 const FILTERS = ['all', 'awaiting_admin', 'confirmed', 'cancelled'];
@@ -106,7 +106,7 @@ const AppointmentsScreen = ({ navigation }) => {
         {/* Status row */}
         <View style={styles.statusRow}>
           <View style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[item.status] }]}>
-            <Text style={styles.statusIcon}>{config.icon}</Text>
+            {config.icon ? <Text style={styles.statusIcon}>{config.icon}</Text> : null}
             <Text style={styles.statusText}>{config.label}</Text>
           </View>
           <Text style={styles.createdAt}>
@@ -119,23 +119,23 @@ const AppointmentsScreen = ({ navigation }) => {
         {/* Request info */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Request</Text>
-          {item.requestedSpeciality ? <Text style={styles.detail}>👤 {item.requestedSpeciality}</Text> : null}
-          {item.preferredTime ? <Text style={styles.detail}>🕐 {item.preferredTime} preference</Text> : null}
+          {item.requestedSpeciality ? <Text style={styles.detail}>Type: {item.requestedSpeciality}</Text> : null}
+          {item.preferredTime ? <Text style={styles.detail}>Time: {item.preferredTime} preference</Text> : null}
           {item.preferredDates?.length > 0 ? (
-            <Text style={styles.detail}>📅 Preferred: {item.preferredDates.slice(0, 3).join(', ')}{item.preferredDates.length > 3 ? '...' : ''}</Text>
+            <Text style={styles.detail}>Preferred: {item.preferredDates.slice(0, 3).join(', ')}{item.preferredDates.length > 3 ? '...' : ''}</Text>
           ) : null}
-          {item.userNote ? <Text style={styles.noteText}>📝 "{item.userNote}"</Text> : null}
+          {item.userNote ? <Text style={styles.noteText}>Note: "{item.userNote}"</Text> : null}
         </View>
 
         {/* Confirmed session details */}
         {(item.status === 'confirmed' || item.status === 'completed') && item.therapistName ? (
           <View style={[styles.section, styles.confirmedSection]}>
-            <Text style={styles.sectionTitle}>✅ Assigned Session</Text>
+            <Text style={styles.sectionTitle}>Assigned Session</Text>
             <Text style={styles.therapistName}>{item.therapistName}</Text>
             {item.specialisation ? <Text style={styles.therapistSpec}>{item.specialisation}</Text> : null}
-            <Text style={styles.detail}>📅 {item.date ? new Date(item.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '—'}</Text>
-            <Text style={styles.detail}>🕐 {item.timeSlot || '—'}</Text>
-            {item.adminNote ? <Text style={styles.adminNoteText}>💬 Admin note: {item.adminNote}</Text> : null}
+            <Text style={styles.detail}>Date: {item.date ? new Date(item.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '—'}</Text>
+            <Text style={styles.detail}>Time: {item.timeSlot || '—'}</Text>
+            {item.adminNote ? <Text style={styles.adminNoteText}>Admin note: {item.adminNote}</Text> : null}
           </View>
         ) : null}
 
@@ -183,7 +183,6 @@ const AppointmentsScreen = ({ navigation }) => {
         <ActivityIndicator color={colors.primary} size="large" style={styles.loadingIndicator} />
       ) : filtered.length === 0 ? (
         <View style={styles.emptyWrap}>
-          <Text style={styles.emptyEmoji}>🗓️</Text>
           <Text style={styles.emptyTitle}>{filter === 'all' ? 'No appointments yet' : `No ${filter} requests`}</Text>
           <Text style={styles.emptyText}>
             {filter === 'all' ? 'Submit a consultation request and our admin team will assign you a therapist.' : `You have no ${filter} appointments right now.`}
@@ -285,7 +284,6 @@ const styles = StyleSheet.create({
   cancelBtnText: { fontSize: 14, color: '#E57373', fontWeight: '600' },
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
   loadingIndicator: { marginTop: 60 },
-  emptyEmoji: { fontSize: 56, marginBottom: 16 },
   emptyTitle: { fontSize: 20, fontWeight: '700', color: colors.secondary, marginBottom: 8 },
   emptyText: { fontSize: 15, color: colors.gray, textAlign: 'center', marginBottom: 24 },
   newReqBtn: { backgroundColor: colors.secondary, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 24 },

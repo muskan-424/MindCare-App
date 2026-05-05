@@ -32,7 +32,7 @@ router.post('/add-concerns', auth, async (req, res) => {
 // @desc    Edit user profile
 // @access  Public
 router.post('/edit-profile', auth, async (req, res) => {
-  const { name, email, phone_no, age, gender, concerns, uid } = req.body;
+  const { name, email, phone_no, age, gender, concerns, profilePic, uid } = req.body;
 
   try {
     const updateFields = {};
@@ -42,6 +42,7 @@ router.post('/edit-profile', auth, async (req, res) => {
     if (age !== undefined) updateFields.age = age;
     if (gender !== undefined) updateFields.gender = gender;
     if (concerns !== undefined) updateFields.concerns = concerns;
+    if (profilePic !== undefined) updateFields.profilePic = profilePic;
 
     const profile = await Profile.findOneAndUpdate(
       { userId: uid },
@@ -49,11 +50,17 @@ router.post('/edit-profile', auth, async (req, res) => {
       { new: true }
     );
 
+    if (profilePic !== undefined) {
+      const User = require('../models/User');
+      await User.findByIdAndUpdate(uid, { $set: { profilePic } });
+    }
+
     if (!profile) {
       return res.status(404).json({ errors: [{ msg: 'Profile not found' }] });
     }
 
     res.json(profile);
+
   } catch (err) {
     console.error('Edit profile error:', err.message);
     res.status(500).json({ errors: [{ msg: 'Server error' }] });
@@ -106,7 +113,8 @@ router.get('/me', auth, async (req, res) => {
 // @access  Private
 router.patch('/update', auth, async (req, res) => {
   try {
-    const allowedFields = ['isPeerMatchingEnabled', 'peerBio', 'concerns', 'name', 'age', 'gender', 'phone_no'];
+    const allowedFields = ['isPeerMatchingEnabled', 'peerBio', 'concerns', 'name', 'age', 'gender', 'phone_no', 'profilePic'];
+
     const updates = {};
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) updates[field] = req.body[field];

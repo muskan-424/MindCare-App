@@ -137,7 +137,7 @@ const WellnessPlanScreen = ({ navigation }) => {
         </View>
         <ScrollView contentContainerStyle={styles.scroll}>
           <View style={styles.questionCard}>
-            <Text style={styles.title}>Request a Custom Plan 🧘</Text>
+            <Text style={styles.title}>Request a Custom Plan</Text>
             <Text style={styles.subtitle}>
               Answer a few questions and our care team will curate a 30-day wellness routine just for you.
             </Text>
@@ -315,7 +315,7 @@ const WellnessPlanScreen = ({ navigation }) => {
         ))}
 
         {(!currentDayData || currentDayData.tasks.length === 0) && (
-          <Text style={styles.emptyTasksHint}>No tasks assigned for this day. Rest up! 💤</Text>
+          <Text style={styles.emptyTasksHint}>No tasks assigned for this day. Rest up!</Text>
         )}
       </ScrollView>
 

@@ -9,11 +9,12 @@ import { colors } from '../constants/theme';
 
 const SPECIALITIES = ['Psychologist', 'Psychiatrist', 'Counsellor', 'Social Worker', 'Any'];
 const TIME_PREFS = [
-  { id: 'morning', label: '🌅 Morning', hint: '8AM – 12PM' },
-  { id: 'afternoon', label: '☀️ Afternoon', hint: '12PM – 5PM' },
-  { id: 'evening', label: '🌙 Evening', hint: '5PM – 9PM' },
-  { id: 'any', label: '🕐 Any Time', hint: 'Flexible' },
+  { id: 'morning', label: 'Morning', hint: '8AM – 12PM' },
+  { id: 'afternoon', label: 'Afternoon', hint: '12PM – 5PM' },
+  { id: 'evening', label: 'Evening', hint: '5PM – 9PM' },
+  { id: 'any', label: 'Any Time', hint: 'Flexible' },
 ];
+
 
 // Next 14 days for date preference
 const getUpcomingDays = () => {
@@ -80,15 +81,16 @@ const BookAppointmentScreen = ({ navigation }) => {
   if (done) {
     return (
       <View style={styles.successContainer}>
-        <Text style={styles.successIcon}>📋</Text>
+        <Text style={styles.successIcon}>✓</Text>
         <Text style={styles.successTitle}>Request Submitted!</Text>
         <Text style={styles.successText}>
           An admin is reviewing your request and will assign the best available therapist
           based on your preferences. You'll be able to see the status in My Appointments.
         </Text>
         <View style={styles.successNote}>
-          <Text style={styles.successNoteText}>⏳ Typically confirmed within 24 hours</Text>
+          <Text style={styles.successNoteText}>Typically confirmed within 24 hours</Text>
         </View>
+
         <TouchableOpacity style={styles.viewBtn} onPress={() => navigation.navigate('Appointments')}>
           <Text style={styles.viewBtnText}>View My Requests</Text>
         </TouchableOpacity>
@@ -110,7 +112,7 @@ const BookAppointmentScreen = ({ navigation }) => {
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>🛡️ Admin-Verified Matching</Text>
+          <Text style={styles.infoTitle}>Admin-Verified Matching</Text>
           <Text style={styles.infoText}>
             Tell us what you need. Our admin team will review your request, check therapist availability,
             and assign the best match — no guesswork for you.

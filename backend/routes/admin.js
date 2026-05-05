@@ -599,6 +599,19 @@ router.get('/pending-verification', adminAuth, async (req, res) => {
         preferredPace: w.preferredPace,
         createdAt: w.createdAt,
       })),
+      pendingContacts: pendingContacts.map(c => ({
+        id: String(c._id),
+        userId: String(c.user?._id),
+        type: 'emergency_contact',
+        userName: c.user?.name || 'Unknown',
+        userEmail: c.user?.email || '',
+        contactName: c.name,
+        relationship: c.relationship,
+        phone: c.phone,
+        reachVia: c.reachVia,
+        userMessage: c.userMessage,
+        createdAt: c.createdAt,
+      })),
       deletionRequests: pendingDeletions.map(d => ({
         id: String(d._id),
         userId: String(d.user?._id),
@@ -882,12 +895,49 @@ router.get('/therapists', adminAuth, async (req, res) => {
     const therapists = await Therapist.find({})
       .populate('userId', 'name email')
       .lean();
-    res.json(therapists.map(t => ({
-      ...t,
-      id: String(t._id),
-      linkedUserEmail: t.userId?.email || null,
-      linkedUserName: t.userId?.name || null
-    })));
+    
+    const User = require('../models/User');
+    const clinicians = await User.find({ role: { $in: ['clinician', 'therapist'] } }).lean();
+
+    const results = [];
+    const seenEmails = new Set();
+
+    therapists.forEach(t => {
+      const isSeeded = ['Dr. Brain Wofe', 'Dr. Selkon Kane', 'Dr. SN Mohanty', 'Kate Williams'].includes(t.name);
+      if (!isSeeded && t.email) {
+        seenEmails.add(t.email.toLowerCase());
+        results.push({
+          ...t,
+          id: String(t._id),
+          linkedUserEmail: t.userId?.email || t.email || null,
+          linkedUserName: t.userId?.name || t.name || null
+        });
+      }
+    });
+
+    clinicians.forEach(u => {
+      if (!seenEmails.has(u.email.toLowerCase())) {
+        seenEmails.add(u.email.toLowerCase());
+        results.push({
+          id: String(u._id),
+          name: u.name || 'Professional Clinician',
+          specialisation: u.role === 'clinician' ? 'Clinical Psychologist' : 'Psychiatrist',
+          img: 'https://www.allsmilesdentist.com/wp-content/uploads/2017/08/Doctors-circle.png',
+          bio: 'Licensed mental health professional dedicated to patient care and wellness.',
+          email: u.email,
+          contact_no: u.contact_no || '',
+          timing: '9:00 AM - 5:00 PM',
+          fee: '$15/session',
+          stars: 5,
+          active: true,
+          linkedUserEmail: u.email,
+          linkedUserName: u.name,
+          userId: { _id: u._id, name: u.name, email: u.email }
+        });
+      }
+    });
+
+    res.json(results.sort((a, b) => (a.name || '').localeCompare(b.name || '')));
   } catch (err) {
     console.error('Admin get therapists error:', err.message);
     res.status(500).json({ error: 'Failed to query therapists' });
@@ -1211,7 +1261,7 @@ router.get('/analytics', adminAuth, async (req, res) => {
       User.countDocuments({}),
       IssueReport.countDocuments({ escalated: true, adminAction: { $ne: 'resolved' } }),
       Therapist.countDocuments({ active: true }),
-      Appointment.countDocuments({ status: { $in: ['awaiting_admin', 'pending'] } })
+      Appointment.countDocuments({ status: 'awaiting_admin' })
     ]);
 
     res.json({
@@ -1290,4 +1340,37 @@ router.get('/export/:type', adminAuth, async (req, res) => {
   }
 });
 
+// PATCH /api/admin/profile — update admin profile name, email, password, profilePic
+router.patch('/profile', adminAuth, async (req, res) => {
+  try {
+    const { name, email, password, profilePic } = req.body;
+    const adminId = req.headers['x-admin-id'] || 'admin';
+    const User = require('../models/User');
+
+    const update = {};
+    if (name !== undefined) update.name = name;
+    if (email !== undefined) update.email = email;
+    if (profilePic !== undefined) update.profilePic = profilePic;
+
+    if (password) {
+      const bcrypt = require('bcryptjs');
+      const salt = await bcrypt.genSalt(10);
+      update.password = await bcrypt.hash(password, salt);
+    }
+
+    const user = await User.findOneAndUpdate(
+      { role: 'super_admin' }, // Match the super_admin
+      { $set: update },
+      { new: true }
+    );
+
+    await logAdminAction('update_admin_profile', adminId, user?._id, { name, email });
+    res.json({ success: true, user });
+  } catch (err) {
+    console.error('Update admin profile error:', err.message);
+    res.status(500).json({ error: 'Failed to update admin profile' });
+  }
+});
+
 module.exports = router;
+
