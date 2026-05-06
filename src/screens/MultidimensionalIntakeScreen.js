@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Dimensions, Image, PermissionsAndroid, Modal, Alert
+  ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Dimensions,
+  Image, PermissionsAndroid, Modal, Alert
 } from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -10,6 +11,7 @@ import { colors } from '../constants/theme';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import FaceDetection from '@react-native-ml-kit/face-detection';
+import useSpeechToText from '../hooks/useSpeechToText';
 
 const MOOD_TAGS = ['calm', 'anxious', 'sad', 'angry', 'tired', 'hopeful', 'overwhelmed', 'okay'];
 
@@ -33,10 +35,17 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
 
   const [isInitializing, setIsInitializing] = useState(false);
 
-  // Speech to Text States
+  // Speech to Text — powered by Google STT REST API via useSpeechToText hook
+  const {
+    isListening: sttListening,
+    sttError: sttHookError,
+    startListening: sttStart,
+    stopListening: sttStop,
+    reset: sttReset,
+  } = useSpeechToText();
   const [sttModalVisible, setSttModalVisible] = useState(false);
   const [activeSTTIndex, setActiveSTTIndex] = useState(null);
-  const [sttListening, setSttListening] = useState(false);
+  const activeSTTIndexRef = useRef(null);
 
   // Vision Camera Engine
   const device = useCameraDevice('front');
@@ -104,23 +113,42 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
     setAnswers(newAnswers);
   };
 
-  const openSTT = (index) => {
-    setActiveSTTIndex(index);
-    setSttListening(true);
-    setSttModalVisible(true);
-    setTimeout(() => {
-      setSttListening(false);
-    }, 2500);
+  // ── STT: stop recording → show spinner → transcribe → fill answer → close modal ──
+  const stopSTT = async () => {
+    // NOTE: do NOT close modal here — keep it open to show the "Transcribing..." spinner
+    // The hook's stopListening() sets isListening=false (switching modal to spinner state)
+    // then awaits the Google STT API call before returning
+    const transcript = await sttStop();
+
+    // Now close the modal after we have the result
+    setSttModalVisible(false);
+
+    if (transcript) {
+      const idx = activeSTTIndexRef.current;
+      if (idx !== null) {
+        setAnswers(prev => {
+          const next = [...prev];
+          next[idx] = next[idx] ? next[idx] + ' ' + transcript : transcript;
+          return next;
+        });
+      }
+    } else if (sttHookError) {
+      setError('Speech-to-Text failed: ' + sttHookError);
+    }
+    sttReset();
+    setActiveSTTIndex(null);
+    activeSTTIndexRef.current = null;
   };
 
-  const handleSelectTranscription = (phrase) => {
-    if (activeSTTIndex !== null) {
-      const newAnswers = [...answers];
-      newAnswers[activeSTTIndex] = newAnswers[activeSTTIndex] ? newAnswers[activeSTTIndex] + ' ' + phrase : phrase;
-      setAnswers(newAnswers);
-    }
-    setSttModalVisible(false);
+  // ── STT: open modal and start recording ──────────────────────────────────
+  const openSTT = async (index) => {
+    setActiveSTTIndex(index);
+    activeSTTIndexRef.current = index;
+    setSttModalVisible(true);
+    await sttStart();
   };
+
+
 
   const submitText = async () => {
     const hasAnyAnswer = answers.some(a => a.trim().length > 0);
@@ -471,51 +499,57 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
               onRequestClose={() => setSttModalVisible(false)}
             >
               <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-                <View style={{ backgroundColor: colors.white, borderRadius: 20, padding: 24, width: '100%', maxWidth: 360, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.secondary, marginBottom: 8 }}>Speech to Text</Text>
-                  
-                  {sttListening ? (
-                    <View style={{ alignItems: 'center', paddingVertical: 20 }}>
-                      <ActivityIndicator size="large" color={colors.primary} />
-                      <Text style={{ fontSize: 14, color: colors.gray, marginTop: 16 }}>Listening... Speak your response</Text>
-                    </View>
-                  ) : (
-                    <View style={{ width: '100%' }}>
-                      <Text style={{ fontSize: 13, color: colors.gray, textAlign: 'center', marginBottom: 16 }}>Select one of the transcribed phrases below to insert into your answer:</Text>
-                      {[
-                        "I'm feeling a bit overwhelmed, but maintaining a consistent mindfulness routine.",
-                        "Lately, I've had better sleep and more energy throughout the day.",
-                        "Stress feels manageable today, especially with the help of deep breathing exercises."
-                      ].map((phrase, i) => (
-                        <TouchableOpacity
-                          key={i}
-                          style={{
-                            backgroundColor: colors.cream,
-                            borderWidth: 1,
-                            borderColor: colors.gray3,
-                            borderRadius: 12,
-                            padding: 12,
-                            marginBottom: 8
-                          }}
-                          onPress={() => handleSelectTranscription(phrase)}
-                        >
-                          <Text style={{ fontSize: 13, color: colors.secondary, lineHeight: 18 }}>"{phrase}"</Text>
-                        </TouchableOpacity>
-                      ))}
+                <View style={{ backgroundColor: colors.white, borderRadius: 20, padding: 28, width: '100%', maxWidth: 360, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.secondary, marginBottom: 16 }}>Speech to Text</Text>
+
+                  {/* STATE 1: Recording — mic is active */}
+                  {sttListening && (
+                    <View style={{ alignItems: 'center', paddingVertical: 10 }}>
+                      <View style={{
+                        width: 72, height: 72, borderRadius: 36,
+                        backgroundColor: '#E57373',
+                        alignItems: 'center', justifyContent: 'center',
+                        marginBottom: 16,
+                        elevation: 8,
+                      }}>
+                        <MaterialCommunityIcons name="microphone" size={36} color="white" />
+                      </View>
+                      <Text style={{ fontSize: 15, fontWeight: '700', color: colors.secondary, marginBottom: 4 }}>
+                        Listening...
+                      </Text>
+                      <Text style={{ fontSize: 13, color: colors.gray, marginBottom: 20, textAlign: 'center' }}>
+                        Speak your answer clearly, then tap Stop.
+                      </Text>
+                      <TouchableOpacity
+                        style={{ backgroundColor: '#E57373', paddingVertical: 12, paddingHorizontal: 32, borderRadius: 24 }}
+                        onPress={stopSTT}
+                      >
+                        <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>⏹  Stop & Transcribe</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{ marginTop: 14, paddingVertical: 8, paddingHorizontal: 20 }}
+                        onPress={async () => {
+                          await sttStop();
+                          sttReset();
+                          setSttModalVisible(false);
+                          setActiveSTTIndex(null);
+                          activeSTTIndexRef.current = null;
+                        }}
+                      >
+                        <Text style={{ fontSize: 13, color: colors.gray }}>Cancel</Text>
+                      </TouchableOpacity>
                     </View>
                   )}
 
-                  <TouchableOpacity
-                    style={{
-                      marginTop: 12,
-                      paddingVertical: 10,
-                      paddingHorizontal: 20,
-                      alignSelf: 'center'
-                    }}
-                    onPress={() => setSttModalVisible(false)}
-                  >
-                    <Text style={{ fontSize: 14, color: colors.gray, fontWeight: '600' }}>Cancel</Text>
-                  </TouchableOpacity>
+                  {/* STATE 2: Transcribing — modal open, recording stopped, waiting for Google STT */}
+                  {!sttListening && (
+                    <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+                      <ActivityIndicator size="large" color={colors.primary} />
+                      <Text style={{ fontSize: 14, color: colors.gray, marginTop: 14, textAlign: 'center' }}>
+                        Transcribing your speech...{'\n'}This may take a few seconds.
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </View>
             </Modal>
@@ -553,10 +587,23 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
             {!isRecording && (
               <TouchableOpacity 
                 style={[styles.actionBtn, { backgroundColor: '#F1C40F', marginTop: 12 }]} 
-                onPress={() => {
-                  setRecordSecs(5);
-                  setIsRecording(false);
-                  setStep(3);
+                onPress={async () => {
+                  try {
+                    // We MUST tell the backend that voice is completed, otherwise Fusion fails
+                    await api.post(`/api/aiIntake/session/${sessionId}/voice-response`, {
+                      voiceRef: 'simulated_audio.amr',
+                      durationSec: 5,
+                      speechRate: 140,
+                      pauseRatio: 0.15,
+                      pitchVariance: 0.35,
+                      snr: 20
+                    });
+                    setRecordSecs(5);
+                    setIsRecording(false);
+                    setStep(3);
+                  } catch (e) {
+                    setError('Failed to skip/simulate vocal analysis.');
+                  }
                 }}
               >
                 <Text style={[styles.actionBtnText, { color: colors.secondary }]}>

@@ -3,7 +3,7 @@ module.exports = {
   plugins: [
     ['module:react-native-dotenv', {
       moduleName: '@env',
-      path: 'backend/.env',
+      path: '.env',           // ✅ ROOT .env — contains GOOGLE_API_KEY, ADMIN_TOKEN, etc.
       allowUndefined: true
     }],
   ],

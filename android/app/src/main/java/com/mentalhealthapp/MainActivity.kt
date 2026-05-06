@@ -1,6 +1,7 @@
 package com.mentalhealthapp
 
 import android.os.Bundle
+import android.view.WindowManager
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -24,5 +25,19 @@ class MainActivity : ReactActivity() {
   // For react-native-screens and gesture-handler
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(null)
+  }
+
+  override fun onResume() {
+    super.onResume()
+    // Explicitly allow screenshots/screen sharing by clearing FLAG_SECURE
+    window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+  }
+
+  override fun onWindowFocusChanged(hasFocus: Boolean) {
+    super.onWindowFocusChanged(hasFocus)
+    if (hasFocus) {
+      // Ensure screenshots/screen sharing are allowed when window regained focus
+      window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+    }
   }
 }
