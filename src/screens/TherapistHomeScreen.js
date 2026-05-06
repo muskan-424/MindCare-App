@@ -282,6 +282,7 @@ const TherapistHomeScreen = (props) => {
             {loading ? (
                 <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
             ) : myPatients.length === 0 ? (
+                <>
                 {/* PREMIUM ZERO-STATE UI */}
                 <View style={styles.premiumEmptyCard}>
                     <LottieView 
@@ -295,6 +296,7 @@ const TherapistHomeScreen = (props) => {
                         Enjoy the downtime, doctor. When new consultations are assigned to you, they will appear here.
                     </Text>
                 </View>
+                </>
             ) : (
                 myPatients.map(apt => (
                     <View key={apt._id} style={styles.patientCard}>
