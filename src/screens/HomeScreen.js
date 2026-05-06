@@ -39,7 +39,7 @@ const FALLBACK_SELF_HELP = [
 ];
 
 const FALLBACK_CONTENT_CATEGORIES = [
-  { id: 'recommended', label: 'Recommended' },
+  { id: 'recommended', label: '⭐ Recommended' },
   { id: 'meditation', label: 'Meditation' },
   { id: 'motivation', label: 'Motivation' },
   { id: 'sleep', label: 'Sleep Stories' },
@@ -140,7 +140,7 @@ const HomeScreen = props => {
         if (res.data?.contentCategories?.length) {
             const serverCats = res.data.contentCategories;
             const hasRec = serverCats.find(c => c.id === 'recommended');
-            setContentCategories(hasRec ? serverCats : [{ id: 'recommended', label: 'Recommended' }, ...serverCats]);
+            setContentCategories(hasRec ? serverCats : [{ id: 'recommended', label: '⭐ Recommended' }, ...serverCats]);
         }
         const alertRes = await api.get('/api/issues/burnout-alert').catch(() => ({}));
         if (alertRes.data?.active) setBurnoutAlert(alertRes.data.alert);
@@ -250,11 +250,11 @@ const HomeScreen = props => {
           </View>
         )}
         <View style={[styles.header, { backgroundColor: isDarkMode ? '#1C2030' : colors.primary }]}>
-          <View style={{ flex: 1 }}>
+          <View>
             <Text style={styles.helloText}>Hello !</Text>
-            <Text style={styles.nameText} numberOfLines={1} ellipsizeMode="tail">{props.auth.profile.name}</Text>
+            <Text style={styles.nameText}>{props.auth.profile.name}</Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 15 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity
               onPress={() => setIsDarkMode(!isDarkMode)}
               style={{ marginRight: 8, padding: 8 }}
@@ -279,8 +279,7 @@ const HomeScreen = props => {
               }}>
               <View style={[styles.avatar, { marginTop: 0, marginLeft: 0 }]}>
                 <Image
-                  source={props.auth.profile.profilePic ? { uri: props.auth.profile.profilePic } : getAvatarForGender(props.auth.profile.gender)}
-
+                  source={getAvatarForGender(props.auth.profile.gender)}
                   style={{ width: 60, height: 60, borderRadius: 30 }}
                 />
               </View>
@@ -519,10 +518,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: colors.primary,
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 40 : 25,
-    paddingBottom: 20,
-    borderBottomLeftRadius: 120,
-    elevation: 10,
+    paddingRight: 35,
+    paddingTop: Platform.OS === 'ios' ? 60 : 45,
+    paddingBottom: 30,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   centeredView: {
     flex: 1,
@@ -554,30 +559,28 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   helloText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    flexDirection: 'column',
+    fontSize: 18,
+    fontWeight: '600',
     color: colors.white,
-    marginTop: 30,
+    opacity: 0.9,
   },
   nameText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    flexDirection: 'column',
+    fontSize: 26,
+    fontWeight: '800',
     color: colors.white,
+    marginTop: 2,
   },
   avatar: {
-    alignSelf: 'flex-end',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'white',
     elevation: 10,
-    width: 70,
-    height: 70,
-    borderRadius: 90,
-    marginRight: 10,
-    marginTop: 20,
-    marginLeft: 20,
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    marginRight: 15,
+    marginTop: 0,
+    marginLeft: 0,
   },
   chatbotContainer: {
     margin: 10,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, createContext, useContext } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList,
   ScrollView, ActivityIndicator, TextInput, Alert, Modal, Linking, Dimensions, StatusBar
@@ -14,8 +14,8 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 const H = { headers: { 'x-admin-token': ADMIN_TOKEN } };
 
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-const D = {
+// ─── Design Themes ────────────────────────────────────────────────────────────
+const DARK_THEME = {
   bg: '#0F1117',
   surface: '#1A1D27',
   surfaceElevated: '#22263A',
@@ -36,18 +36,42 @@ const D = {
   tabRadius: 10,
 };
 
+const LIGHT_THEME = {
+  bg: '#F4F6F9',
+  surface: '#FFFFFF',
+  surfaceElevated: '#F1F3F5',
+  surfaceBorder: '#E5E9F0',
+  primary: '#6C9B4A',
+  primaryLight: '#8CC063',
+  accent: '#4C78C4',
+  accentLight: '#6B9BE2',
+  danger: '#E05A5A',
+  dangerDeep: '#A33030',
+  warning: '#E8A249',
+  success: '#5BAD7C',
+  textPrimary: '#111111',
+  textSecondary: '#555555',
+  textMuted: '#777777',
+  borderColor: '#D8DEE9',
+  cardRadius: 16,
+  tabRadius: 10,
+};
+
+const ThemeContext = createContext({ D: DARK_THEME, ss: {} });
+const D = DARK_THEME;
+
 const RISK_COLORS = {
-  LOW: D.success,
-  MEDIUM: D.warning,
-  HIGH: D.danger,
-  CRITICAL: D.dangerDeep,
+  LOW: DARK_THEME.success,
+  MEDIUM: DARK_THEME.warning,
+  HIGH: DARK_THEME.danger,
+  CRITICAL: DARK_THEME.dangerDeep,
 };
 
 const ACTION_COLORS = {
-  none: D.textMuted,
-  contacted: D.accent,
-  referred: D.warning,
-  resolved: D.success,
+  none: DARK_THEME.textMuted,
+  contacted: DARK_THEME.accent,
+  referred: DARK_THEME.warning,
+  resolved: DARK_THEME.success,
 };
 
 const PREDEFINED_RESOURCES = [
@@ -58,40 +82,53 @@ const PREDEFINED_RESOURCES = [
 ];
 
 // ─── Shared Micro-components ──────────────────────────────────────────────────
-const SectionHeader = ({ icon, title, count }) => (
-  <View style={ss.sectionHeader}>
-    <MaterialIcons name={icon} size={18} color={D.primary} />
-    <Text style={ss.sectionHeaderText}>{title}</Text>
-    {count !== undefined && (
-      <View style={ss.sectionBadge}>
-        <Text style={ss.sectionBadgeText}>{count}</Text>
-      </View>
-    )}
-  </View>
-);
+const SectionHeader = ({ icon, title, count }) => {
+  const { D, ss } = useContext(ThemeContext);
+  return (
+    <View style={ss.sectionHeader}>
+      <MaterialIcons name={icon} size={18} color={D.primary} />
+      <Text style={ss.sectionHeaderText}>{title}</Text>
+      {count !== undefined && (
+        <View style={ss.sectionBadge}>
+          <Text style={ss.sectionBadgeText}>{count}</Text>
+        </View>
+      )}
+    </View>
+  );
+};
 
-const EmptyState = ({ icon, message }) => (
-  <View style={ss.emptyState}>
-    <MaterialIcons name={icon} size={36} color={D.textMuted} />
-    <Text style={ss.emptyStateText}>{message}</Text>
-  </View>
-);
+const EmptyState = ({ icon, message }) => {
+  const { D, ss } = useContext(ThemeContext);
+  return (
+    <View style={ss.emptyState}>
+      <MaterialIcons name={icon} size={36} color={D.textMuted} />
+      <Text style={ss.emptyStateText}>{message}</Text>
+    </View>
+  );
+};
 
-const PillBadge = ({ label, color, textColor }) => (
-  <View style={[ss.pillBadge, { backgroundColor: color + '22', borderColor: color + '55' }]}>
-    <Text style={[ss.pillBadgeText, { color: textColor || color }]}>{label}</Text>
-  </View>
-);
+const PillBadge = ({ label, color, textColor }) => {
+  const { ss } = useContext(ThemeContext);
+  return (
+    <View style={[ss.pillBadge, { backgroundColor: color + '22', borderColor: color + '55' }]}>
+      <Text style={[ss.pillBadgeText, { color: textColor || color }]}>{label}</Text>
+    </View>
+  );
+};
 
-const ActionButton = ({ label, icon, color, onPress, style }) => (
-  <TouchableOpacity style={[ss.actionButton, { backgroundColor: color }, style]} onPress={onPress} activeOpacity={0.8}>
-    {icon && <MaterialIcons name={icon} size={15} color="#fff" style={{ marginRight: 6 }} />}
-    <Text style={ss.actionButtonText}>{label}</Text>
-  </TouchableOpacity>
-);
+const ActionButton = ({ label, icon, color, onPress, style }) => {
+  const { ss } = useContext(ThemeContext);
+  return (
+    <TouchableOpacity style={[ss.actionButton, { backgroundColor: color }, style]} onPress={onPress} activeOpacity={0.8}>
+      {icon && <MaterialIcons name={icon} size={15} color="#fff" style={{ marginRight: 6 }} />}
+      <Text style={ss.actionButtonText}>{label}</Text>
+    </TouchableOpacity>
+  );
+};
 
 // ─── Pending Tab ──────────────────────────────────────────────────────────────
 const PendingTab = () => {
+  const { D, ss } = useContext(ThemeContext);
   const [data, setData] = useState({ appointmentRequests: [], riskReports: [], pendingContacts: [], wellnessPlans: [], deletionRequests: [], totalPending: 0, escalatedCount: 0 });
   const [loading, setLoading] = useState(true);
   const [therapists, setTherapists] = useState([]);
@@ -1141,6 +1178,7 @@ const PendingTab = () => {
 
 // ─── Groups Tab ───────────────────────────────────────────────────────────────
 const GroupsTab = () => {
+  const { D, ss } = useContext(ThemeContext);
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [createModal, setCreateModal] = useState(false);
@@ -1333,6 +1371,7 @@ const GroupsTab = () => {
 
 // ─── Therapists Tab ──────────────────────────────────────────────────────────
 const TherapistsTab = () => {
+  const { D, ss } = useContext(ThemeContext);
   const [therapists, setTherapists] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1698,6 +1737,7 @@ const TherapistsTab = () => {
 
 // ─── Resource CMS Tab ─────────────────────────────────────────────────────────
 const ResourcesTab = () => {
+  const { D, ss } = useContext(ThemeContext);
   const [resources, setResources] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1955,6 +1995,7 @@ const ResourcesTab = () => {
 
 // ─── Audit Trail Tab ──────────────────────────────────────────────────────────
 const AuditTab = () => {
+  const { D, ss } = useContext(ThemeContext);
   const [logs, setLogs] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
   const [total, setTotal] = useState(0);
@@ -2113,6 +2154,7 @@ const AuditTab = () => {
 
 // ─── Analytics Tab ────────────────────────────────────────────────────────────
 const AnalyticsTab = () => {
+  const { D, ss } = useContext(ThemeContext);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({ riskTrend: [], moodHeatmap: [], kpis: {} });
   const [exporting, setExporting] = useState(false);
@@ -2272,6 +2314,7 @@ const AnalyticsTab = () => {
 
 // ─── Notes Tab ────────────────────────────────────────────────────────────────
 const NotesTab = () => {
+  const { D, ss } = useContext(ThemeContext);
   const navigation = useNavigation();
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
@@ -2348,6 +2391,7 @@ const NotesTab = () => {
 
 // ─── Users Tab ────────────────────────────────────────────────────────────────
 const UsersTab = () => {
+  const { D, ss } = useContext(ThemeContext);
   const [users, setUsers] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
   const [selected, setSelected] = useState(null);
@@ -2472,10 +2516,15 @@ const UsersTab = () => {
   return (
     <View style={{ flex: 1, backgroundColor: D.bg }}>
       {/* ── Overview Stats Section ── */}
-      <View style={{ paddingHorizontal: 16, paddingTop: 16, backgroundColor: D.bg }}>
+      <View style={{ padding: 20, backgroundColor: D.surface, borderBottomWidth: 1, borderBottomColor: D.borderColor }}>
         <View style={ss.overviewHeader}>
           <Text style={ss.overviewTitle}>Overview</Text>
+          <View style={ss.overviewBadge}>
+            <View style={[ss.overviewBadgeDot, { backgroundColor: D.success }]} />
+            <Text style={[ss.overviewBadgeText, { color: D.success }]}>Live System</Text>
+          </View>
         </View>
+        
         <View style={ss.statsGrid}>
           {STATS.map((s, i) => (
             <TouchableOpacity 
@@ -2485,6 +2534,7 @@ const UsersTab = () => {
               style={[
                 ss.statTile, 
                 { borderTopColor: s.color },
+<<<<<<< HEAD
                 activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
               ]}
             >
@@ -2493,15 +2543,29 @@ const UsersTab = () => {
               </View>
               <Text style={ss.statValue}>{s.value}</Text>
               <Text style={ss.statLabel}>{s.label}</Text>
+=======
+                activeFilter === s.label && { backgroundColor: s.color + '1A', transform: [{ scale: 1.02 }] }
+              ]}
+            >
+              <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
+                <MaterialIcons name={s.icon} size={20} color={s.color} />
+              </View>
+              <View>
+                <Text style={ss.statValue}>{s.value}</Text>
+                <Text style={ss.statLabel}>{s.label}</Text>
+              </View>
+>>>>>>> 8c53e04 (UI/UX Stabilization: Fixed Admin Theme, Modernized Therapist Dashboard, and Resolved Layout Clutter)
             </TouchableOpacity>
           ))}
         </View>
-        <View style={[ss.workQueueHeader, { marginTop: 8, marginBottom: 16 }]}>
+      </View>
+
+      <View style={{ backgroundColor: D.bg, flex: 1, padding: 20 }}>
+        <View style={[ss.workQueueHeader, { marginTop: 0, marginBottom: 20 }]}>
           <View style={ss.workQueueLine} />
           <Text style={ss.workQueueLabel}>Filtered Results</Text>
           <View style={ss.workQueueLine} />
         </View>
-      </View>
 
       <View style={ss.usersLayout}>
         {/* User List Panel (Full Width if No User Selected) */}
@@ -2736,11 +2800,13 @@ const UsersTab = () => {
         </View>
       </Modal>
     </View>
+  </View>
   );
 };
 
 // ─── Notifications Hub Tab ────────────────────────────────────────────────────
 const NotificationsTab = () => {
+  const { D, ss } = useContext(ThemeContext);
   const [notifications, setNotifications] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
   const [total, setTotal] = useState(0);
@@ -2960,26 +3026,8 @@ const AdminDashboardScreen = () => {
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState('pending');
   const [isDarkMode, setIsDarkMode] = useState(true);
-
-  if (!isDarkMode) {
-    D.bg = '#F4F6F9';
-    D.surface = '#FFFFFF';
-    D.surfaceElevated = '#F1F3F5';
-    D.surfaceBorder = '#E5E9F0';
-    D.textPrimary = '#111111';
-    D.textSecondary = '#555555';
-    D.textMuted = '#777777';
-    D.borderColor = '#D8DEE9';
-  } else {
-    D.bg = '#0F1117';
-    D.surface = '#1A1D27';
-    D.surfaceElevated = '#22263A';
-    D.surfaceBorder = '#2A2E45';
-    D.textPrimary = '#EAEDF4';
-    D.textSecondary = '#8891AB';
-    D.textMuted = '#545B76';
-    D.borderColor = '#2A2E45';
-  }
+  const D = isDarkMode ? DARK_THEME : LIGHT_THEME;
+  const ss = useMemo(() => getStyles(D), [isDarkMode]);
 
   // ── Profile Edit state ──
   const [profileModal, setProfileModal] = useState(false);
@@ -3051,8 +3099,14 @@ const AdminDashboardScreen = () => {
   ];
 
   return (
+<<<<<<< HEAD
     <View style={ss.container}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={D.surface} />
+=======
+    <ThemeContext.Provider value={{ D, ss }}>
+      <View style={ss.container}>
+      <StatusBar barStyle="light-content" backgroundColor={D.surface} />
+>>>>>>> 8c53e04 (UI/UX Stabilization: Fixed Admin Theme, Modernized Therapist Dashboard, and Resolved Layout Clutter)
 
       {/* Header */}
       <View style={ss.header}>
@@ -3269,14 +3323,19 @@ const AdminDashboardScreen = () => {
           )}
         </View>
       )}
-    </View>
+      </View>
+    </ThemeContext.Provider>
   );
 };
 
 export default AdminDashboardScreen;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
+<<<<<<< HEAD
 const getSs = () => ({
+=======
+const getStyles = (D) => StyleSheet.create({
+>>>>>>> 8c53e04 (UI/UX Stabilization: Fixed Admin Theme, Modernized Therapist Dashboard, and Resolved Layout Clutter)
   container: { flex: 1, backgroundColor: D.bg },
 
   // Header
@@ -3323,11 +3382,11 @@ const getSs = () => ({
   overviewBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: D.success + '22', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: D.success + '55' },
   overviewBadgeDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
   overviewBadgeText: { fontSize: 11, fontWeight: '700' },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
-  statTile: { width: '48%', backgroundColor: D.surface, borderRadius: D.cardRadius, padding: 14, borderWidth: 1, borderColor: D.borderColor, borderTopWidth: 3 },
-  statIconWrap: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
-  statValue: { fontSize: 22, fontWeight: '800', color: D.textPrimary, marginBottom: 2 },
-  statLabel: { fontSize: 12, color: D.textMuted, fontWeight: '600' },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, marginBottom: 20 },
+  statTile: { width: '48%', backgroundColor: D.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: D.borderColor, borderTopWidth: 4, minHeight: 110, justifyContent: 'space-between' },
+  statIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  statValue: { fontSize: 24, fontWeight: '800', color: D.textPrimary, marginTop: 8 },
+  statLabel: { fontSize: 11, color: D.textMuted, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 },
 
   // Work Queue
   workQueueHeader: { flexDirection: 'row', alignItems: 'center', marginVertical: 16 },

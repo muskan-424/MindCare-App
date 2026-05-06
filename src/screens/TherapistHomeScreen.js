@@ -8,7 +8,9 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
+import TouchableScale from 'react-native-touchable-scale';
 import { Searchbar } from 'react-native-paper';
 import { connect } from 'react-redux';
 import { logout } from '../redux/actions/auth';
@@ -128,16 +130,21 @@ const TherapistHomeScreen = (props) => {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
                     <Text style={styles.heroGreeting}>{greeting}, Dr. {(props.auth.user?.name || '').split(' ')[0]}</Text>
-                    <Text style={styles.heroSub}>
-                      {props.auth.user?.specialisation ? `${props.auth.user.specialisation} • ` : ''}Your clinician workspace is fully optimized.
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                      <View style={[styles.livePulse, { backgroundColor: '#4ADE80' }]} />
+                      <Text style={styles.heroSub}>
+                        {props.auth.user?.specialisation ? `${props.auth.user.specialisation} • ` : ''}Active Session
+                      </Text>
+                    </View>
                 </View>
-                <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={[styles.logoutBtn, { marginRight: 8 }]}>
-                    <MaterialCommunityIcons name={isDarkMode ? 'weather-sunny' : 'weather-night'} size={20} color={colors.primary} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => props.logout()} style={styles.logoutBtn}>
-                    <MaterialCommunityIcons name="logout" size={20} color={colors.primary} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <TouchableScale onPress={() => setIsDarkMode(!isDarkMode)} style={styles.headerActionBtn} tension={50} friction={7}>
+                      <MaterialCommunityIcons name={isDarkMode ? 'weather-sunny' : 'weather-night'} size={18} color={colors.primary} />
+                  </TouchableScale>
+                  <TouchableScale onPress={() => props.logout()} style={styles.headerActionBtn} tension={50} friction={7}>
+                      <MaterialCommunityIcons name="logout" size={18} color={colors.primary} />
+                  </TouchableScale>
+                </View>
             </View>
 
 
@@ -150,8 +157,8 @@ const TherapistHomeScreen = (props) => {
                 </View>
                 <View style={styles.metricCard}>
                     <MaterialCommunityIcons name="clipboard-text-outline" size={24} color={colors.white} />
-                    <Text style={styles.metricValue}>{myPatients.length * 2}</Text>
-                    <Text style={styles.metricLabel}>Completed Notes</Text>
+                    <Text style={styles.metricValue}>0</Text>
+                    <Text style={styles.metricLabel}>Pending Notes</Text>
                 </View>
                 <View style={styles.metricCard}>
                     <MaterialCommunityIcons name="account-group-outline" size={24} color={colors.white} />
@@ -162,60 +169,41 @@ const TherapistHomeScreen = (props) => {
         </View>
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {/* QUICK ACTIONS ROW */}
-            <View style={styles.quickOpsContainer}>
-                <Text style={styles.sectionTitle}>Operations Hub</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickOpsScroll}>
-                    <TouchableOpacity style={styles.quickOpBtn} activeOpacity={0.8} onPress={() => props.navigation.navigate('TherapistProfile')}>
-                        <View style={[styles.qIconWrap, { backgroundColor: '#E3F2FD' }]}>
-                            <MaterialCommunityIcons name="account-details" size={24} color="#1E88E5" />
+            {/* QUICK ACTIONS GRID */}
+            <View style={styles.opsContainer}>
+                <Text style={styles.sectionTitle}>Operations</Text>
+                <View style={styles.opsGrid}>
+                    <TouchableScale style={[styles.opCard, { backgroundColor: '#EBF5FF' }]} activeScale={0.96}>
+                        <View style={[styles.opIconWrap, { backgroundColor: '#1E88E5' }]}>
+                            <MaterialCommunityIcons name="calendar-edit" size={22} color="#fff" />
                         </View>
-                        <Text style={styles.qText}>My Profile</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.quickOpBtn} activeOpacity={0.8}>
-                        <View style={[styles.qIconWrap, { backgroundColor: '#F3E5F5' }]}>
-                            <MaterialCommunityIcons name="calendar-edit" size={24} color="#8E24AA" />
+                        <Text style={styles.opTitle}>Availability</Text>
+                        <Text style={styles.opSub}>Manage slots</Text>
+                    </TouchableScale>
+                    
+                    <TouchableScale style={[styles.opCard, { backgroundColor: '#F9F0FF' }]} activeScale={0.96} onPress={() => props.navigation.navigate('TherapistProfile')}>
+                        <View style={[styles.opIconWrap, { backgroundColor: '#8E24AA' }]}>
+                            <MaterialCommunityIcons name="account-details" size={22} color="#fff" />
                         </View>
-                        <Text style={styles.qText}>Availability</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.quickOpBtn} activeOpacity={0.8}>
-                        <View style={[styles.qIconWrap, { backgroundColor: '#E8F5E9' }]}>
-                            <MaterialCommunityIcons name="cash-multiple" size={24} color="#43A047" />
+                        <Text style={styles.opTitle}>My Profile</Text>
+                        <Text style={styles.opSub}>Edit bio</Text>
+                    </TouchableScale>
+                    
+                    <TouchableScale style={[styles.opCard, { backgroundColor: '#EDFFF1' }]} activeScale={0.96}>
+                        <View style={[styles.opIconWrap, { backgroundColor: '#43A047' }]}>
+                            <MaterialCommunityIcons name="cash-multiple" size={22} color="#fff" />
                         </View>
-                        <Text style={styles.qText}>Earnings</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.quickOpBtn} activeOpacity={0.8}>
-                        <View style={[styles.qIconWrap, { backgroundColor: '#FFF3E0' }]}>
-                            <MaterialCommunityIcons name="shield-check" size={24} color="#FB8C00" />
+                        <Text style={styles.opTitle}>Earnings</Text>
+                        <Text style={styles.opSub}>View payouts</Text>
+                    </TouchableScale>
+                    
+                    <TouchableScale style={[styles.opCard, { backgroundColor: '#FFF7ED' }]} activeScale={0.96}>
+                        <View style={[styles.opIconWrap, { backgroundColor: '#FB8C00' }]}>
+                            <MaterialCommunityIcons name="school" size={22} color="#fff" />
                         </View>
-                        <Text style={styles.qText}>Security</Text>
-                    </TouchableOpacity>
-                </ScrollView>
-            </View>
-
-            {/* DYNAMIC WELNESS INSIGHTS WIDGET */}
-            <View style={styles.wellnessInsightsCard}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                    <MaterialCommunityIcons name="chart-bell-curve-cumulative" size={24} color="#E0A96D" />
-                    <Text style={styles.insightsTitle}>Practice Vitality & Wellness Index</Text>
-                </View>
-                <View style={styles.insightsGrid}>
-                    <View style={styles.insightStat}>
-                        <Text style={styles.insightStatVal}>92%</Text>
-                        <Text style={styles.insightStatLbl}>Patient Attendance</Text>
-                    </View>
-                    <View style={styles.insightStat}>
-                        <Text style={styles.insightStatVal}>84%</Text>
-                        <Text style={styles.insightStatLbl}>Patient Mood Score</Text>
-                    </View>
-                    <View style={styles.insightStat}>
-                        <Text style={styles.insightStatVal}>4.9/5</Text>
-                        <Text style={styles.insightStatLbl}>Session Rating</Text>
-                    </View>
-                </View>
-                <View style={styles.insightsFooter}>
-                    <MaterialCommunityIcons name="check-decagram" size={16} color={colors.accent} />
-                    <Text style={styles.insightsFooterText}>Your clinical throughput is performing above benchmark.</Text>
+                        <Text style={styles.opTitle}>Training</Text>
+                        <Text style={styles.opSub}>New courses</Text>
+                    </TouchableScale>
                 </View>
             </View>
 
@@ -251,8 +239,8 @@ const TherapistHomeScreen = (props) => {
             )}
 
             <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 20}}>
-                <Text style={[styles.sectionTitle, {marginHorizontal: 0, marginTop: 10}]}>Active Schedule</Text>
-                <TouchableOpacity onPress={fetchMyPatients}><Text style={{color: colors.primary, fontSize: 13, fontWeight: 'bold', marginTop: 10}}>Refresh</Text></TouchableOpacity>
+                <Text style={[styles.sectionTitle, {marginHorizontal: 0, marginTop: 10}]}>My Schedule</Text>
+                <TouchableOpacity><Text style={{color: colors.primary, fontSize: 13, fontWeight: 'bold', marginTop: 10}}>View All</Text></TouchableOpacity>
             </View>
 
             {loading ? (
@@ -273,14 +261,14 @@ const TherapistHomeScreen = (props) => {
                     <View key={apt._id} style={styles.patientCard}>
                         <View style={styles.patientInfo}>
                             <View style={styles.avatar}>
-                                <Text style={styles.avatarText}>{apt.user?.name ? apt.user.name[0] : 'P'}</Text>
+                                <Text style={styles.avatarText}>{apt.user?.name[0]}</Text>
                             </View>
                             <View style={{ marginLeft: 15, flex: 1 }}>
-                                <Text style={styles.patientName}>{apt.user?.name || 'Anonymous User'}</Text>
+                                <Text style={styles.patientName}>{apt.user?.name}</Text>
                                 <Text style={styles.patientSub}>{apt.requestedSpeciality || 'General Session'}</Text>
                             </View>
-                            <View style={[styles.statusBadge, { backgroundColor: apt.status === 'confirmed' ? '#E8F5E9' : '#FFF3E0' }]}>
-                                <Text style={[styles.statusText, { color: apt.status === 'confirmed' ? '#2E7D32' : '#E65100' }]}>{apt.status}</Text>
+                            <View style={styles.statusBadge}>
+                                <Text style={styles.statusText}>{apt.status}</Text>
                             </View>
                         </View>
                         <View style={styles.patientActions}>
@@ -436,19 +424,21 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 8,
   },
-  heroGreeting: { fontSize: 26, fontWeight: '800', color: colors.white },
-  heroSub: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
-  logoutBtn: { backgroundColor: colors.white, padding: 10, borderRadius: 14 },
-  metricsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 32 },
-  metricCard: { flex: 1, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingVertical: 14, marginHorizontal: 4 },
-  metricValue: { color: colors.white, fontSize: 22, fontWeight: 'bold', marginTop: 4 },
-  metricLabel: { color: 'rgba(255,255,255,0.85)', fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2, textAlign: 'center' },
+  heroGreeting: { fontSize: 26, fontWeight: '800', color: colors.white, letterSpacing: -0.5 },
+  heroSub: { fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: '600' },
+  livePulse: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
+  headerActionBtn: { backgroundColor: colors.white, width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', elevation: 4 },
+  metricsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 },
+  metricCard: { flex: 1, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 24, paddingVertical: 18, marginHorizontal: 5, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+  metricValue: { color: colors.white, fontSize: 24, fontWeight: '900', marginTop: 6 },
+  metricLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 2, textAlign: 'center' },
   
-  quickOpsContainer: { marginTop: 15 },
-  quickOpsScroll: { paddingHorizontal: 20, paddingBottom: 10 },
-  quickOpBtn: { alignItems: 'center', marginRight: 20, width: 65 },
-  qIconWrap: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  qText: { fontSize: 11, fontWeight: '600', color: colors.secondary, textAlign: 'center' },
+  opsContainer: { marginTop: 10 },
+  opsGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 15, justifyContent: 'space-between' },
+  opCard: { width: '48%', borderRadius: 20, padding: 15, marginBottom: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 },
+  opIconWrap: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+  opTitle: { fontSize: 14, fontWeight: '700', color: colors.secondary },
+  opSub: { fontSize: 11, color: colors.gray, marginTop: 2 },
 
   premiumEmptyCard: {
     backgroundColor: '#fff',
@@ -480,14 +470,5 @@ const styles = StyleSheet.create({
   openReqTime: { fontSize: 12, color: '#444', fontWeight: '500' },
   claimBtn: { backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 8, gap: 8 },
   claimBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
-
-  wellnessInsightsCard: { backgroundColor: '#fff', marginHorizontal: 20, borderRadius: 20, padding: 20, marginTop: 10, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, borderWidth: 1, borderColor: '#f0f0f0' },
-  insightsTitle: { fontSize: 15, fontWeight: '700', color: colors.secondary, marginLeft: 10 },
-  insightsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
-  insightStat: { flex: 1, alignItems: 'center', backgroundColor: '#fafafa', paddingVertical: 12, borderRadius: 12, marginHorizontal: 4 },
-  insightStatVal: { fontSize: 18, fontWeight: 'bold', color: colors.primary },
-  insightStatLbl: { fontSize: 9, color: colors.gray, marginTop: 4, textAlign: 'center' },
-  insightsFooter: { flexDirection: 'row', alignItems: 'center', marginTop: 15, borderTopWidth: 1, borderTopColor: '#f5f5f5', paddingTop: 12 },
-  insightsFooterText: { fontSize: 11, color: colors.gray, marginLeft: 6 },
 });
 
