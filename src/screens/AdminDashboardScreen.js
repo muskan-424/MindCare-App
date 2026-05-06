@@ -2534,16 +2534,6 @@ const UsersTab = () => {
               style={[
                 ss.statTile, 
                 { borderTopColor: s.color },
-<<<<<<< HEAD
-                activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
-              ]}
-            >
-              <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
-                <MaterialIcons name={s.icon} size={18} color={s.color} />
-              </View>
-              <Text style={ss.statValue}>{s.value}</Text>
-              <Text style={ss.statLabel}>{s.label}</Text>
-=======
                 activeFilter === s.label && { backgroundColor: s.color + '1A', transform: [{ scale: 1.02 }] }
               ]}
             >
@@ -2554,7 +2544,6 @@ const UsersTab = () => {
                 <Text style={ss.statValue}>{s.value}</Text>
                 <Text style={ss.statLabel}>{s.label}</Text>
               </View>
->>>>>>> 8c53e04 (UI/UX Stabilization: Fixed Admin Theme, Modernized Therapist Dashboard, and Resolved Layout Clutter)
             </TouchableOpacity>
           ))}
         </View>
@@ -3099,14 +3088,9 @@ const AdminDashboardScreen = () => {
   ];
 
   return (
-<<<<<<< HEAD
-    <View style={ss.container}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={D.surface} />
-=======
     <ThemeContext.Provider value={{ D, ss }}>
       <View style={ss.container}>
-      <StatusBar barStyle="light-content" backgroundColor={D.surface} />
->>>>>>> 8c53e04 (UI/UX Stabilization: Fixed Admin Theme, Modernized Therapist Dashboard, and Resolved Layout Clutter)
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={D.surface} />
 
       {/* Header */}
       <View style={ss.header}>
@@ -3331,11 +3315,7 @@ const AdminDashboardScreen = () => {
 export default AdminDashboardScreen;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
-const getSs = () => ({
-=======
 const getStyles = (D) => StyleSheet.create({
->>>>>>> 8c53e04 (UI/UX Stabilization: Fixed Admin Theme, Modernized Therapist Dashboard, and Resolved Layout Clutter)
   container: { flex: 1, backgroundColor: D.bg },
 
   // Header

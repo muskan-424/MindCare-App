@@ -20,6 +20,11 @@ import TrackedTouchable from '../components/TrackedTouchable';
 import localData from '../constants/doctors';
 import { colors } from '../constants/theme';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import LottieView from 'lottie-react-native';
+import { LineChart } from 'react-native-chart-kit';
+import { Dimensions } from 'react-native';
+
+const screenWidth = Dimensions.get('window').width;
 
 const FALLBACK_CATEGORIES = [
   { id: '1', name: 'Psychologist', icon: 'https://cdn-icons-png.flaticon.com/512/2785/2785819.png' },
@@ -207,6 +212,37 @@ const TherapistHomeScreen = (props) => {
                 </View>
             </View>
 
+            {/* CLINICAL INSIGHTS CHART */}
+            <View style={styles.chartContainer}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, paddingHorizontal: 20 }}>
+                    <Text style={[styles.sectionTitle, { marginHorizontal: 0, marginTop: 0 }]}>Weekly Impact</Text>
+                    <View style={styles.chartLegend}>
+                        <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
+                        <Text style={styles.legendText}>Sessions</Text>
+                    </View>
+                </View>
+                <LineChart
+                    data={{
+                        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+                        datasets: [{ data: [2, 5, 3, 7, 4, 2, 1] }]
+                    }}
+                    width={screenWidth - 40}
+                    height={180}
+                    chartConfig={{
+                        backgroundColor: "#fff",
+                        backgroundGradientFrom: "#fff",
+                        backgroundGradientTo: "#fff",
+                        decimalPlaces: 0,
+                        color: (opacity = 1) => `rgba(108, 155, 74, ${opacity})`,
+                        labelColor: (opacity = 1) => `rgba(108, 155, 74, ${opacity})`,
+                        style: { borderRadius: 16 },
+                        propsForDots: { r: "4", strokeWidth: "2", stroke: colors.primary }
+                    }}
+                    bezier
+                    style={{ borderRadius: 16, marginVertical: 8, alignSelf: 'center' }}
+                />
+            </View>
+
             {openRequests.length > 0 && (
                 <>
                     <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 20}}>
@@ -246,14 +282,17 @@ const TherapistHomeScreen = (props) => {
             {loading ? (
                 <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
             ) : myPatients.length === 0 ? (
-                /* PREMIUM ZERO-STATE UI */
+                {/* PREMIUM ZERO-STATE UI */}
                 <View style={styles.premiumEmptyCard}>
-                    <View style={styles.emptyIconCircle}>
-                        <MaterialCommunityIcons name="calendar-check" size={36} color={colors.primary} />
-                    </View>
+                    <LottieView 
+                        source={{ uri: 'https://assets5.lottiefiles.com/packages/lf20_96mscz64.json' }} 
+                        autoPlay 
+                        loop 
+                        style={{ width: 180, height: 180 }}
+                    />
                     <Text style={styles.emptyCardTitle}>Your schedule is clear!</Text>
                     <Text style={styles.emptyCardText}>
-                        Enjoy the downtime, doctor. When new consultations are assigned to you by the triage team, they will automatically appear here.
+                        Enjoy the downtime, doctor. When new consultations are assigned to you, they will appear here.
                     </Text>
                 </View>
             ) : (
@@ -470,5 +509,37 @@ const styles = StyleSheet.create({
   openReqTime: { fontSize: 12, color: '#444', fontWeight: '500' },
   claimBtn: { backgroundColor: colors.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 8, gap: 8 },
   claimBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
+  chartContainer: {
+    backgroundColor: '#fff',
+    marginHorizontal: 20,
+    borderRadius: 24,
+    padding: 20,
+    marginTop: 15,
+    marginBottom: 20,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+  },
+  chartLegend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(108, 155, 74, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  legendText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
 });
 
