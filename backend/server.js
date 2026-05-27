@@ -1,10 +1,30 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const { requestLogger } = require('./middleware/requestLogger');
 
 const app = express();
+
+// Trust Vercel's reverse proxy so rate limiting identifies true client IPs
+app.set('trust proxy', 1);
+
+// ─── Security Middleware ─────────────────────────────────────────────────────
+app.use(helmet()); // Adds secure HTTP headers (XSS protection, no-sniff, etc.)
+
+// Global Rate Limiting: Max 200 requests per 15 minutes per IP
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, 
+  message: { error: 'Too many requests from this IP, please try again later.' },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+// Apply rate limiter to all /api routes
+app.use('/api', apiLimiter);
+
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
 app.use(cors());
