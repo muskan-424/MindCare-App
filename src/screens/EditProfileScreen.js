@@ -24,7 +24,9 @@ import { concerns } from '../constants/concerns';
 import { updateUser } from '../redux/actions/profile';
 import { connect } from 'react-redux';
 import { getAvatarForGender } from '../utils/avatar';
-
+import { launchImageLibrary } from 'react-native-image-picker';
+import { uploadImageToCloudinary } from '../utils/cloudinaryUpload';
+import { ActivityIndicator } from 'react-native-paper';
 const renderGenderRadio = (value, checked, setChecked) => (
   <RadioButton
     value={value}
@@ -64,6 +66,30 @@ const Profile = props => {
   const [age, setAge] = useState(props.auth.profile.age);
 
   const [profilePic, setProfilePic] = useState(props.auth.profile.profilePic || '');
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handlePickImage = async () => {
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      quality: 0.8,
+    });
+
+    if (!result.didCancel && result.assets && result.assets.length > 0) {
+      const selectedImage = result.assets[0];
+      if (selectedImage.uri) {
+        setIsUploading(true);
+        try {
+          const cloudUrl = await uploadImageToCloudinary(selectedImage.uri, 'profile_pics');
+          setProfilePic(cloudUrl);
+        } catch (error) {
+          console.error("Cloudinary upload error: ", error);
+          alert('Failed to upload image. Please try again.');
+        } finally {
+          setIsUploading(false);
+        }
+      }
+    }
+  };
 
   const submitHandler = () => {
     props.updateUser(
@@ -99,39 +125,25 @@ const Profile = props => {
           />
           <Text style={styles.profileText}>Edit Profile</Text>
           <View style={styles.dpCover}>
-            <Image
-              style={{ width: 90, height: 90, borderRadius: 45 }}
-              source={profilePic ? { uri: profilePic } : getAvatarForGender(checked)}
-
-            />
+            {isUploading ? (
+              <ActivityIndicator animating={true} color={colors.secondary} size="large" />
+            ) : (
+              <Image
+                style={{ width: 90, height: 90, borderRadius: 45 }}
+                source={profilePic ? { uri: profilePic } : getAvatarForGender(checked)}
+              />
+            )}
           </View>
-          <Entypo
+          <AntDesign
             name="camera"
             size={24}
             color={colors.secondary}
             style={styles.camera}
+            onPress={handlePickImage}
           />
         </View>
         <View>
-          <View style={styles.inputBox}>
-            <AntDesign
-              name="picture"
-              size={24}
-              color={colors.secondary}
-              style={{ position: 'relative', left: 20 }}
-            />
-            <TextInput
-              style={styles.input}
-              theme={{ colors: { primary: colors.secondary } }}
-              underlineColor={colors.secondary}
-              selectionColor={colors.secondary}
-              mode="flat"
-              dense={true}
-              label="Profile Photo URL"
-              value={profilePic}
-              onChangeText={text => setProfilePic(text)}
-            />
-          </View>
+
 
           <View style={styles.inputBox}>
             <AntDesign
