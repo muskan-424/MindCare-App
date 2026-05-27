@@ -29,4 +29,10 @@ const NotificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Fetch notifications by audience sorted by newest first
+NotificationSchema.index({ audience: 1, createdAt: -1 });
+
+// Auto-delete notifications older than 90 days to prevent storage bloat
+NotificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 90 });
+
 module.exports = mongoose.model('Notification', NotificationSchema);

@@ -30,5 +30,9 @@ const IssueReportSchema = new mongoose.Schema(
 );
 
 IssueReportSchema.index({ user: 1, createdAt: -1 });
+// SLA monitor query: find unescalated HIGH/CRITICAL reports past their deadline
+IssueReportSchema.index({ adminVerified: 1, escalated: 1, riskLevel: 1, createdAt: 1 });
+// Admin dashboard: view all unverified reports sorted by newest
+IssueReportSchema.index({ adminVerified: 1, createdAt: -1 });
 
 module.exports = mongoose.model('IssueReport', IssueReportSchema);

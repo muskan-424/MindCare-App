@@ -37,4 +37,9 @@ GoalSchema.pre('save', function (next) {
   next();
 });
 
+// Compound indexes for common query patterns
+GoalSchema.index({ userId: 1, status: 1 });        // fetch active/paused/completed goals per user
+GoalSchema.index({ userId: 1, targetDate: 1 });    // sort goals by deadline per user
+GoalSchema.index({ userId: 1, category: 1 });      // filter goals by category per user
+
 module.exports = mongoose.model('Goal', GoalSchema);
