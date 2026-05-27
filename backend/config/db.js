@@ -16,6 +16,8 @@ const connectDB = async () => {
     cachedConnection = await mongoose.connect(process.env.MONGODB_URI, {
       serverSelectionTimeoutMS: 10000, // fail fast after 10s
       socketTimeoutMS: 45000,
+      maxPoolSize: 5,  // keep low for M0 free tier connection limits
+      minPoolSize: 1,  // keep 1 connection alive for fast subsequent requests
     });
     console.log(`MongoDB Connected: ${cachedConnection.connection.host}`);
     return cachedConnection;
