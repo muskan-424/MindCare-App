@@ -12,6 +12,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
 import FaceDetection from '@react-native-ml-kit/face-detection';
 import useSpeechToText from '../hooks/useSpeechToText';
+import { extractVoiceFeatures } from '../utils/audioHelpers';
 
 const MOOD_TAGS = ['calm', 'anxious', 'sad', 'angry', 'tired', 'hopeful', 'overwhelmed', 'okay'];
 
@@ -59,13 +60,15 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
   const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
   const [recordSecs, setRecordSecs] = useState(0);
   const [meterLevel, setMeterLevel] = useState(0);
+  const meteringDbValues = useRef([]);
+
 
   // Request native hardware camera permission upon reaching the vision step
   useEffect(() => {
     if (step === 3 && !hasPermission) {
       requestPermission();
     }
-  }, [step, hasPermission]);
+  }, [step, hasPermission, requestPermission]);
 
   const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -203,6 +206,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
     setIsRecording(true);
     setRecordSecs(0);
     setMeterLevel(0);
+    meteringDbValues.current = [];
     try {
       await audioRecorderPlayer.startRecorder();
       audioRecorderPlayer.addRecordBackListener((e) => {
@@ -210,6 +214,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
         if (e.currentMetering !== undefined && e.currentMetering !== null) {
           const level = Math.min(100, Math.max(0, (e.currentMetering + 160) / 1.6));
           setMeterLevel(level);
+          meteringDbValues.current.push(e.currentMetering);
         } else {
           // Fallback animation when metering is not available
           setMeterLevel(prev => (prev + 12) % 100);
@@ -228,14 +233,18 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
       audioRecorderPlayer.removeRecordBackListener();
       setIsRecording(false);
       
-      // We simulate extraction here, but use real duration
+      const duration = recordSecs || 2;
+      const features = extractVoiceFeatures(meteringDbValues.current, duration);
+      console.log('[VoiceCapture] Extracted voice features:', features);
+
       await api.post(`/api/aiIntake/session/${sessionId}/voice-response`, {
         voiceRef: result, // Actual device file path
-        durationSec: recordSecs || 2, // Actual recorded duration
-        speechRate: 140,
-        pauseRatio: 0.15,
-        pitchVariance: 0.35,
-        snr: 20
+        durationSec: features.durationSec,
+        speechRate: features.speechRate,
+        pauseRatio: features.pauseRatio,
+        pitchVariance: features.pitchVariance,
+        snr: features.snr,
+        energyLevel: features.energyLevel
       });
       setStep(3); 
     } catch (e) {
