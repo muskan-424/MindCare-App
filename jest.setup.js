@@ -38,6 +38,7 @@ jest.mock('react-native-svg', () => {
 
 // ── Redux store (prevent unresolved modules) ───────────────────────────────────
 jest.mock('./src/redux/store', () => ({
+  __esModule: true,
   default: {
     getState: () => ({ auth: { token: 'mock-token' } }),
     dispatch: jest.fn(),
