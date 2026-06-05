@@ -85,7 +85,7 @@ router.post('/plan', async (req, res) => {
 
   try {
     const llm = new ChatGoogleGenerativeAI({
-      modelName: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash',
       temperature: 0.3,
       apiKey
     });
