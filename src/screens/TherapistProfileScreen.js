@@ -30,6 +30,7 @@ const TherapistProfileScreen = ({ route, navigation }) => {
     if (!therapist) {
       fetchMyProfile();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchMyProfile = async () => {
