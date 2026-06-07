@@ -169,7 +169,7 @@ const HomeScreen = props => {
       } catch (_) {}
     };
     checkDailyMood();
-  }, [props.auth.user?._id, props.auth.welcomeMessage]);
+  }, [props.auth.user?._id, props.auth.welcomeMessage, props.navigation]);
 
   useEffect(() => {
     fetchQuoteOfTheDay();
@@ -208,7 +208,7 @@ const HomeScreen = props => {
       clearTimeout(t);
       clearTimeout(navDelay);
     };
-  }, [welcomeMessage]);
+  }, [welcomeMessage, clearWelcomeMessage, props.navigation]);
 
   const renderItem = ({ item }) => {
     return (
@@ -529,35 +529,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
   },
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 22,
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    flexDirection: 'column',
-    width: Dimensions.get('window').width - 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
   helloText: {
     fontSize: 18,
     fontWeight: '600',
@@ -696,25 +667,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
     width: 120,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  modalClose: {
-    marginLeft: 12,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-  },
-  modalCloseText: {
-    fontSize: 22,
-    color: colors.gray,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: colors.gray,
-    marginBottom: 16,
   },
   stepLabel: {
     fontSize: 15,
