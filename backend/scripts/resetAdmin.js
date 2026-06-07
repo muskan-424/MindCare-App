@@ -4,8 +4,8 @@ const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
 const connectDB = require('../config/db');
-const User = require('../models/User');
-const Profile = require('../models/Profile');
+const User = require('../src/domains/identity/models/User');
+const Profile = require('../src/domains/identity/models/Profile');
 
 async function resetAdmin() {
   const args = process.argv.slice(2);

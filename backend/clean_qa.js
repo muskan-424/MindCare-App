@@ -1,6 +1,6 @@
 require('dotenv').config();
 const connectDB = require('./config/db');
-const Notification = require('./models/Notification');
+const Notification = require('./src/domains/admin/models/Notification');
 
 const cleanDb = async () => {
     try {

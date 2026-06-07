@@ -18,15 +18,15 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 // ── Models ──────────────────────────────────────────────────────────────────
-const User            = require('../models/User');
-const Profile         = require('../models/Profile');
-const MoodEntry       = require('../models/MoodEntry');
-const IssueReport     = require('../models/IssueReport');
-const JournalEntry    = require('../models/JournalEntry');
-const EmergencyContact = require('../models/EmergencyContact');
-const Appointment     = require('../models/Appointment');
-const WellnessPlan    = require('../models/WellnessPlan');
-const Goal            = require('../models/Goal');
+const User            = require('../src/domains/identity/models/User');
+const Profile         = require('../src/domains/identity/models/Profile');
+const MoodEntry       = require('../src/domains/wellness/models/MoodEntry');
+const IssueReport     = require('../src/domains/admin/models/IssueReport');
+const JournalEntry    = require('../src/domains/wellness/models/JournalEntry');
+const EmergencyContact = require('../src/domains/admin/models/EmergencyContact');
+const Appointment     = require('../src/domains/therapy/models/Appointment');
+const WellnessPlan    = require('../src/domains/wellness/models/WellnessPlan');
+const Goal            = require('../src/domains/wellness/models/Goal');
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const daysAgo = (n) => {
@@ -215,7 +215,7 @@ async function seed() {
 
   // ── 8. Appointment ──────────────────────────────────────────────────────────
   // Re-use or find a therapist
-  const Therapist = require('../models/Therapist');
+  const Therapist = require('../src/domains/therapy/models/Therapist');
   let therapist = await Therapist.findOne({ active: true });
   if (!therapist) {
     therapist = await Therapist.create({

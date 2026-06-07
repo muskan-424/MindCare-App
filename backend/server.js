@@ -44,30 +44,30 @@ app.get('/', (req, res) => {
 });
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
-app.use('/api/user', require('./routes/user'));
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/profile', require('./routes/profile'));
-app.use('/api/quotes', require('./routes/quotes'));
-app.use('/api/chat', require('./routes/chat'));
-app.use('/api/fitness', require('./routes/fitness'));
-app.use('/api/content', require('./routes/content'));
-app.use('/api/blogs', require('./routes/blogs'));
-app.use('/api/home', require('./routes/home'));
-app.use('/api/journals', require('./routes/journals'));
-app.use('/api/therapists', require('./routes/therapists'));
-app.use('/api/issues', require('./routes/issues'));
-app.use('/api/mood', require('./routes/mood'));
-app.use('/api/admin', require('./routes/admin'));
-app.use('/api/appointments', require('./routes/appointments'));
-app.use('/api/emergency-contact', require('./routes/emergencyContact'));
-app.use('/api/wellness', require('./routes/wellness'));
-app.use('/api/resources', require('./routes/resources'));
-app.use('/api/groups', require('./routes/groups'));
-app.use('/api/goals', require('./routes/goals'));
-app.use('/api/peers', require('./routes/peers'));
-app.use('/api/institutions', require('./routes/institutions'));
-app.use('/api/aiIntake', require('./routes/aiIntake'));
-app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/user', require('./src/domains/identity/routes/user'));
+app.use('/api/auth', require('./src/domains/identity/routes/auth'));
+app.use('/api/profile', require('./src/domains/identity/routes/profile'));
+app.use('/api/quotes', require('./src/domains/content/routes/quotes'));
+app.use('/api/chat', require('./src/domains/community/routes/chat'));
+app.use('/api/fitness', require('./src/domains/wellness/routes/fitness'));
+app.use('/api/content', require('./src/domains/content/routes/content'));
+app.use('/api/blogs', require('./src/domains/community/routes/blogs'));
+app.use('/api/home', require('./src/domains/content/routes/home'));
+app.use('/api/journals', require('./src/domains/wellness/routes/journals'));
+app.use('/api/therapists', require('./src/domains/therapy/routes/therapists'));
+app.use('/api/issues', require('./src/domains/admin/routes/issues'));
+app.use('/api/mood', require('./src/domains/wellness/routes/mood'));
+app.use('/api/admin', require('./src/domains/admin/routes/admin'));
+app.use('/api/appointments', require('./src/domains/therapy/routes/appointments'));
+app.use('/api/emergency-contact', require('./src/domains/admin/routes/emergencyContact'));
+app.use('/api/wellness', require('./src/domains/wellness/routes/wellness'));
+app.use('/api/resources', require('./src/domains/content/routes/resources'));
+app.use('/api/groups', require('./src/domains/community/routes/groups'));
+app.use('/api/goals', require('./src/domains/wellness/routes/goals'));
+app.use('/api/peers', require('./src/domains/community/routes/peers'));
+app.use('/api/institutions', require('./src/domains/identity/routes/institutions'));
+app.use('/api/aiIntake', require('./src/domains/assessment/routes/aiIntake'));
+app.use('/api/analytics', require('./src/domains/admin/routes/analytics'));
 
 // ─── Local Dev Server ─────────────────────────────────────────────────────────
 // When running locally (node server.js / npm run dev), start the HTTP server
@@ -81,7 +81,7 @@ if (require.main === module) {
     console.log('===================================\n');
 
     // SLA monitor only runs in traditional server mode (not serverless)
-    const { startSLAMonitor } = require('./services/slaMonitor');
+    const { startSLAMonitor } = require('./src/domains/admin/services/slaMonitor');
     startSLAMonitor();
   });
 }

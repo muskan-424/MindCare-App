@@ -2,11 +2,11 @@ require('dotenv').config();
 const m = require('mongoose');
 async function run() {
   await m.connect(process.env.MONGODB_URI);
-  const Appointment = require('./models/Appointment');
-  const IssueReport = require('./models/IssueReport');
-  const EC = require('./models/EmergencyContact');
-  const WP = require('./models/WellnessPlan');
-  const DR = require('./models/DeletionRequest');
+  const Appointment = require('./src/domains/therapy/models/Appointment');
+  const IssueReport = require('./src/domains/admin/models/IssueReport');
+  const EC = require('./src/domains/admin/models/EmergencyContact');
+  const WP = require('./src/domains/wellness/models/WellnessPlan');
+  const DR = require('./src/domains/identity/models/DeletionRequest');
 
   console.log({
     appts: await Appointment.find({ status: 'awaiting_admin' }).lean(),

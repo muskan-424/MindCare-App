@@ -4,8 +4,8 @@
  */
 require('dotenv').config();
 const mongoose = require('mongoose');
-const User = require('../models/User');
-const Profile = require('../models/Profile');
+const User = require('../src/domains/identity/models/User');
+const Profile = require('../src/domains/identity/models/Profile');
 
 async function listUsers() {
   await mongoose.connect(process.env.MONGODB_URI);

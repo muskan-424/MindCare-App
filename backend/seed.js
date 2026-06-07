@@ -1,6 +1,6 @@
 require('dotenv').config();
 const connectDB = require('./config/db');
-const Quote = require('./models/Quote');
+const Quote = require('./src/domains/content/models/Quote');
 
 const quotes = [
   { quote: 'Be yourself no matter what they say!', author: 'Sting' },
