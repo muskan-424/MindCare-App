@@ -1,38 +1,54 @@
 const express = require('express');
 const router = express.Router();
+const { body, validationResult } = require('express-validator');
 const Appointment = require('../models/Appointment');
 const { auth } = require('../../../../middleware/auth');
+const therapistOnly = require('../../../../middleware/therapistOnly');
 
 // POST /api/appointments — submit a consultation REQUEST (no therapist assigned yet)
-router.post('/', auth, async (req, res) => {
-  try {
-    const { requestedSpeciality, preferredDates, preferredTime, userNote } = req.body;
+router.post(
+  '/',
+  auth,
+  [
+    body('requestedSpeciality').optional().trim().isLength({ max: 100 }),
+    body('preferredDates').optional().isArray(),
+    body('preferredTime').optional().trim().isLength({ max: 50 }),
+    body('userNote').optional().trim().isLength({ max: 1000 }).withMessage('Note cannot exceed 1000 characters'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    try {
+      const { requestedSpeciality, preferredDates, preferredTime, userNote } = req.body;
 
-    const appointment = new Appointment({
-      user: req.user.id,
-      requestedSpeciality: requestedSpeciality || '',
-      preferredDates: preferredDates || [],
-      preferredTime: preferredTime || 'any',
-      userNote: userNote?.trim() || '',
-      status: 'awaiting_admin',
-    });
-    await appointment.save();
+      const appointment = new Appointment({
+        user: req.user.id,
+        requestedSpeciality: requestedSpeciality || '',
+        preferredDates: preferredDates || [],
+        preferredTime: preferredTime || 'any',
+        userNote: userNote?.trim() || '',
+        status: 'awaiting_admin',
+      });
+      await appointment.save();
 
-    res.status(201).json({
-      id: appointment._id,
-      requestedSpeciality: appointment.requestedSpeciality,
-      preferredDates: appointment.preferredDates,
-      preferredTime: appointment.preferredTime,
-      userNote: appointment.userNote,
-      status: appointment.status,
-      createdAt: appointment.createdAt,
-      message: 'Your consultation request has been submitted. An admin will assign a therapist and confirm your slot shortly.',
-    });
-  } catch (err) {
-    console.error('Book appointment error:', err.message);
-    res.status(500).json({ error: 'Failed to submit consultation request' });
+      res.status(201).json({
+        id: appointment._id,
+        requestedSpeciality: appointment.requestedSpeciality,
+        preferredDates: appointment.preferredDates,
+        preferredTime: appointment.preferredTime,
+        userNote: appointment.userNote,
+        status: appointment.status,
+        createdAt: appointment.createdAt,
+        message: 'Your consultation request has been submitted. An admin will assign a therapist and confirm your slot shortly.',
+      });
+    } catch (err) {
+      console.error('Book appointment error:', err.message);
+      res.status(500).json({ error: 'Failed to submit consultation request' });
+    }
   }
-});
+);
 
 // GET /api/appointments — user's own appointments (all statuses)
 router.get('/', auth, async (req, res) => {
@@ -65,13 +81,8 @@ router.get('/', auth, async (req, res) => {
 });
 
 // GET /api/appointments/therapist/me — therapist/clinician sees their assigned patients
-router.get('/therapist/me', auth, async (req, res) => {
+router.get('/therapist/me', auth, therapistOnly, async (req, res) => {
   try {
-    const allowedRoles = ['therapist', 'clinician', 'admin'];
-    if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access denied: Clinician role required' });
-    }
-    
     // Step 1: Find the Therapist listing linked to this clinician User account
     const Therapist = require('../models/Therapist');
     const listing = await Therapist.findOne({ userId: req.user.id }).lean();
@@ -94,13 +105,8 @@ router.get('/therapist/me', auth, async (req, res) => {
 });
 
 // GET /api/appointments/open — therapist sees unassigned requests
-router.get('/open', auth, async (req, res) => {
+router.get('/open', auth, therapistOnly, async (req, res) => {
   try {
-    const allowedRoles = ['therapist', 'clinician', 'admin'];
-    if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access denied: Clinician role required' });
-    }
-
     const Therapist = require('../models/Therapist');
     const listing = await Therapist.findOne({ userId: req.user.id }).lean();
     if (!listing) return res.json([]);
@@ -127,13 +133,8 @@ router.get('/open', auth, async (req, res) => {
 });
 
 // POST /api/appointments/:id/claim — therapist claims an unassigned request
-router.post('/:id/claim', auth, async (req, res) => {
+router.post('/:id/claim', auth, therapistOnly, async (req, res) => {
   try {
-    const allowedRoles = ['therapist', 'clinician', 'admin'];
-    if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access denied: Clinician role required' });
-    }
-
     const Therapist = require('../models/Therapist');
     const listing = await Therapist.findOne({ userId: req.user.id }).lean();
     if (!listing) return res.status(403).json({ error: 'No therapist profile linked.' });
@@ -156,13 +157,8 @@ router.post('/:id/claim', auth, async (req, res) => {
 
 
 // PATCH /api/appointments/:id/complete — therapist marks a confirmed session as complete
-router.patch('/:id/complete', auth, async (req, res) => {
+router.patch('/:id/complete', auth, therapistOnly, async (req, res) => {
   try {
-    const allowedRoles = ['therapist', 'clinician', 'admin'];
-    if (!allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access denied: Clinician role required' });
-    }
-
     const Therapist = require('../models/Therapist');
     const listing = await Therapist.findOne({ userId: req.user.id }).lean();
     if (!listing) return res.status(403).json({ error: 'No therapist profile linked.' });

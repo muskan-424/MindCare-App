@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const { body, param, validationResult } = require('express-validator');
 const Therapist = require('../models/Therapist');
 const { auth } = require('../../../../middleware/auth');
+const therapistOnly = require('../../../../middleware/therapistOnly');
 
 // Seed data used only if the database is empty.
 const SEED_THERAPISTS = [
@@ -210,12 +212,8 @@ const JournalEntry = require('../../wellness/models/JournalEntry');
 
 // ── GET /api/therapists/notes/:userId ───────────────────────────────────────
 // Fetch all session notes for a specific patient (Therapist only)
-router.get('/notes/:userId', auth, async (req, res) => {
+router.get('/notes/:userId', auth, therapistOnly, async (req, res) => {
   try {
-    if (!['therapist', 'clinician', 'admin', 'super_admin'].includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access denied: Clinician only' });
-    }
-
     const notes = await TherapistNote.find({
       patient: req.params.userId,
       therapist: req.user.id
@@ -231,12 +229,8 @@ router.get('/notes/:userId', auth, async (req, res) => {
 
 // ── GET /api/therapists/patient/:userId/profile ─────────────────────────────
 // Fetch full clinical profile (AI assessments, reports, moods, journals)
-router.get('/patient/:userId/profile', auth, async (req, res) => {
+router.get('/patient/:userId/profile', auth, therapistOnly, async (req, res) => {
   try {
-    if (!['therapist', 'clinician', 'admin', 'super_admin'].includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access denied: Clinician only' });
-    }
-
     const userId = req.params.userId;
     const [user, profile, fusions, issues, moods, journals] = await Promise.all([
       User.findById(userId).lean(),
@@ -265,42 +259,54 @@ router.get('/patient/:userId/profile', auth, async (req, res) => {
 
 // ── POST /api/therapists/notes ──────────────────────────────────────────────
 // Save a new session note
-router.post('/notes', auth, async (req, res) => {
-  try {
-    if (!['therapist', 'clinician', 'admin', 'super_admin'].includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access denied: Clinician only' });
+router.post(
+  '/notes',
+  auth,
+  therapistOnly,
+  [
+    body('patientId', 'patientId must be a valid MongoDB ObjectId').isMongoId(),
+    body('content', 'content is required')
+      .isString().trim().notEmpty()
+      .isLength({ max: 5000 }).withMessage('Session note cannot exceed 5,000 characters'),
+    body('category')
+      .optional()
+      .isIn(['Progress', 'Clinical', 'Crisis', 'Follow-up'])
+      .withMessage('category must be one of: Progress, Clinical, Crisis, Follow-up'),
+    body('confidentialityLevel')
+      .optional()
+      .isInt({ min: 1, max: 3 })
+      .withMessage('confidentialityLevel must be 1 (Low), 2 (Medium), or 3 (High)'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
     }
+    try {
+      const { patientId, sessionDate, content, category, confidentialityLevel } = req.body;
 
-    const { patientId, sessionDate, content, category, confidentialityLevel } = req.body;
-    if (!patientId || !content) {
-      return res.status(400).json({ error: 'patientId and content are required' });
+      const note = new TherapistNote({
+        patient: patientId,
+        therapist: req.user.id,
+        sessionDate: sessionDate || new Date(),
+        content,
+        category: category || 'Progress',
+        confidentialityLevel: confidentialityLevel || 1
+      });
+
+      await note.save();
+      res.status(201).json(note);
+    } catch (err) {
+      console.error('Note creation error:', err.message);
+      res.status(500).json({ error: 'Failed to save note' });
     }
-
-    const note = new TherapistNote({
-      patient: patientId,
-      therapist: req.user.id,
-      sessionDate: sessionDate || new Date(),
-      content,
-      category: category || 'Progress',
-      confidentialityLevel: confidentialityLevel || 1
-    });
-
-    await note.save();
-    res.status(201).json(note);
-  } catch (err) {
-    console.error('Note creation error:', err.message);
-    res.status(500).json({ error: 'Failed to save note' });
   }
-});
+);
 
 // ── DELETE /api/therapists/notes/:id ────────────────────────────────────────
 // Remove a note (only by the therapist who wrote it)
-router.delete('/notes/:id', auth, async (req, res) => {
+router.delete('/notes/:id', auth, therapistOnly, async (req, res) => {
   try {
-    if (!['therapist', 'clinician', 'admin', 'super_admin'].includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-
     const note = await TherapistNote.findOneAndDelete({
       _id: req.params.id,
       therapist: req.user.id

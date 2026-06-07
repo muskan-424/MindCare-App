@@ -1,28 +1,44 @@
 const express = require('express');
 const router = express.Router();
+const { body, validationResult } = require('express-validator');
 const MoodEntry = require('../models/MoodEntry');
 const { auth } = require('../../../../middleware/auth');
 const { evaluateBurnoutRisk } = require('../../therapy/services/burnoutPredictionService');
 
 // POST /api/mood — log a mood entry
-router.post('/', auth, async (req, res) => {
-  try {
-    const { rating, note } = req.body;
-    const userId = req.user.id; // from JWT
-    if (rating == null) return res.status(400).json({ error: 'rating is required' });
-    const r = Math.max(1, Math.min(10, Number(rating)));
-    const entry = new MoodEntry({ user: userId, rating: r, note: note || '' });
-    await entry.save();
+router.post(
+  '/',
+  auth,
+  [
+    body('rating', 'rating must be an integer between 1 and 10')
+      .isInt({ min: 1, max: 10 }),
+    body('note')
+      .optional()
+      .trim()
+      .isLength({ max: 500 }).withMessage('Mood note cannot exceed 500 characters'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+    try {
+      const { rating, note } = req.body;
+      const userId = req.user.id;
+      const r = Math.max(1, Math.min(10, Number(rating)));
+      const entry = new MoodEntry({ user: userId, rating: r, note: note || '' });
+      await entry.save();
 
-    // Asynchronously trigger advanced burnout prediction logic
-    evaluateBurnoutRisk(userId).catch(e => console.error('Burnout Trigger Error:', e.message));
+      // Asynchronously trigger advanced burnout prediction logic
+      evaluateBurnoutRisk(userId).catch(e => console.error('Burnout Trigger Error:', e.message));
 
-    res.json({ id: entry._id, date: entry.date, rating: entry.rating });
-  } catch (err) {
-    console.error('Mood log error:', err.message);
-    res.status(500).json({ error: 'Failed to save mood' });
+      res.json({ id: entry._id, date: entry.date, rating: entry.rating });
+    } catch (err) {
+      console.error('Mood log error:', err.message);
+      res.status(500).json({ error: 'Failed to save mood' });
+    }
   }
-});
+);
 
 // GET /api/mood/trend?window=7|30|90 — mood trend for charts
 router.get('/trend', auth, async (req, res) => {

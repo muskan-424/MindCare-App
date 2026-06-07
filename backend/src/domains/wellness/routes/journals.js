@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { body, validationResult } = require('express-validator');
 const JournalEntry = require('../models/JournalEntry');
 const { auth } = require('../../../../middleware/auth');
 
@@ -66,44 +67,56 @@ router.get('/', auth, async (req, res) => {
 });
 
 // POST /api/journals — create a journal entry with AI sentiment analysis
-router.post('/', auth, async (req, res) => {
-  try {
-    const { content } = req.body;
-    const userId = req.user.id;
-    if (!content || typeof content !== 'string') {
-      return res.status(400).json({ error: 'content is required' });
+router.post(
+  '/',
+  auth,
+  [
+    body('content', 'content is required and must be a non-empty string')
+      .isString()
+      .trim()
+      .notEmpty()
+      .isLength({ max: 10000 }).withMessage('Journal entry cannot exceed 10,000 characters'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
     }
+    try {
+      const { content } = req.body;
+      const userId = req.user.id;
 
-    // Run AI analysis in parallel with saving
-    const [entry, aiResult] = await Promise.all([
-      new JournalEntry({ user: userId, content: content.trim() }).save(),
-      analyzeJournalSentiment(content.trim()),
-    ]);
+      // Run AI analysis in parallel with saving
+      const [entry, aiResult] = await Promise.all([
+        new JournalEntry({ user: userId, content: content.trim() }).save(),
+        analyzeJournalSentiment(content.trim()),
+      ]);
 
-    // If AI result arrived, persist it
-    if (aiResult) {
-      entry.sentimentScore = aiResult.sentimentScore;
-      entry.emotionTags = aiResult.emotionTags || [];
-      entry.riskLevel = aiResult.riskLevel || 'LOW';
-      entry.aiInsight = aiResult.aiInsight || '';
-      await entry.save();
+      // If AI result arrived, persist it
+      if (aiResult) {
+        entry.sentimentScore = aiResult.sentimentScore;
+        entry.emotionTags = aiResult.emotionTags || [];
+        entry.riskLevel = aiResult.riskLevel || 'LOW';
+        entry.aiInsight = aiResult.aiInsight || '';
+        await entry.save();
+      }
+
+      res.json({
+        id: entry._id,
+        date: new Date(entry.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+        time: new Date(entry.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+        content: entry.content,
+        sentimentScore: entry.sentimentScore,
+        emotionTags: entry.emotionTags,
+        riskLevel: entry.riskLevel,
+        aiInsight: entry.aiInsight,
+      });
+    } catch (err) {
+      console.error('Error creating journal:', err.message);
+      res.status(500).json({ error: 'Failed to save journal' });
     }
-
-    res.json({
-      id: entry._id,
-      date: new Date(entry.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-      time: new Date(entry.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-      content: entry.content,
-      sentimentScore: entry.sentimentScore,
-      emotionTags: entry.emotionTags,
-      riskLevel: entry.riskLevel,
-      aiInsight: entry.aiInsight,
-    });
-  } catch (err) {
-    console.error('Error creating journal:', err.message);
-    res.status(500).json({ error: 'Failed to save journal' });
   }
-});
+);
 
 // DELETE /api/journals/:id — delete a journal entry
 router.delete('/:id', auth, async (req, res) => {
