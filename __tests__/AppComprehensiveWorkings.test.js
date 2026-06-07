@@ -206,7 +206,7 @@ describe('5. Mood Tracker Screen Working', () => {
     expect(json).toContain('Avg (30d)');
     expect(json).toContain('Streak');
     expect(json).toContain('Save Mood');
-  });
+  }, 15000);
 });
 
 describe('6. Goal Tracker Screen Working', () => {

@@ -155,6 +155,48 @@ router.post('/:id/claim', auth, async (req, res) => {
 });
 
 
+// PATCH /api/appointments/:id/complete — therapist marks a confirmed session as complete
+router.patch('/:id/complete', auth, async (req, res) => {
+  try {
+    const allowedRoles = ['therapist', 'clinician', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Access denied: Clinician role required' });
+    }
+
+    const Therapist = require('../models/Therapist');
+    const listing = await Therapist.findOne({ userId: req.user.id }).lean();
+    if (!listing) return res.status(403).json({ error: 'No therapist profile linked.' });
+
+    const appt = await Appointment.findOne({ _id: req.params.id, therapist: listing._id });
+    if (!appt) return res.status(404).json({ error: 'Appointment not found or not assigned to you' });
+    if (appt.status !== 'confirmed') {
+      return res.status(400).json({ error: 'Only confirmed appointments can be marked as complete' });
+    }
+
+    appt.status = 'completed';
+    await appt.save();
+    res.json({ success: true, status: appt.status });
+  } catch (err) {
+    console.error('Complete appointment error:', err.message);
+    res.status(500).json({ error: 'Failed to complete appointment' });
+  }
+});
+
+// GET /api/appointments/slots/:therapistId — return 30-min time slots for a therapist
+router.get('/slots/:therapistId', async (req, res) => {
+  try {
+    const Therapist = require('../models/Therapist');
+    const therapist = await Therapist.findById(req.params.therapistId).lean();
+    if (!therapist) return res.status(404).json({ error: 'Therapist not found' });
+
+    const slots = generateSlots(therapist.timing || '');
+    res.json({ slots, timing: therapist.timing || '' });
+  } catch (err) {
+    console.error('Slots fetch error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch slots' });
+  }
+});
+
 // PATCH /api/appointments/:id/cancel — user cancels own pending request
 router.patch('/:id/cancel', auth, async (req, res) => {
   try {

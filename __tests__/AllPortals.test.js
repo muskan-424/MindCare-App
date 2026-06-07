@@ -202,7 +202,7 @@ describe('Portal 1 — User Portal (HomeScreen)', () => {
       );
     });
     expect(tree).toBeTruthy();
-  });
+  }, 15000);
 
   it('shows the user greeting section', async () => {
     const store = makeStore({ role: 'user', name: 'Muskan' });

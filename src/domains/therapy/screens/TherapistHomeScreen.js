@@ -44,6 +44,7 @@ const TherapistHomeScreen = (props) => {
   // For Therapist Role
   const [myPatients, setMyPatients] = useState([]);
   const [openRequests, setOpenRequests] = useState([]);
+  const [pendingNotesCount, setPendingNotesCount] = useState(0);
   const isTherapist = props.auth.user &&
     (props.auth.user.role === 'therapist' || props.auth.user.role === 'clinician');
 
@@ -60,9 +61,14 @@ const TherapistHomeScreen = (props) => {
   const fetchMyPatients = async () => {
     setLoading(true);
     try {
-      // Find appointments where this therapist is assigned
       const res = await api.get('/api/appointments/therapist/me');
-      setMyPatients(res.data || []);
+      const patients = res.data || [];
+      setMyPatients(patients);
+
+      // Count sessions with confirmed status that may lack a clinical note
+      // (approximate: all confirmed appointments count as "pending note" until noted)
+      const confirmedCount = patients.filter(p => p.status === 'confirmed').length;
+      setPendingNotesCount(confirmedCount);
     } catch (e) {
       console.warn('Patients fetch error:', e.message);
     }
@@ -157,12 +163,12 @@ const TherapistHomeScreen = (props) => {
             <View style={styles.metricsRow}>
                 <View style={styles.metricCard}>
                     <MaterialCommunityIcons name="calendar-clock" size={24} color={colors.white} />
-                    <Text style={styles.metricValue}>{myPatients.length}</Text>
-                    <Text style={styles.metricLabel}>Daily Sessions</Text>
+                    <Text style={styles.metricValue}>{myPatients.filter(p => p.status === 'confirmed').length}</Text>
+                    <Text style={styles.metricLabel}>Confirmed Sessions</Text>
                 </View>
                 <View style={styles.metricCard}>
                     <MaterialCommunityIcons name="clipboard-text-outline" size={24} color={colors.white} />
-                    <Text style={styles.metricValue}>0</Text>
+                    <Text style={styles.metricValue}>{pendingNotesCount}</Text>
                     <Text style={styles.metricLabel}>Pending Notes</Text>
                 </View>
                 <View style={styles.metricCard}>
@@ -178,7 +184,7 @@ const TherapistHomeScreen = (props) => {
             <View style={styles.opsContainer}>
                 <Text style={styles.sectionTitle}>Operations Hub</Text>
                 <View style={styles.opsGrid}>
-                    <TouchableScale style={[styles.opCard, { backgroundColor: '#EBF5FF' }]} activeScale={0.96}>
+                    <TouchableScale style={[styles.opCard, { backgroundColor: '#EBF5FF' }]} activeScale={0.96} onPress={() => props.navigation.navigate('TherapistProfile')}>
                         <View style={[styles.opIconWrap, { backgroundColor: '#1E88E5' }]}>
                             <MaterialCommunityIcons name="calendar-edit" size={22} color="#fff" />
                         </View>
@@ -224,7 +230,21 @@ const TherapistHomeScreen = (props) => {
                 <LineChart
                     data={{
                         labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-                        datasets: [{ data: [2, 5, 3, 7, 4, 2, 1] }]
+                        datasets: [{
+                          data: (() => {
+                            // Count confirmed sessions per weekday from live myPatients data
+                            const counts = [0, 0, 0, 0, 0, 0, 0];
+                            myPatients.forEach(apt => {
+                              if (apt.date) {
+                                const day = new Date(apt.date).getDay(); // 0=Sun,1=Mon...
+                                const idx = day === 0 ? 6 : day - 1; // remap Sun→6, Mon→0
+                                counts[idx]++;
+                              }
+                            });
+                            // Ensure at least one non-zero for the chart to render
+                            return counts.every(v => v === 0) ? [0, 0, 0, 0, 0, 0, 1] : counts;
+                          })()
+                        }]
                     }}
                     width={screenWidth - 40}
                     height={180}
@@ -317,7 +337,8 @@ const TherapistHomeScreen = (props) => {
                                 style={styles.actionBtn}
                                 onPress={() => props.navigation.navigate('TherapistPatientHistory', { 
                                     patientId: apt.user?._id, 
-                                    patientName: apt.user?.name 
+                                    patientName: apt.user?.name,
+                                    appointmentId: apt._id,
                                 })}
                             >
                                 <MaterialCommunityIcons name="history" size={18} color={colors.primary} />

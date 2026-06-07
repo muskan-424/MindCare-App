@@ -15,10 +15,17 @@ const CATEGORIES = [
     { label: 'Follow-up', icon: 'calendar-clock',  color: '#FF9800' }
 ];
 
+const CONFIDENTIALITY_LEVELS = [
+    { level: 1, label: 'Low',    icon: 'lock-open-outline',  color: '#4CAF50', desc: 'General progress note' },
+    { level: 2, label: 'Medium', icon: 'lock-outline',       color: '#FF9800', desc: 'Sensitive clinical info' },
+    { level: 3, label: 'High',   icon: 'lock',               color: '#F44336', desc: 'Crisis / restricted access' },
+];
+
 const AddSessionNoteScreen = ({ route, navigation }) => {
   const { patientId, patientName } = route.params;
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('Progress');
+  const [confidentialityLevel, setConfidentialityLevel] = useState(1);
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
@@ -29,6 +36,7 @@ const AddSessionNoteScreen = ({ route, navigation }) => {
         patientId,
         content: content.trim(),
         category,
+        confidentialityLevel,
         sessionDate: new Date()
       });
       Alert.alert('Success', 'Session note saved successfully!');
@@ -84,6 +92,29 @@ const AddSessionNoteScreen = ({ route, navigation }) => {
               </Text>
             </TouchableOpacity>
           ))}
+        </View>
+
+        <Text style={styles.lbl}>Confidentiality Level</Text>
+        <View style={styles.confRow}>
+          {CONFIDENTIALITY_LEVELS.map(c => {
+            const isActive = confidentialityLevel === c.level;
+            return (
+              <TouchableOpacity
+                key={c.level}
+                style={[
+                  styles.confBtn,
+                  isActive && { backgroundColor: c.color, borderColor: c.color }
+                ]}
+                onPress={() => setConfidentialityLevel(c.level)}
+              >
+                <MaterialCommunityIcons name={c.icon} size={20} color={isActive ? '#fff' : c.color} />
+                <View>
+                  <Text style={[styles.confLabel, isActive && { color: '#fff' }]}>{c.label}</Text>
+                  <Text style={[styles.confDesc, isActive && { color: 'rgba(255,255,255,0.8)' }]}>{c.desc}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         <Text style={styles.lbl}>Session Documentation</Text>
@@ -156,4 +187,17 @@ const styles = StyleSheet.create({
   },
   privacyMsg: { flexDirection: 'row', gap: 10, marginTop: 24, padding: 16, backgroundColor: '#EDF2F7', borderRadius: 10 },
   privacyText: { flex: 1, fontSize: 11, color: '#666', lineHeight: 16, fontStyle: 'italic' },
+  confRow: { gap: 8, marginBottom: 24 },
+  confBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 13,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#DCDFE6',
+    backgroundColor: '#fff',
+  },
+  confLabel: { fontSize: 13, fontWeight: 'bold', color: '#333' },
+  confDesc: { fontSize: 11, color: '#888', marginTop: 1 },
 });

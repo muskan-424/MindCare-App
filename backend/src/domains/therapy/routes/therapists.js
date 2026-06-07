@@ -313,5 +313,46 @@ router.delete('/notes/:id', auth, async (req, res) => {
   }
 });
 
+// ── PATCH /api/therapists/notes/:id ────────────────────────────────────────────
+// Update an existing session note (only the therapist who wrote it)
+router.patch('/notes/:id', auth, async (req, res) => {
+  try {
+    if (!['therapist', 'clinician', 'admin', 'super_admin'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const { content, category, confidentialityLevel } = req.body;
+    const VALID_CATEGORIES = ['Progress', 'Clinical', 'Crisis', 'Follow-up'];
+
+    if (content !== undefined && !content.trim()) {
+      return res.status(400).json({ error: 'Content cannot be empty' });
+    }
+    if (category !== undefined && !VALID_CATEGORIES.includes(category)) {
+      return res.status(400).json({ error: `category must be one of: ${VALID_CATEGORIES.join(', ')}` });
+    }
+    if (confidentialityLevel !== undefined && ![1, 2, 3].includes(Number(confidentialityLevel))) {
+      return res.status(400).json({ error: 'confidentialityLevel must be 1, 2, or 3' });
+    }
+
+    const note = await TherapistNote.findOneAndUpdate(
+      { _id: req.params.id, therapist: req.user.id },
+      {
+        $set: {
+          ...(content !== undefined && { content: content.trim() }),
+          ...(category !== undefined && { category }),
+          ...(confidentialityLevel !== undefined && { confidentialityLevel: Number(confidentialityLevel) }),
+        }
+      },
+      { new: true }
+    );
+
+    if (!note) return res.status(404).json({ error: 'Note not found or unauthorized' });
+    res.json(note);
+  } catch (err) {
+    console.error('Note update error:', err.message);
+    res.status(500).json({ error: 'Failed to update note' });
+  }
+});
+
 module.exports = router;
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Alert, RefreshControl, Modal, Dimensions
+  ActivityIndicator, Alert, RefreshControl, Modal, Dimensions, TextInput
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import api from '../../../utils/apiClient';
@@ -24,6 +24,11 @@ const TherapistPatientHistoryScreen = ({ route, navigation }) => {
   const [fullProfile, setFullProfile] = useState(null);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [editingNote, setEditingNote] = useState(null);  // { id, content, category }
+  const [editContent, setEditContent] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
+  const [appointmentId, setAppointmentId] = useState(route.params?.appointmentId || null);
+  const [completing, setCompleting] = useState(false);
 
   const loadNotes = useCallback(async () => {
     try {
@@ -69,6 +74,51 @@ const TherapistPatientHistoryScreen = ({ route, navigation }) => {
             }
         }}
     ]);
+  };
+
+  const openEditNote = (note) => {
+    setEditingNote(note);
+    setEditContent(note.content);
+  };
+
+  const saveEditNote = async () => {
+    if (!editContent.trim()) return Alert.alert('Required', 'Note content cannot be empty.');
+    setEditSaving(true);
+    try {
+      await api.patch(`/api/therapists/notes/${editingNote._id}`, {
+        content: editContent.trim(),
+        category: editingNote.category,
+      });
+      setEditingNote(null);
+      loadNotes();
+    } catch (e) {
+      Alert.alert('Error', 'Failed to update note.');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const markSessionComplete = async () => {
+    if (!appointmentId) return Alert.alert('Info', 'No linked appointment ID found for this patient visit.');
+    Alert.alert(
+      'Mark as Complete',
+      'Are you sure you want to mark this session as complete? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Complete', onPress: async () => {
+          setCompleting(true);
+          try {
+            await api.patch(`/api/appointments/${appointmentId}/complete`);
+            Alert.alert('Done', 'Session marked as complete!');
+            navigation.goBack();
+          } catch (e) {
+            Alert.alert('Error', e.response?.data?.error || 'Failed to complete session.');
+          } finally {
+            setCompleting(false);
+          }
+        }}
+      ]
+    );
   };
 
   if (loading && !refreshing) {
@@ -127,8 +177,13 @@ const TherapistPatientHistoryScreen = ({ route, navigation }) => {
                 </View>
                 <Text style={styles.noteContent}>{note.content}</Text>
                 <View style={styles.noteFooter}>
-                    <TouchableOpacity onPress={() => handleDelete(note._id)}>
-                        <AntDesign name="delete" size={16} color={colors.gray} />
+                    <TouchableOpacity onPress={() => openEditNote(note)} style={styles.noteAction}>
+                        <AntDesign name="edit" size={16} color={colors.primary} />
+                        <Text style={styles.noteActionText}>Edit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDelete(note._id)} style={styles.noteAction}>
+                        <AntDesign name="delete" size={16} color="#E74C3C" />
+                        <Text style={[styles.noteActionText, { color: '#E74C3C' }]}>Delete</Text>
                     </TouchableOpacity>
                 </View>
                 {/* Timeline Line */}
@@ -138,6 +193,51 @@ const TherapistPatientHistoryScreen = ({ route, navigation }) => {
           })
         )}
       </ScrollView>
+
+      {/* Mark Complete Banner */}
+      {appointmentId && (
+        <TouchableOpacity
+          style={[styles.completeBtn, completing && { opacity: 0.6 }]}
+          onPress={markSessionComplete}
+          disabled={completing}
+        >
+          <MaterialCommunityIcons name="check-circle-outline" size={20} color="#fff" />
+          <Text style={styles.completeBtnText}>
+            {completing ? 'Marking Complete...' : 'Mark Session as Complete'}
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Edit Note Modal */}
+      <Modal visible={!!editingNote} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { height: '55%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Note</Text>
+              <TouchableOpacity onPress={() => setEditingNote(null)}>
+                <AntDesign name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              style={styles.editInput}
+              multiline
+              value={editContent}
+              onChangeText={setEditContent}
+              textAlignVertical="top"
+              autoFocus
+            />
+            <TouchableOpacity
+              style={[styles.saveEditBtn, editSaving && { opacity: 0.6 }]}
+              onPress={saveEditNote}
+              disabled={editSaving}
+            >
+              {editSaving
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={styles.saveEditBtnText}>Save Changes</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Full Profile Modal */}
       <Modal visible={profileModalVisible} transparent animationType="slide">
@@ -218,6 +318,20 @@ const TherapistPatientHistoryScreen = ({ route, navigation }) => {
                     </View>
                   ))}
                 </View>
+
+                <View style={styles.profileSection}>
+                  <Text style={styles.sectionTitle}>Journal Entries</Text>
+                  {(!fullProfile.journals || fullProfile.journals.length === 0) && (
+                    <Text style={styles.emptyText}>No journal entries found.</Text>
+                  )}
+                  {fullProfile.journals?.slice(0, 5).map(j => (
+                    <View key={j.id} style={[styles.dataCard, { borderLeftWidth: 3, borderLeftColor: colors.primary }]}>
+                      <Text style={styles.dataTitle}>{j.title || 'Untitled Entry'}</Text>
+                      <Text style={styles.dataText}>{j.contentPreview}</Text>
+                      <Text style={styles.dataDate}>{new Date(j.date).toLocaleDateString()}</Text>
+                    </View>
+                  ))}
+                </View>
               </ScrollView>
             ) : null}
           </View>
@@ -269,4 +383,37 @@ const styles = StyleSheet.create({
   dataText: { color: '#566573', fontSize: 13, marginBottom: 2 },
   dataDate: { color: '#99A3A4', fontSize: 11, marginTop: 4, textAlign: 'right' },
   emptyText: { color: '#99A3A4', fontStyle: 'italic' },
+  noteAction: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  noteActionText: { fontSize: 12, fontWeight: '600', color: colors.primary },
+  completeBtn: {
+    backgroundColor: '#2ECC71',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    margin: 16,
+    padding: 16,
+    borderRadius: 14,
+    elevation: 4,
+  },
+  completeBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
+  editInput: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 10,
+    padding: 14,
+    fontSize: 14,
+    color: '#333',
+    borderWidth: 1,
+    borderColor: '#E4E7ED',
+    marginBottom: 12,
+    textAlignVertical: 'top',
+  },
+  saveEditBtn: {
+    backgroundColor: colors.primary,
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  saveEditBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
 });
