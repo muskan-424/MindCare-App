@@ -35,10 +35,11 @@ describe('API Route Configuration Health Check', () => {
     expect(api_route.endsWith('/')).toBe(false);
   });
 
-  it('api_route points to a valid host:port in local mode', () => {
-    // Local mode: http://127.0.0.1:5000 (via adb reverse)
-    expect(api_route).toContain('127.0.0.1');
-    expect(api_route).toContain('5000');
+  it('api_route points to a valid host:port or server host', () => {
+    // Supports local mode: http://127.0.0.1:5000 or production serverless on Vercel
+    const isLocal = api_route.includes('127.0.0.1') || api_route.includes('localhost') || api_route.includes('192.168.');
+    const isProduction = api_route.includes('vercel.app') || api_route.includes('onrender.com');
+    expect(isLocal || isProduction).toBe(true);
   });
 
   it('simulates a successful health check response', async () => {
