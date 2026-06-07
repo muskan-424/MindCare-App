@@ -4,12 +4,12 @@ const { auth } = require('../../../../middleware/auth');
 const AssessmentSession = require('../models/AssessmentSession');
 const AssessmentFeatureVector = require('../models/AssessmentFeatureVector');
 const AssessmentFusionResult = require('../models/AssessmentFusionResult');
-const { assessTextPayload } = require('../../../../services/ai/textAssessmentService');
-const { assessVoicePayload } = require('../../../../services/ai/voiceAssessmentService');
-const { assessVisionPayload } = require('../../../../services/ai/visionAssessmentService');
-const { fuseAssessment } = require('../../../../services/ai/fusionAssessmentService');
-const { getSessionQuestions } = require('../../../../services/ai/questionPolicyService');
-const { assessMoodTrend } = require('../../../../services/ai/moodTrendService');
+const { assessTextPayload } = require('../services/ai/textAssessmentService');
+const { assessVoicePayload } = require('../services/ai/voiceAssessmentService');
+const { assessVisionPayload } = require('../services/ai/visionAssessmentService');
+const { fuseAssessment } = require('../services/ai/fusionAssessmentService');
+const { getSessionQuestions } = require('../services/ai/questionPolicyService');
+const { assessMoodTrend } = require('../services/ai/moodTrendService');
 
 router.use(auth);
 

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { auth } = require('../../../../middleware/auth');
-const { generateEmotionalFingerprint } = require('../../../../services/ai/emotionalFingerprintService');
+const { generateEmotionalFingerprint } = require('../../assessment/services/ai/emotionalFingerprintService');
 
 // @route   GET /api/analytics/fingerprint
 // @desc    Get personalized emotional pattern fingerprint
