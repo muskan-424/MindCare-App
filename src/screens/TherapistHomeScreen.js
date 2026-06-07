@@ -176,7 +176,7 @@ const TherapistHomeScreen = (props) => {
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             {/* QUICK ACTIONS GRID */}
             <View style={styles.opsContainer}>
-                <Text style={styles.sectionTitle}>Operations</Text>
+                <Text style={styles.sectionTitle}>Operations Hub</Text>
                 <View style={styles.opsGrid}>
                     <TouchableScale style={[styles.opCard, { backgroundColor: '#EBF5FF' }]} activeScale={0.96}>
                         <View style={[styles.opIconWrap, { backgroundColor: '#1E88E5' }]}>
@@ -215,7 +215,7 @@ const TherapistHomeScreen = (props) => {
             {/* CLINICAL INSIGHTS CHART */}
             <View style={styles.chartContainer}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, paddingHorizontal: 20 }}>
-                    <Text style={[styles.sectionTitle, { marginHorizontal: 0, marginTop: 0 }]}>Weekly Impact</Text>
+                    <Text style={[styles.sectionTitle, { marginHorizontal: 0, marginTop: 0 }]}>Practice Vitality</Text>
                     <View style={styles.chartLegend}>
                         <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
                         <Text style={styles.legendText}>Sessions</Text>
@@ -275,7 +275,7 @@ const TherapistHomeScreen = (props) => {
             )}
 
             <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 20}}>
-                <Text style={[styles.sectionTitle, {marginHorizontal: 0, marginTop: 10}]}>My Schedule</Text>
+                <Text style={[styles.sectionTitle, {marginHorizontal: 0, marginTop: 10}]}>Active Schedule</Text>
                 <TouchableOpacity><Text style={{color: colors.primary, fontSize: 13, fontWeight: 'bold', marginTop: 10}}>View All</Text></TouchableOpacity>
             </View>
 
