@@ -1,8 +1,8 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
-const FitnessCategory = require('../models/FitnessCategory');
-const FitnessSubcategory = require('../models/FitnessSubcategory');
-const FitnessContentItem = require('../models/FitnessContentItem');
+const FitnessCategory = require('../src/domains/wellness/models/FitnessCategory');
+const FitnessSubcategory = require('../src/domains/wellness/models/FitnessSubcategory');
+const FitnessContentItem = require('../src/domains/wellness/models/FitnessContentItem');
 
 const CATEGORIES = [
   { name: 'Yoga', icon: 'https://cdn-icons-png.flaticon.com/512/2647/2647625.png', order: 1 },

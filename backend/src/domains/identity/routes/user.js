@@ -1,0 +1,145 @@
+const express = require('express');
+const router = express.Router();
+const { body, validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const Profile = require('../models/Profile');
+
+// @route   POST /api/user
+// @desc    Register a new user
+// @access  Public
+router.post(
+  '/',
+  [
+    body('name', 'Name is required').notEmpty(),
+    body('email', 'Please include a valid email').isEmail(),
+    body('password', 'Password must be at least 6 characters').isLength({ min: 6 }),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    const { name, email, password, age, gender, phone_no, role, specialisation } = req.body;
+
+    try {
+      // Check if user already exists
+      let existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ errors: [{ msg: 'User already exists' }] });
+      }
+
+      // Hash password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      // Create user
+      const user = new User({
+        name,
+        email,
+        password: hashedPassword,
+        age: age || '',
+        gender: gender || '',
+        role: role === 'clinician' ? 'clinician' : 'user',
+      });
+      await user.save();
+
+      // Create profile
+      const profile = new Profile({
+        userId: user._id,
+        name,
+        email,
+        age: age || '',
+        gender: gender || '',
+        phone_no: phone_no || '',
+        bio: '',
+        concerns: [],
+      });
+      await profile.save();
+
+      // Create or link Therapist listing if role is clinician
+      if (user.role === 'clinician') {
+        const Therapist = require('../../therapy/models/Therapist');
+        try {
+          const existing = await Therapist.findOne({ email: user.email });
+          if (existing) {
+             existing.userId = user._id;
+             if (specialisation) existing.specialisation = specialisation;
+             await existing.save();
+          } else {
+             const newTherapist = new Therapist({
+                name: user.name,
+                email: user.email,
+                specialisation: specialisation || 'Psychologist', // Default fallback
+                userId: user._id,
+                active: true,
+             });
+             await newTherapist.save();
+          }
+        } catch (linkErr) {
+          console.error('Therapist creation/link error:', linkErr.message);
+        }
+      }
+
+      const payload = {
+        user: {
+          id: user._id,
+          role: user.role,
+        },
+      };
+      const token = jwt.sign(payload, process.env.JWT_SECRET || 'dev_jwt_secret_change_me', {
+        expiresIn: '7d',
+      });
+
+      // Return user + profile + token (frontend can store token if needed)
+      res.json({
+        token,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          age: user.age,
+          gender: user.gender,
+          role: user.role,
+        },
+        profile: {
+          _id: profile._id,
+          userId: profile.userId,
+          name: profile.name,
+          email: profile.email,
+          phone_no: profile.phone_no,
+          age: profile.age,
+          gender: profile.gender,
+          bio: profile.bio,
+          concerns: profile.concerns,
+        },
+      });
+    } catch (err) {
+      console.error('Register error:', err.message);
+      res.status(500).json({ errors: [{ msg: 'Server error' }] });
+    }
+  }
+);
+
+// GET /api/user/notifications — fetch admin broadcasts for users
+router.get('/notifications', async (req, res) => {
+  try {
+    const Notification = require('../../admin/models/Notification');
+    // Fetch notifications broadcast to all_users or specifically for therapists
+    const notifications = await Notification.find({
+      audience: { $in: ['all_users', 'therapists'] }
+    })
+    .sort({ createdAt: -1 })
+    .limit(30)
+    .lean();
+
+    res.json(notifications);
+  } catch (err) {
+    console.error('Fetch notifications error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+module.exports = router;
+
