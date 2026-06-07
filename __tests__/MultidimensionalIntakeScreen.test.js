@@ -7,11 +7,11 @@
  */
 import React from 'react';
 import renderer from 'react-test-renderer';
-import MultidimensionalIntakeScreen from '../src/screens/MultidimensionalIntakeScreen';
+import MultidimensionalIntakeScreen from '../src/domains/assessment/screens/MultidimensionalIntakeScreen';
 
 // ── Mock all native dependencies ─────────────────────────────────────────────
 
-jest.mock('../src/hooks/useSpeechToText', () => () => ({
+jest.mock('../src/domains/assessment/hooks/useSpeechToText', () => () => ({
   isListening: false,
   sttError: '',
   startListening: jest.fn(),

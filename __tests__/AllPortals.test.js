@@ -87,7 +87,7 @@ jest.mock('../src/utils/avatar', () => ({
 
 jest.mock('../src/constants/doctors', () => []);
 
-jest.mock('../src/components/TherapistCard', () => () => 'TherapistCard');
+jest.mock('../src/domains/therapy/components/TherapistCard', () => () => 'TherapistCard');
 jest.mock('../src/components/TrackedTouchable', () => {
   const { TouchableOpacity } = require('react-native');
   return ({ children, onPress, style }) => (
@@ -188,7 +188,7 @@ describe('Portal 1 — User Portal (HomeScreen)', () => {
   let HomeScreen;
 
   beforeAll(() => {
-    HomeScreen = require('../src/screens/HomeScreen').default;
+    HomeScreen = require('../src/domains/content/screens/HomeScreen').default;
   });
 
   it('renders without crashing', async () => {
@@ -295,7 +295,7 @@ describe('Portal 2 — Therapist Portal (TherapistHomeScreen)', () => {
   let TherapistHomeScreen;
 
   beforeAll(() => {
-    TherapistHomeScreen = require('../src/screens/TherapistHomeScreen').default;
+    TherapistHomeScreen = require('../src/domains/therapy/screens/TherapistHomeScreen').default;
   });
 
   it('renders the therapist dashboard without crashing', async () => {
@@ -416,7 +416,7 @@ describe('Portal 3 — Admin Portal (AdminDashboardScreen)', () => {
   let AdminDashboardScreen;
 
   beforeAll(() => {
-    AdminDashboardScreen = require('../src/screens/AdminDashboardScreen').default;
+    AdminDashboardScreen = require('../src/domains/admin/screens/AdminDashboardScreen').default;
   });
 
   it('renders the admin dashboard without crashing', async () => {
