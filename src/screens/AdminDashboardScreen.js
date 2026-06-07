@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, createContext, useContext } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList,
-  ScrollView, ActivityIndicator, TextInput, Alert, Modal, Linking, Dimensions, StatusBar
+  ScrollView, ActivityIndicator, TextInput, Alert, Modal, Linking, Dimensions, StatusBar, Image
 } from 'react-native';
 import api from '../utils/apiClient';
 import { colors } from '../constants/theme';
@@ -3016,7 +3016,7 @@ const AdminDashboardScreen = () => {
   const [activeTab, setActiveTab] = useState('pending');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const D = isDarkMode ? DARK_THEME : LIGHT_THEME;
-  const ss = useMemo(() => getStyles(D), [isDarkMode]);
+  const ss = useMemo(() => getStyles(D), [D]);
 
   // ── Profile Edit state ──
   const [profileModal, setProfileModal] = useState(false);
@@ -3352,7 +3352,7 @@ const getStyles = (D) => StyleSheet.create({
 
   // Section Headers
   sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: 6 },
-  sectionHeaderText: { fontSize: 14, fontWeight: '700', color: D.textSecondary, marginLeft: 6, flex: 1, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: 11 },
+  sectionHeaderText: { fontWeight: '700', color: D.textSecondary, marginLeft: 6, flex: 1, textTransform: 'uppercase', letterSpacing: 0.8, fontSize: 11 },
   sectionBadge: { backgroundColor: D.surfaceElevated, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: D.borderColor },
   sectionBadgeText: { fontSize: 11, fontWeight: '700', color: D.textSecondary },
 
@@ -3578,6 +3578,7 @@ const getStyles = (D) => StyleSheet.create({
   notifBody: { fontSize: 13, color: D.textSecondary, lineHeight: 19 },
 });
 
+const getSs = () => getStyles(DARK_THEME);
 const ss = new Proxy({}, {
   get(target, prop) {
     return getSs()[prop];
