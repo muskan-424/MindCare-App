@@ -1,0 +1,915 @@
+diff --git a/node_modules/react-native-audio-recorder-player/android/.gradle/8.9/checksums/checksums.lock b/node_modules/react-native-audio-recorder-player/android/.gradle/8.9/checksums/checksums.lock
+new file mode 100644
+index 0000000..67084ae
+Binary files /dev/null and b/node_modules/react-native-audio-recorder-player/android/.gradle/8.9/checksums/checksums.lock differ
+diff --git a/node_modules/react-native-audio-recorder-player/android/.gradle/8.9/dependencies-accessors/gc.properties b/node_modules/react-native-audio-recorder-player/android/.gradle/8.9/dependencies-accessors/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-audio-recorder-player/android/.gradle/8.9/fileChanges/last-build.bin b/node_modules/react-native-audio-recorder-player/android/.gradle/8.9/fileChanges/last-build.bin
+new file mode 100644
+index 0000000..f76dd23
+Binary files /dev/null and b/node_modules/react-native-audio-recorder-player/android/.gradle/8.9/fileChanges/last-build.bin differ
+diff --git a/node_modules/react-native-audio-recorder-player/android/.gradle/8.9/fileHashes/fileHashes.lock b/node_modules/react-native-audio-recorder-player/android/.gradle/8.9/fileHashes/fileHashes.lock
+new file mode 100644
+index 0000000..0d82a52
+Binary files /dev/null and b/node_modules/react-native-audio-recorder-player/android/.gradle/8.9/fileHashes/fileHashes.lock differ
+diff --git a/node_modules/react-native-audio-recorder-player/android/.gradle/8.9/gc.properties b/node_modules/react-native-audio-recorder-player/android/.gradle/8.9/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-audio-recorder-player/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock b/node_modules/react-native-audio-recorder-player/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+new file mode 100644
+index 0000000..9f827fb
+Binary files /dev/null and b/node_modules/react-native-audio-recorder-player/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock differ
+diff --git a/node_modules/react-native-audio-recorder-player/android/.gradle/buildOutputCleanup/cache.properties b/node_modules/react-native-audio-recorder-player/android/.gradle/buildOutputCleanup/cache.properties
+new file mode 100644
+index 0000000..9a53e67
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/.gradle/buildOutputCleanup/cache.properties
+@@ -0,0 +1,2 @@
++#Fri Jun 05 12:33:08 IST 2026
++gradle.version=8.9
+diff --git a/node_modules/react-native-audio-recorder-player/android/.gradle/vcs-1/gc.properties b/node_modules/react-native-audio-recorder-player/android/.gradle/vcs-1/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-audio-recorder-player/android/.project b/node_modules/react-native-audio-recorder-player/android/.project
+new file mode 100644
+index 0000000..a991a3f
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/.project
+@@ -0,0 +1,28 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<projectDescription>
++	<name>react-native-audio-recorder-player</name>
++	<comment>Project react-native-audio-recorder-player created by Buildship.</comment>
++	<projects>
++	</projects>
++	<buildSpec>
++		<buildCommand>
++			<name>org.eclipse.buildship.core.gradleprojectbuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++	</buildSpec>
++	<natures>
++		<nature>org.eclipse.buildship.core.gradleprojectnature</nature>
++	</natures>
++	<filteredResources>
++		<filter>
++			<id>1777792289730</id>
++			<name></name>
++			<type>30</type>
++			<matcher>
++				<id>org.eclipse.core.resources.regexFilterMatcher</id>
++				<arguments>node_modules|\.git|__CREATED_BY_JAVA_LANGUAGE_SERVER__</arguments>
++			</matcher>
++		</filter>
++	</filteredResources>
++</projectDescription>
+diff --git a/node_modules/react-native-audio-recorder-player/android/bin/.gradle/8.9/checksums/checksums.lock b/node_modules/react-native-audio-recorder-player/android/bin/.gradle/8.9/checksums/checksums.lock
+new file mode 100644
+index 0000000..67084ae
+Binary files /dev/null and b/node_modules/react-native-audio-recorder-player/android/bin/.gradle/8.9/checksums/checksums.lock differ
+diff --git a/node_modules/react-native-audio-recorder-player/android/bin/.gradle/8.9/dependencies-accessors/gc.properties b/node_modules/react-native-audio-recorder-player/android/bin/.gradle/8.9/dependencies-accessors/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-audio-recorder-player/android/bin/.gradle/8.9/fileChanges/last-build.bin b/node_modules/react-native-audio-recorder-player/android/bin/.gradle/8.9/fileChanges/last-build.bin
+new file mode 100644
+index 0000000..f76dd23
+Binary files /dev/null and b/node_modules/react-native-audio-recorder-player/android/bin/.gradle/8.9/fileChanges/last-build.bin differ
+diff --git a/node_modules/react-native-audio-recorder-player/android/bin/.gradle/8.9/fileHashes/fileHashes.lock b/node_modules/react-native-audio-recorder-player/android/bin/.gradle/8.9/fileHashes/fileHashes.lock
+new file mode 100644
+index 0000000..0d82a52
+Binary files /dev/null and b/node_modules/react-native-audio-recorder-player/android/bin/.gradle/8.9/fileHashes/fileHashes.lock differ
+diff --git a/node_modules/react-native-audio-recorder-player/android/bin/.gradle/8.9/gc.properties b/node_modules/react-native-audio-recorder-player/android/bin/.gradle/8.9/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-audio-recorder-player/android/bin/.gradle/buildOutputCleanup/buildOutputCleanup.lock b/node_modules/react-native-audio-recorder-player/android/bin/.gradle/buildOutputCleanup/buildOutputCleanup.lock
+new file mode 100644
+index 0000000..9f827fb
+Binary files /dev/null and b/node_modules/react-native-audio-recorder-player/android/bin/.gradle/buildOutputCleanup/buildOutputCleanup.lock differ
+diff --git a/node_modules/react-native-audio-recorder-player/android/bin/.gradle/buildOutputCleanup/cache.properties b/node_modules/react-native-audio-recorder-player/android/bin/.gradle/buildOutputCleanup/cache.properties
+new file mode 100644
+index 0000000..9a53e67
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/bin/.gradle/buildOutputCleanup/cache.properties
+@@ -0,0 +1,2 @@
++#Fri Jun 05 12:33:08 IST 2026
++gradle.version=8.9
+diff --git a/node_modules/react-native-audio-recorder-player/android/bin/.gradle/vcs-1/gc.properties b/node_modules/react-native-audio-recorder-player/android/bin/.gradle/vcs-1/gc.properties
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-audio-recorder-player/android/bin/.project b/node_modules/react-native-audio-recorder-player/android/bin/.project
+new file mode 100644
+index 0000000..6b5839f
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/bin/.project
+@@ -0,0 +1,34 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<projectDescription>
++	<name>react-native-audio-recorder-player</name>
++	<comment>Project react-native-audio-recorder-player created by Buildship.</comment>
++	<projects>
++	</projects>
++	<buildSpec>
++		<buildCommand>
++			<name>org.eclipse.jdt.core.javabuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++		<buildCommand>
++			<name>org.eclipse.buildship.core.gradleprojectbuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++	</buildSpec>
++	<natures>
++		<nature>org.eclipse.jdt.core.javanature</nature>
++		<nature>org.eclipse.buildship.core.gradleprojectnature</nature>
++	</natures>
++	<filteredResources>
++		<filter>
++			<id>1777792289730</id>
++			<name></name>
++			<type>30</type>
++			<matcher>
++				<id>org.eclipse.core.resources.regexFilterMatcher</id>
++				<arguments>node_modules|\.git|__CREATED_BY_JAVA_LANGUAGE_SERVER__</arguments>
++			</matcher>
++		</filter>
++	</filteredResources>
++</projectDescription>
+diff --git a/node_modules/react-native-audio-recorder-player/android/bin/build.gradle b/node_modules/react-native-audio-recorder-player/android/bin/build.gradle
+new file mode 100644
+index 0000000..6bb3aa2
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/bin/build.gradle
+@@ -0,0 +1,77 @@
++
++buildscript {
++    ext.getExtOrDefault = {name ->
++        return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.ext.get(name)
++    }
++    
++    ext {
++        gradleVersion = '4.1.0'
++        kotlinVersion = '1.6.0'
++    }
++
++    repositories {
++        google()
++        mavenCentral()
++    }
++
++    dependencies {
++        classpath "com.android.tools.build:gradle:4.2.2"
++        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${getExtOrDefault('kotlinVersion')}"
++    }
++}
++
++def safeExtGet(prop, fallback) {
++    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
++}
++
++apply plugin: 'com.android.library'
++apply plugin: 'kotlin-android'
++
++android {
++  def agpVersion = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION
++  if (agpVersion.tokenize('.')[0].toInteger() >= 7) {
++    namespace "com.dooboolab.audiorecorderplayer"
++  }
++  compileSdkVersion safeExtGet('compileSdkVersion', 31)
++
++  defaultConfig {
++    minSdkVersion safeExtGet('minSdkVersion', 24)
++    targetSdkVersion safeExtGet('targetSdkVersion', 31)
++    versionCode 1
++    versionName "1.0"
++  }
++
++  compileOptions {
++    sourceCompatibility JavaVersion.VERSION_17
++    targetCompatibility JavaVersion.VERSION_17
++  }
++
++  lintOptions {
++    abortOnError false
++  }
++}
++
++repositories {
++    mavenCentral()
++}
++
++dependencies {
++  implementation 'com.facebook.react:react-native:+'
++  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${safeExtGet('kotlinVersion', project.ext.kotlinVersion)}"
++
++  def supportLibVersion = safeExtGet('supportLibVersion', safeExtGet('supportVersion', null))
++  def androidXVersion = safeExtGet('androidXVersion', null)
++  if (supportLibVersion && androidXVersion == null) {
++    implementation "com.android.support:support-annotations:$supportLibVersion"
++    implementation "com.android.support:customtabs:$supportLibVersion"
++  } else {
++    def defaultAndroidXVersion = "1.2.0"
++    if (androidXVersion == null) {
++      androidXVersion = defaultAndroidXVersion
++    }
++    def androidXAnnotation = safeExtGet('androidXAnnotation', androidXVersion)
++    def androidXBrowser = safeExtGet('androidXBrowser', androidXVersion)
++    implementation "androidx.annotation:annotation:$androidXAnnotation"
++    implementation "androidx.browser:browser:$androidXBrowser"
++  }
++}
+diff --git a/node_modules/react-native-audio-recorder-player/android/bin/src/main/AndroidManifest.xml b/node_modules/react-native-audio-recorder-player/android/bin/src/main/AndroidManifest.xml
+new file mode 100644
+index 0000000..bce36eb
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/bin/src/main/AndroidManifest.xml
+@@ -0,0 +1,8 @@
++
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++          package="com.dooboolab.audiorecorderplayer">
++    <!-- dooboolab -->
++    <uses-permission android:name="android.permission.RECORD_AUDIO" />
++    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
++</manifest>
++  
+\ No newline at end of file
+diff --git a/node_modules/react-native-audio-recorder-player/android/bin/src/main/java/com/dooboolab.audiorecorderplayer/RNAudioRecorderPlayerModule.kt b/node_modules/react-native-audio-recorder-player/android/bin/src/main/java/com/dooboolab.audiorecorderplayer/RNAudioRecorderPlayerModule.kt
+new file mode 100644
+index 0000000..3624b9f
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/bin/src/main/java/com/dooboolab.audiorecorderplayer/RNAudioRecorderPlayerModule.kt
+@@ -0,0 +1,405 @@
++package com.dooboolab.audiorecorderplayer
++
++import android.Manifest
++import android.content.pm.PackageManager
++import android.media.MediaPlayer
++import android.media.MediaRecorder
++import android.net.Uri
++import android.os.Build
++import android.os.Handler
++import android.os.Looper
++import android.os.SystemClock
++import android.util.Log
++import androidx.core.app.ActivityCompat
++import com.facebook.react.bridge.*
++import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
++import com.facebook.react.modules.core.PermissionListener
++import java.io.IOException
++import java.util.*
++import kotlin.math.log10
++
++class RNAudioRecorderPlayerModule(private val reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext), PermissionListener {
++    private var audioFileURL = ""
++    private var subsDurationMillis = 500
++    private var _meteringEnabled = false
++    private var mediaRecorder: MediaRecorder? = null
++    private var mediaPlayer: MediaPlayer? = null
++    private var recorderRunnable: Runnable? = null
++    private var mTask: TimerTask? = null
++    private var mTimer: Timer? = null
++    private var pausedRecordTime = 0L
++    private var totalPausedRecordTime = 0L
++    var recordHandler: Handler? = Handler(Looper.getMainLooper())
++    override fun getName(): String {
++        return tag
++    }
++
++    @ReactMethod
++    fun startRecorder(path: String, audioSet: ReadableMap?, meteringEnabled: Boolean, promise: Promise) {
++        try {
++            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
++                // On devices that run Android 10 (API level 29) or higher
++                // your app can contribute to well-defined media collections such as MediaStore.Downloads without requesting any storage-related permissions
++                // https://developer.android.com/about/versions/11/privacy/storage#permissions-target-11
++                if (Build.VERSION.SDK_INT < 29 &&
++                        (ActivityCompat.checkSelfPermission(reactContext, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
++                        ActivityCompat.checkSelfPermission(reactContext, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED))  {
++                    ActivityCompat.requestPermissions((currentActivity)!!, arrayOf(
++                            Manifest.permission.RECORD_AUDIO,
++                            Manifest.permission.WRITE_EXTERNAL_STORAGE), 0)
++                    promise.reject("No permission granted.", "Try again after adding permission.")
++                    return
++                } else if (ActivityCompat.checkSelfPermission(reactContext, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
++                    ActivityCompat.requestPermissions((currentActivity)!!, arrayOf(Manifest.permission.RECORD_AUDIO), 0)
++                    promise.reject("No permission granted.", "Try again after adding permission.")
++                    return
++                }
++            }
++        } catch (ne: NullPointerException) {
++            Log.w(tag, ne.toString())
++            promise.reject("No permission granted.", "Try again after adding permission.")
++            return
++        }
++
++        var outputFormat = if (audioSet != null && audioSet.hasKey("OutputFormatAndroid"))
++            audioSet.getInt("OutputFormatAndroid")
++        else
++            MediaRecorder.OutputFormat.MPEG_4
++
++        audioFileURL = if (((path == "DEFAULT"))) "${reactContext.cacheDir}/sound.${defaultFileExtensions.get(outputFormat)}" else path
++        _meteringEnabled = meteringEnabled
++
++        if (mediaRecorder == null) {
++            mediaRecorder = MediaRecorder()
++        }
++
++        if (audioSet != null) {
++            mediaRecorder!!.setAudioSource(if (audioSet.hasKey("AudioSourceAndroid")) audioSet.getInt("AudioSourceAndroid") else MediaRecorder.AudioSource.MIC)
++            mediaRecorder!!.setOutputFormat(outputFormat)
++            mediaRecorder!!.setAudioEncoder(if (audioSet.hasKey("AudioEncoderAndroid")) audioSet.getInt("AudioEncoderAndroid") else MediaRecorder.AudioEncoder.AAC)
++            mediaRecorder!!.setAudioSamplingRate(if (audioSet.hasKey("AudioSamplingRateAndroid")) audioSet.getInt("AudioSamplingRateAndroid") else 48000)
++            mediaRecorder!!.setAudioEncodingBitRate(if (audioSet.hasKey("AudioEncodingBitRateAndroid")) audioSet.getInt("AudioEncodingBitRateAndroid") else 128000)
++            mediaRecorder!!.setAudioChannels(if (audioSet.hasKey("AudioChannelsAndroid")) audioSet.getInt("AudioChannelsAndroid") else 2)
++        } else {
++            mediaRecorder!!.setAudioSource(MediaRecorder.AudioSource.MIC)
++            mediaRecorder!!.setOutputFormat(outputFormat)
++            mediaRecorder!!.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
++            mediaRecorder!!.setAudioEncodingBitRate(128000)
++            mediaRecorder!!.setAudioSamplingRate(48000)
++        }
++        mediaRecorder!!.setOutputFile(audioFileURL)
++
++        try {
++            mediaRecorder!!.prepare()
++            totalPausedRecordTime = 0L
++            mediaRecorder!!.start()
++            val systemTime = SystemClock.elapsedRealtime()
++            recorderRunnable = object : Runnable {
++                override fun run() {
++                    val time = SystemClock.elapsedRealtime() - systemTime - totalPausedRecordTime
++                    val obj = Arguments.createMap()
++                    obj.putDouble("currentPosition", time.toDouble())
++                    if (_meteringEnabled) {
++                        var maxAmplitude = 0
++                        if (mediaRecorder != null) {
++                            maxAmplitude = mediaRecorder!!.maxAmplitude
++                        }
++                        var dB = -160.0
++                        val maxAudioSize = 32767.0
++                        if (maxAmplitude > 0) {
++                            dB = 20 * log10(maxAmplitude / maxAudioSize)
++                        }
++                        obj.putInt("currentMetering", dB.toInt())
++                    }
++                    sendEvent(reactContext, "rn-recordback", obj)
++                    recordHandler!!.postDelayed(this, subsDurationMillis.toLong())
++                }
++            }
++            (recorderRunnable as Runnable).run()
++            promise.resolve("file:///$audioFileURL")
++        } catch (e: Exception) {
++            Log.e(tag, "Exception: ", e)
++            promise.reject("startRecord", e.message)
++        }
++    }
++
++    @ReactMethod
++    fun resumeRecorder(promise: Promise) {
++        if (mediaRecorder == null) {
++            promise.reject("resumeReocrder", "Recorder is null.")
++            return
++        }
++
++        try {
++            mediaRecorder!!.resume()
++            totalPausedRecordTime += SystemClock.elapsedRealtime() - pausedRecordTime;
++            recorderRunnable?.let { recordHandler!!.postDelayed(it, subsDurationMillis.toLong()) }
++            promise.resolve("Recorder resumed.")
++        } catch (e: Exception) {
++            Log.e(tag, "Recorder resume: " + e.message)
++            promise.reject("resumeRecorder", e.message)
++        }
++    }
++
++    @ReactMethod
++    fun pauseRecorder(promise: Promise) {
++        if (mediaRecorder == null) {
++            promise.reject("pauseRecorder", "Recorder is null.")
++            return
++        }
++
++        try {
++            mediaRecorder!!.pause()
++            pausedRecordTime = SystemClock.elapsedRealtime();
++            recorderRunnable?.let { recordHandler!!.removeCallbacks(it) };
++            promise.resolve("Recorder paused.")
++        } catch (e: Exception) {
++            Log.e(tag, "pauseRecorder exception: " + e.message)
++            promise.reject("pauseRecorder", e.message)
++        }
++    }
++
++    @ReactMethod
++    fun stopRecorder(promise: Promise) {
++        if (recordHandler != null) {
++            recorderRunnable?.let { recordHandler!!.removeCallbacks(it) }
++        }
++
++        if (mediaRecorder == null) {
++            promise.reject("stopRecord", "recorder is null.")
++            return
++        }
++
++        try {
++            mediaRecorder!!.stop()
++            mediaRecorder!!.reset()
++            mediaRecorder!!.release()
++            mediaRecorder = null
++            promise.resolve("file:///$audioFileURL")
++        } catch (stopException: RuntimeException) {
++            stopException.message?.let { Log.d(tag,"" + it) }
++            promise.reject("stopRecord", stopException.message)
++        }
++    }
++
++    @ReactMethod
++    fun setVolume(volume: Double, promise: Promise) {
++        if (mediaPlayer == null) {
++            promise.reject("setVolume", "player is null.")
++            return
++        }
++
++        val mVolume = volume.toFloat()
++        mediaPlayer!!.setVolume(mVolume, mVolume)
++        promise.resolve("set volume")
++    }
++
++    @ReactMethod
++    fun startPlayer(path: String, httpHeaders: ReadableMap?, promise: Promise) {
++        if (mediaPlayer != null) {
++            val isPaused = !mediaPlayer!!.isPlaying && mediaPlayer!!.currentPosition > 1
++
++            if (isPaused) {
++                mediaPlayer!!.start()
++                promise.resolve("player resumed.")
++                return
++            }
++
++            Log.e(tag, "Player is already running. Stop it first.")
++            promise.reject("startPlay", "Player is already running. Stop it first.")
++            return
++        } else {
++            mediaPlayer = MediaPlayer()
++        }
++
++        try {
++            if ((path == "DEFAULT")) {
++                mediaPlayer!!.setDataSource("${reactContext.cacheDir}/$defaultFileName")
++            } else {
++                if (httpHeaders != null) {
++                    val headers: MutableMap<String, String?> = HashMap<String, String?>()
++                    val iterator = httpHeaders.keySetIterator()
++                    while (iterator.hasNextKey()) {
++                        val key = iterator.nextKey()
++                        headers.put(key, httpHeaders.getString(key))
++                    }
++                    mediaPlayer!!.setDataSource(currentActivity!!.applicationContext, Uri.parse(path), headers)
++                } else {
++                    mediaPlayer!!.setDataSource(path)
++                }
++            }
++
++            mediaPlayer!!.setOnPreparedListener { mp ->
++                Log.d(tag, "Mediaplayer prepared and start")
++                mp.start()
++                /**
++                 * Set timer task to send event to RN.
++                 */
++                mTask = object : TimerTask() {
++                    override fun run() {
++                        try {
++                            val obj = Arguments.createMap()
++                            obj.putInt("duration", mp.duration)
++                            obj.putInt("currentPosition", mp.currentPosition)
++                            obj.putBoolean("isFinished", false);
++                            sendEvent(reactContext, "rn-playback", obj)
++                        } catch (e: IllegalStateException) {
++                            // IllegalStateException 처리
++                            Log.e(tag, "Mediaplayer error: ${e.message}")
++                        }
++                    }
++                }
++
++                mTimer = Timer()
++                mTimer!!.schedule(mTask, 0, subsDurationMillis.toLong())
++                val resolvedPath = if (((path == "DEFAULT"))) "${reactContext.cacheDir}/$defaultFileName" else path
++                promise.resolve(resolvedPath)
++            }
++
++            /**
++             * Detect when finish playing.
++             */
++            mediaPlayer!!.setOnCompletionListener { mp ->
++                /**
++                 * Send last event
++                 */
++                val obj = Arguments.createMap()
++                obj.putInt("duration", mp.duration)
++                obj.putInt("currentPosition", mp.currentPosition)
++                obj.putBoolean("isFinished", true);
++                sendEvent(reactContext, "rn-playback", obj)
++                /**
++                 * Reset player.
++                 */
++                Log.d(tag, "Plays completed.")
++                mTimer?.cancel()
++                mp.stop()
++                mp.reset()
++                mp.release()
++                mediaPlayer = null
++            }
++
++            mediaPlayer!!.prepare()
++        } catch (e: IOException) {
++            Log.e(tag, "startPlay() io exception")
++            promise.reject("startPlay", e.message)
++        } catch (e: NullPointerException) {
++            Log.e(tag, "startPlay() null exception")
++        }
++    }
++
++    @ReactMethod
++    fun resumePlayer(promise: Promise) {
++        if (mediaPlayer == null) {
++            promise.reject("resume", "Mediaplayer is null on resume.")
++            return
++        }
++
++        if (mediaPlayer!!.isPlaying) {
++            promise.reject("resume", "Mediaplayer is already running.")
++            return
++        }
++
++        try {
++            mediaPlayer!!.seekTo(mediaPlayer!!.currentPosition)
++            mediaPlayer!!.start()
++            promise.resolve("resume player")
++        } catch (e: Exception) {
++            Log.e(tag, "Mediaplayer resume: " + e.message)
++            promise.reject("resume", e.message)
++        }
++    }
++
++    @ReactMethod
++    fun pausePlayer(promise: Promise) {
++        if (mediaPlayer == null) {
++            promise.reject("pausePlay", "Mediaplayer is null on pause.")
++            return
++        }
++
++        try {
++            mediaPlayer!!.pause()
++            promise.resolve("pause player")
++        } catch (e: Exception) {
++            Log.e(tag, "pausePlay exception: " + e.message)
++            promise.reject("pausePlay", e.message)
++        }
++    }
++
++    @ReactMethod
++    fun seekToPlayer(time: Double, promise: Promise) {
++        if (mediaPlayer == null) {
++            promise.reject("seekTo", "Mediaplayer is null on seek.")
++            return
++        }
++
++        mediaPlayer!!.seekTo(time.toInt())
++        promise.resolve("pause player")
++    }
++
++    private fun sendEvent(reactContext: ReactContext,
++                          eventName: String,
++                          params: WritableMap?) {
++        reactContext
++                .getJSModule<RCTDeviceEventEmitter>(RCTDeviceEventEmitter::class.java)
++                .emit(eventName, params)
++    }
++
++    @ReactMethod
++    fun stopPlayer(promise: Promise) {
++        if (mTimer != null) {
++            mTimer!!.cancel()
++        }
++
++        if (mediaPlayer == null) {
++            promise.resolve("Already stopped player")
++            return
++        }
++
++        try {
++            mediaPlayer!!.stop()
++            mediaPlayer!!.reset()
++            mediaPlayer!!.release()
++            mediaPlayer = null
++            promise.resolve("stopped player")
++        } catch (e: Exception) {
++            Log.e(tag, "stopPlay exception: " + e.message)
++            promise.reject("stopPlay", e.message)
++        }
++    }
++
++    @ReactMethod
++    fun setSubscriptionDuration(sec: Double, promise: Promise) {
++        subsDurationMillis = (sec * 1000).toInt()
++        promise.resolve("setSubscriptionDuration: $subsDurationMillis")
++    }
++
++    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray): Boolean {
++        var requestRecordAudioPermission: Int = 200
++
++        when (requestCode) {
++            requestRecordAudioPermission -> if (grantResults[0] == PackageManager.PERMISSION_GRANTED) return true
++        }
++
++        return false
++    }
++
++    companion object {
++        private var tag = "RNAudioRecorderPlayer"
++        private var defaultFileName = "sound.mp4"
++        private var defaultFileExtensions = listOf(
++            "mp4", // DEFAULT = 0
++            "3gp", // THREE_GPP
++            "mp4", // MPEG_4
++            "amr", // AMR_NB
++            "amr", // AMR_WB
++            "aac", // AAC_ADIF
++            "aac", // AAC_ADTS
++            "rtp", // OUTPUT_FORMAT_RTP_AVP
++            "ts",  // MPEG_2_TSMPEG_2_TS
++            "webm",// WEBM
++            "xxx", // UNUSED
++            "ogg", // OGG
++        )
++    }
++}
+diff --git a/node_modules/react-native-audio-recorder-player/android/bin/src/main/java/com/dooboolab.audiorecorderplayer/RNAudioRecorderPlayerPackage.kt b/node_modules/react-native-audio-recorder-player/android/bin/src/main/java/com/dooboolab.audiorecorderplayer/RNAudioRecorderPlayerPackage.kt
+new file mode 100644
+index 0000000..49a222a
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/bin/src/main/java/com/dooboolab.audiorecorderplayer/RNAudioRecorderPlayerPackage.kt
+@@ -0,0 +1,17 @@
++package com.dooboolab.audiorecorderplayer
++
++import com.facebook.react.ReactPackage
++import com.facebook.react.bridge.NativeModule
++import com.facebook.react.bridge.ReactApplicationContext
++import com.facebook.react.uimanager.ViewManager
++import java.util.*
++
++class RNAudioRecorderPlayerPackage : ReactPackage {
++    override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
++        return Arrays.asList<NativeModule>(RNAudioRecorderPlayerModule(reactContext))
++    }
++
++    override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {
++        return emptyList()
++    }
++}
+\ No newline at end of file
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/generated/source/buildConfig/debug/com/dooboolab/audiorecorderplayer/BuildConfig.java b/node_modules/react-native-audio-recorder-player/android/build/generated/source/buildConfig/debug/com/dooboolab/audiorecorderplayer/BuildConfig.java
+new file mode 100644
+index 0000000..40a8c21
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/generated/source/buildConfig/debug/com/dooboolab/audiorecorderplayer/BuildConfig.java
+@@ -0,0 +1,10 @@
++/**
++ * Automatically generated file. DO NOT MODIFY
++ */
++package com.dooboolab.audiorecorderplayer;
++
++public final class BuildConfig {
++  public static final boolean DEBUG = Boolean.parseBoolean("true");
++  public static final String LIBRARY_PACKAGE_NAME = "com.dooboolab.audiorecorderplayer";
++  public static final String BUILD_TYPE = "debug";
++}
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml b/node_modules/react-native-audio-recorder-player/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+new file mode 100644
+index 0000000..f813cba
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/AndroidManifest.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.dooboolab.audiorecorderplayer" >
++
++    <uses-sdk android:minSdkVersion="24" />
++    <!-- dooboolab -->
++    <uses-permission android:name="android.permission.RECORD_AUDIO" />
++    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json b/node_modules/react-native-audio-recorder-player/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+new file mode 100644
+index 0000000..a5829c5
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/intermediates/aapt_friendly_merged_manifests/debug/processDebugManifest/aapt/output-metadata.json
+@@ -0,0 +1,18 @@
++{
++  "version": 3,
++  "artifactType": {
++    "type": "AAPT_FRIENDLY_MERGED_MANIFESTS",
++    "kind": "Directory"
++  },
++  "applicationId": "com.dooboolab.audiorecorderplayer",
++  "variantName": "debug",
++  "elements": [
++    {
++      "type": "SINGLE",
++      "filters": [],
++      "attributes": [],
++      "outputFile": "AndroidManifest.xml"
++    }
++  ],
++  "elementType": "File"
++}
+\ No newline at end of file
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties b/node_modules/react-native-audio-recorder-player/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+new file mode 100644
+index 0000000..1211b1e
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/intermediates/aar_metadata/debug/writeDebugAarMetadata/aar-metadata.properties
+@@ -0,0 +1,6 @@
++aarFormatVersion=1.0
++aarMetadataVersion=1.0
++minCompileSdk=1
++minCompileSdkExtension=0
++minAndroidGradlePluginVersion=1.0.0
++coreLibraryDesugaringEnabled=false
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json b/node_modules/react-native-audio-recorder-player/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+new file mode 100644
+index 0000000..9e26dfe
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/intermediates/annotation_processor_list/debug/javaPreCompileDebug/annotationProcessors.json
+@@ -0,0 +1 @@
++{}
+\ No newline at end of file
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar b/node_modules/react-native-audio-recorder-player/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar
+new file mode 100644
+index 0000000..e920285
+Binary files /dev/null and b/node_modules/react-native-audio-recorder-player/android/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar differ
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt b/node_modules/react-native-audio-recorder-player/android/build/intermediates/compile_symbol_list/debug/generateDebugRFile/R.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties b/node_modules/react-native-audio-recorder-player/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+new file mode 100644
+index 0000000..8fa29d1
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+@@ -0,0 +1 @@
++#Sun Jun 07 16:26:56 IST 2026
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml b/node_modules/react-native-audio-recorder-player/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+new file mode 100644
+index 0000000..7749bff
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\debug\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\debug\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\build\generated\res\resValues\debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\build\generated\res\resValues\debug"/></dataSet><mergedItems/></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt b/node_modules/react-native-audio-recorder-player/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+new file mode 100644
+index 0000000..78ac5b8
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/intermediates/local_only_symbol_list/debug/parseDebugLocalResources/R-def.txt
+@@ -0,0 +1,2 @@
++R_DEF: Internal format may change without notice
++local
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt b/node_modules/react-native-audio-recorder-player/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+new file mode 100644
+index 0000000..55feef8
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/intermediates/manifest_merge_blame_file/debug/processDebugManifest/manifest-merger-blame-debug-report.txt
+@@ -0,0 +1,14 @@
++1<?xml version="1.0" encoding="utf-8"?>
++2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++3    package="com.dooboolab.audiorecorderplayer" >
++4
++5    <uses-sdk android:minSdkVersion="24" />
++6    <!-- dooboolab -->
++7    <uses-permission android:name="android.permission.RECORD_AUDIO" />
++7-->C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml:5:5-71
++7-->C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml:5:22-68
++8    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
++8-->C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml:6:5-81
++8-->C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml:6:22-78
++9
++10</manifest>
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml b/node_modules/react-native-audio-recorder-player/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+new file mode 100644
+index 0000000..f813cba
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.dooboolab.audiorecorderplayer" >
++
++    <uses-sdk android:minSdkVersion="24" />
++    <!-- dooboolab -->
++    <uses-permission android:name="android.permission.RECORD_AUDIO" />
++    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json b/node_modules/react-native-audio-recorder-player/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+new file mode 100644
+index 0000000..0637a08
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/intermediates/navigation_json/debug/extractDeepLinksDebug/navigation.json
+@@ -0,0 +1 @@
++[]
+\ No newline at end of file
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt b/node_modules/react-native-audio-recorder-player/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+new file mode 100644
+index 0000000..08f4ebe
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/intermediates/nested_resources_validation_report/debug/generateDebugResources/nestedResourcesValidationReport.txt
+@@ -0,0 +1 @@
++0 Warning/Error
+\ No newline at end of file
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt b/node_modules/react-native-audio-recorder-player/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+new file mode 100644
+index 0000000..dfbcb96
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/intermediates/symbol_list_with_package_name/debug/generateDebugRFile/package-aware-r.txt
+@@ -0,0 +1 @@
++com.dooboolab.audiorecorderplayer
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/kotlin/compileDebugKotlin/cacheable/dirty-sources.txt b/node_modules/react-native-audio-recorder-player/android/build/kotlin/compileDebugKotlin/cacheable/dirty-sources.txt
+new file mode 100644
+index 0000000..122adbb
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/kotlin/compileDebugKotlin/cacheable/dirty-sources.txt
+@@ -0,0 +1,2 @@
++C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\java\com\dooboolab.audiorecorderplayer\RNAudioRecorderPlayerModule.kt
++C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\java\com\dooboolab.audiorecorderplayer\RNAudioRecorderPlayerPackage.kt
+\ No newline at end of file
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/kotlin/compileDebugKotlin/local-state/build-history.bin b/node_modules/react-native-audio-recorder-player/android/build/kotlin/compileDebugKotlin/local-state/build-history.bin
+new file mode 100644
+index 0000000..8737795
+Binary files /dev/null and b/node_modules/react-native-audio-recorder-player/android/build/kotlin/compileDebugKotlin/local-state/build-history.bin differ
+diff --git a/node_modules/react-native-audio-recorder-player/android/build/outputs/logs/manifest-merger-debug-report.txt b/node_modules/react-native-audio-recorder-player/android/build/outputs/logs/manifest-merger-debug-report.txt
+new file mode 100644
+index 0000000..c5b5992
+--- /dev/null
++++ b/node_modules/react-native-audio-recorder-player/android/build/outputs/logs/manifest-merger-debug-report.txt
+@@ -0,0 +1,25 @@
++-- Merging decision tree log ---
++manifest
++ADDED from C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml:2:1-7:12
++INJECTED from C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml:2:1-7:12
++	package
++		ADDED from C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml:3:11-54
++		INJECTED from C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml
++	xmlns:android
++		ADDED from C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml:2:11-69
++uses-permission#android.permission.RECORD_AUDIO
++ADDED from C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml:5:5-71
++	android:name
++		ADDED from C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml:5:22-68
++uses-permission#android.permission.WRITE_EXTERNAL_STORAGE
++ADDED from C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml:6:5-81
++	android:name
++		ADDED from C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml:6:22-78
++uses-sdk
++INJECTED from C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml reason: use-sdk injection requested
++INJECTED from C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml
++INJECTED from C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml
++	android:targetSdkVersion
++		INJECTED from C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml
++	android:minSdkVersion
++		INJECTED from C:\Projects\MentalHealthApp\node_modules\react-native-audio-recorder-player\android\src\main\AndroidManifest.xml
+diff --git a/node_modules/react-native-audio-recorder-player/android/src/main/java/com/dooboolab.audiorecorderplayer/RNAudioRecorderPlayerModule.kt b/node_modules/react-native-audio-recorder-player/android/src/main/java/com/dooboolab.audiorecorderplayer/RNAudioRecorderPlayerModule.kt
+index 3624b9f..349961b 100644
+--- a/node_modules/react-native-audio-recorder-player/android/src/main/java/com/dooboolab.audiorecorderplayer/RNAudioRecorderPlayerModule.kt
++++ b/node_modules/react-native-audio-recorder-player/android/src/main/java/com/dooboolab.audiorecorderplayer/RNAudioRecorderPlayerModule.kt
+@@ -44,13 +44,13 @@ class RNAudioRecorderPlayerModule(private val reactContext: ReactApplicationCont
+                 if (Build.VERSION.SDK_INT < 29 &&
+                         (ActivityCompat.checkSelfPermission(reactContext, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
+                         ActivityCompat.checkSelfPermission(reactContext, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED))  {
+-                    ActivityCompat.requestPermissions((currentActivity)!!, arrayOf(
++                    ActivityCompat.requestPermissions((reactContext.currentActivity)!!, arrayOf(
+                             Manifest.permission.RECORD_AUDIO,
+                             Manifest.permission.WRITE_EXTERNAL_STORAGE), 0)
+                     promise.reject("No permission granted.", "Try again after adding permission.")
+                     return
+                 } else if (ActivityCompat.checkSelfPermission(reactContext, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+-                    ActivityCompat.requestPermissions((currentActivity)!!, arrayOf(Manifest.permission.RECORD_AUDIO), 0)
++                    ActivityCompat.requestPermissions((reactContext.currentActivity)!!, arrayOf(Manifest.permission.RECORD_AUDIO), 0)
+                     promise.reject("No permission granted.", "Try again after adding permission.")
+                     return
+                 }
+@@ -223,7 +223,7 @@ class RNAudioRecorderPlayerModule(private val reactContext: ReactApplicationCont
+                         val key = iterator.nextKey()
+                         headers.put(key, httpHeaders.getString(key))
+                     }
+-                    mediaPlayer!!.setDataSource(currentActivity!!.applicationContext, Uri.parse(path), headers)
++                    mediaPlayer!!.setDataSource(reactContext.applicationContext, Uri.parse(path), headers)
+                 } else {
+                     mediaPlayer!!.setDataSource(path)
+                 }
