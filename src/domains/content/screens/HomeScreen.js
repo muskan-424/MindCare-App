@@ -25,6 +25,7 @@ import { updateConcerns } from '../../../redux/actions/profile';
 import { fetchQuoteOfTheDay } from '../../../redux/actions/quote';
 import { clearWelcome } from '../../../redux/actions/auth';
 import { getAvatarForGender } from '../../../utils/avatar';
+import StreakBanner from '../../wellness/components/StreakBanner';
 
 const SEVERITY_LABELS = { 1: 'A bit', 2: 'Somewhat', 3: 'Moderate', 4: 'Quite a bit', 5: 'Very much' };
 const MOOD_TAGS = ['calm', 'anxious', 'sad', 'angry', 'tired', 'hopeful', 'overwhelmed', 'okay'];
@@ -287,6 +288,7 @@ const HomeScreen = props => {
           </View>
         </View>
 
+        <StreakBanner />
 
         {/* Notifications Modal */}
         <Modal

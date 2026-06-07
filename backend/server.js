@@ -64,6 +64,7 @@ app.use('/api/wellness', require('./src/domains/wellness/routes/wellness'));
 app.use('/api/resources', require('./src/domains/content/routes/resources'));
 app.use('/api/groups', require('./src/domains/community/routes/groups'));
 app.use('/api/goals', require('./src/domains/wellness/routes/goals'));
+app.use('/api/streaks', require('./src/domains/wellness/routes/streaks'));
 app.use('/api/peers', require('./src/domains/community/routes/peers'));
 app.use('/api/institutions', require('./src/domains/identity/routes/institutions'));
 app.use('/api/aiIntake', require('./src/domains/assessment/routes/aiIntake'));

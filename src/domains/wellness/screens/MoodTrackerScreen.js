@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Dimensions
+  TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Alert, Dimensions,
+  Modal, Animated
 } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { connect } from 'react-redux';
 import api from '../../../utils/apiClient';
 import { colors, sizes } from '../../../constants/theme';
@@ -10,6 +12,16 @@ import { LineChart, ContributionGraph } from 'react-native-chart-kit';
 
 const RATING_LABELS = { 1: 'Terrible', 2: 'Very Low', 3: 'Low', 4: 'Below Okay', 5: 'Okay', 6: 'Decent', 7: 'Good', 8: 'Great', 9: 'Very Good', 10: 'Excellent' };
 const RATING_COLORS = { low: '#E57373', mid: '#FFB74D', high: '#81C784' };
+
+const BADGE_META = {
+  first_checkin:   { label: 'First Step',       icon: 'star-face',          color: '#F59E0B', desc: 'Logged your first mood check-in' },
+  week_warrior:    { label: 'Week Warrior',      icon: 'fire',               color: '#EF4444', desc: 'Maintained a 7-day streak' },
+  fortnight_focus: { label: 'Fortnight Focus',   icon: 'calendar-check',     color: '#8B5CF6', desc: 'Maintained a 14-day streak' },
+  monthly_master:  { label: 'Monthly Master',    icon: 'crown',              color: '#10B981', desc: 'Maintained a 30-day streak' },
+  mood_explorer:   { label: 'Mood Explorer',     icon: 'compass',            color: '#3B82F6', desc: 'Logged 10 mood check-ins' },
+  consistent_50:   { label: 'Consistent Mind',   icon: 'brain',              color: '#EC4899', desc: 'Logged 50 mood check-ins' },
+  centurion:       { label: 'Centurion',         icon: 'shield-star',        color: '#F97316', desc: 'Logged 100 mood check-ins' },
+};
 
 const MoodTrackerScreen = ({ auth, navigation }) => {
   const [rating, setRating] = useState(5);
@@ -20,6 +32,21 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
   const [loadingTrend, setLoadingTrend] = useState(true);
   const [saved, setSaved] = useState(false);
   const [window, setWindow] = useState(7);
+  const [earnedBadgeMeta, setEarnedBadgeMeta] = useState(null);
+  const [scaleAnim] = useState(new Animated.Value(0));
+
+  useEffect(() => {
+    if (earnedBadgeMeta) {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 5,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      scaleAnim.setValue(0);
+    }
+  }, [earnedBadgeMeta]);
 
   const fetchData = useCallback(async () => {
     setLoadingTrend(true);
@@ -44,9 +71,15 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
     setLoading(true);
     setSaved(false);
     try {
-      await api.post('/api/mood', { rating, note: note.trim() || undefined });
+      const res = await api.post('/api/mood', { rating, note: note.trim() || undefined });
       setSaved(true);
       setNote('');
+      if (res.data && res.data.newBadge) {
+        const meta = BADGE_META[res.data.newBadge];
+        if (meta) {
+          setEarnedBadgeMeta(meta);
+        }
+      }
     } catch (e) {
       Alert.alert('Error', 'Failed to save mood. Please try again.');
     }
@@ -191,6 +224,51 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
           </View>
         )}
       </ScrollView>
+
+      {/* Celebration Modal */}
+      <Modal
+        visible={earnedBadgeMeta !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setEarnedBadgeMeta(null)}
+      >
+        <View style={styles.celebrationOverlay}>
+          <Animated.View
+            style={[
+              styles.celebrationCard,
+              { transform: [{ scale: scaleAnim }] },
+            ]}
+          >
+            {earnedBadgeMeta && (
+              <>
+                <View
+                  style={[
+                    styles.badgeGlow,
+                    { backgroundColor: `${earnedBadgeMeta.color}15`, borderColor: earnedBadgeMeta.color, borderWidth: 2 },
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name={earnedBadgeMeta.icon || 'trophy'}
+                    size={64}
+                    color={earnedBadgeMeta.color}
+                  />
+                </View>
+                <Text style={styles.congratsText}>CONGRATULATIONS!</Text>
+                <Text style={[styles.earnedLabel, { color: earnedBadgeMeta.color }]}>
+                  {earnedBadgeMeta.label}
+                </Text>
+                <Text style={styles.earnedDesc}>{earnedBadgeMeta.desc}</Text>
+                <TouchableOpacity
+                  style={[styles.collectBtn, { backgroundColor: earnedBadgeMeta.color }]}
+                  onPress={() => setEarnedBadgeMeta(null)}
+                >
+                  <Text style={styles.collectBtnText}>Awesome!</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </Animated.View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -239,4 +317,68 @@ const styles = StyleSheet.create({
   insightLabel: { fontSize: 12, fontWeight: '700', color: colors.secondary, marginBottom: 4 },
   insightValue: { fontSize: 13, color: colors.secondary },
   insightSub: { fontSize: 11, color: colors.gray, marginTop: 2 },
+  celebrationOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  celebrationCard: {
+    backgroundColor: colors.white,
+    borderRadius: 24,
+    padding: 30,
+    width: Dimensions.get('window').width - 48,
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+  },
+  badgeGlow: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  congratsText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#64748B',
+    letterSpacing: 1.5,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  earnedLabel: {
+    fontSize: 26,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  earnedDesc: {
+    fontSize: 14,
+    color: '#475569',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+    paddingHorizontal: 10,
+  },
+  collectBtn: {
+    paddingHorizontal: 36,
+    paddingVertical: 14,
+    borderRadius: 28,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+  },
+  collectBtnText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
 });

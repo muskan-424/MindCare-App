@@ -2,8 +2,90 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const MoodEntry = require('../models/MoodEntry');
+const UserStreak = require('../models/UserStreak');
+const Badge = require('../models/Badge');
 const { auth } = require('../../../../middleware/auth');
 const { evaluateBurnoutRisk } = require('../../therapy/services/burnoutPredictionService');
+
+// Badge thresholds: [badgeKey, streakRequired, totalCheckinsRequired]
+const BADGE_THRESHOLDS = [
+  { key: 'first_checkin',   streak: null, checkins: 1  },
+  { key: 'week_warrior',    streak: 7,    checkins: null },
+  { key: 'fortnight_focus', streak: 14,   checkins: null },
+  { key: 'monthly_master',  streak: 30,   checkins: null },
+  { key: 'mood_explorer',   streak: null, checkins: 10 },
+  { key: 'consistent_50',   streak: null, checkins: 50 },
+  { key: 'centurion',       streak: null, checkins: 100 },
+];
+
+/**
+ * processStreak(userId)
+ * Updates the user's streak document and checks/awards badges.
+ * Returns { currentStreak, longestStreak, totalCheckins, newBadge }
+ */
+async function processStreak(userId) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let streakDoc = await UserStreak.findOne({ user: userId });
+  let newBadgeKey = null;
+
+  if (!streakDoc) {
+    // First ever check-in
+    streakDoc = await UserStreak.create({
+      user: userId,
+      currentStreak: 1,
+      longestStreak: 1,
+      lastCheckinDate: today,
+      totalCheckins: 1,
+    });
+  } else {
+    const last = new Date(streakDoc.lastCheckinDate);
+    last.setHours(0, 0, 0, 0);
+    const dayDiff = Math.round((today - last) / (1000 * 60 * 60 * 24));
+
+    if (dayDiff === 0) {
+      // Already checked in today — no streak change, but still check badges
+    } else if (dayDiff === 1) {
+      // Consecutive day — extend streak
+      streakDoc.currentStreak += 1;
+      streakDoc.totalCheckins += 1;
+      streakDoc.lastCheckinDate = today;
+      if (streakDoc.currentStreak > streakDoc.longestStreak) {
+        streakDoc.longestStreak = streakDoc.currentStreak;
+      }
+    } else {
+      // Gap — reset streak
+      streakDoc.currentStreak = 1;
+      streakDoc.totalCheckins += 1;
+      streakDoc.lastCheckinDate = today;
+    }
+    await streakDoc.save();
+  }
+
+  // Check badge thresholds
+  for (const threshold of BADGE_THRESHOLDS) {
+    const streakMet = threshold.streak === null || streakDoc.currentStreak >= threshold.streak;
+    const checkinMet = threshold.checkins === null || streakDoc.totalCheckins >= threshold.checkins;
+    if (streakMet && checkinMet) {
+      try {
+        // insertOne with unique index — silently ignores if already earned
+        const badge = await Badge.create({ user: userId, badgeKey: threshold.key });
+        if (badge) newBadgeKey = threshold.key;  // newly created = just earned
+      } catch (e) {
+        // Duplicate key = already earned, skip
+        if (e.code !== 11000) console.warn('Badge award error:', e.message);
+      }
+    }
+  }
+
+  return {
+    currentStreak: streakDoc.currentStreak,
+    longestStreak: streakDoc.longestStreak,
+    totalCheckins: streakDoc.totalCheckins,
+    newBadge: newBadgeKey,
+  };
+}
 
 // POST /api/mood — log a mood entry
 router.post(
@@ -29,10 +111,22 @@ router.post(
       const entry = new MoodEntry({ user: userId, rating: r, note: note || '' });
       await entry.save();
 
+      // Process streak and badge awards (non-blocking on error)
+      const streakData = await processStreak(userId).catch(e => {
+        console.error('Streak processing error:', e.message);
+        return { currentStreak: 0, longestStreak: 0, totalCheckins: 0, newBadge: null };
+      });
+
       // Asynchronously trigger advanced burnout prediction logic
       evaluateBurnoutRisk(userId).catch(e => console.error('Burnout Trigger Error:', e.message));
 
-      res.json({ id: entry._id, date: entry.date, rating: entry.rating });
+      res.json({
+        id: entry._id,
+        date: entry.date,
+        rating: entry.rating,
+        streak: streakData.currentStreak,
+        newBadge: streakData.newBadge,
+      });
     } catch (err) {
       console.error('Mood log error:', err.message);
       res.status(500).json({ error: 'Failed to save mood' });

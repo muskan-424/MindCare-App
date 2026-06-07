@@ -23,6 +23,12 @@ jest.mock('react-native-vector-icons/Ionicons', () => 'IonIcon');
 jest.mock('react-native-vector-icons/AntDesign', () => 'AntIcon');
 jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => 'MCIcon');
 
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({ navigate: jest.fn(), goBack: jest.fn() }),
+  useRoute: () => ({ params: {} }),
+  useIsFocused: () => true,
+}));
+
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
   SafeAreaProvider: ({ children }) => children,
@@ -265,3 +271,50 @@ describe('7. Chat With Tink Screen Working', () => {
     expect(json).toContain("Message Tink");
   });
 });
+
+describe('8. Badges Screen Working', () => {
+  const BadgesScreen = require('../src/domains/wellness/screens/BadgesScreen').default;
+
+  beforeEach(() => {
+    mockApiGet.mockImplementation((url) => {
+      if (url.includes('/api/streaks/me')) {
+        return Promise.resolve({
+          data: {
+            currentStreak: 3,
+            longestStreak: 5,
+            totalCheckins: 10,
+            badges: [
+              { key: 'first_checkin', earnedAt: '2026-05-28T12:00:00Z', label: 'First Step', icon: 'star-face', color: '#F59E0B', desc: 'Logged your first mood check-in' }
+            ],
+            nextStreakGoal: { label: 'Week Warrior', target: 7, progress: 3, icon: 'fire', color: '#EF4444', desc: 'Maintained a 7-day streak' },
+            nextCheckinGoal: { label: 'Mood Explorer', target: 10, progress: 10, icon: 'compass', color: '#3B82F6', desc: 'Logged 10 mood check-ins' }
+          }
+        });
+      }
+      return Promise.resolve({ data: {} });
+    });
+    mockApiPatch.mockImplementation((url) => {
+      if (url.includes('/api/streaks/seen')) {
+        return Promise.resolve({ data: { success: true } });
+      }
+      return Promise.resolve({ data: {} });
+    });
+  });
+
+  it('renders badges statistics, goals, and badges grid', async () => {
+    let tree;
+    await renderer.act(async () => {
+      tree = renderer.create(
+        <BadgesScreen navigation={mockNavigation} />
+      );
+    });
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).toContain('Achievements & Streaks');
+    expect(json).toContain('Current Streak');
+    expect(json).toContain('Longest Streak');
+    expect(json).toContain('Next Milestone Goals');
+    expect(json).toContain('Week Warrior');
+    expect(json).toContain('Locked');
+  });
+});
+

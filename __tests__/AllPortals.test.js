@@ -48,6 +48,7 @@ jest.mock('react-native-chart-kit', () => ({
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: jest.fn(), goBack: jest.fn() }),
   useRoute: () => ({ params: { institutionId: 'inst-123' } }),
+  useIsFocused: () => true,
 }));
 
 jest.mock('react-native-gesture-handler', () => ({

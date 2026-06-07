@@ -206,6 +206,30 @@ async function run() {
     record('GET Mood Stats  /api/mood/stats', 0, 200, `NETWORK ERROR: ${e.message}`);
   }
 
+  // Gamification — streaks & badges
+  try {
+    const r = await request('GET', '/api/streaks/me', null, true);
+    record('GET Streaks & Badges  /api/streaks/me', r.status, 200, `streak=${r.data?.currentStreak} badgesCount=${r.data?.badges?.length}`);
+  } catch (e) {
+    record('GET Streaks & Badges  /api/streaks/me', 0, 200, `NETWORK ERROR: ${e.message}`);
+  }
+
+  try {
+    const r = await request('PATCH', '/api/streaks/seen', null, true);
+    record('PATCH Mark Badges Seen  /api/streaks/seen', r.status, 200, `success=${r.data?.success}`);
+  } catch (e) {
+    record('PATCH Mark Badges Seen  /api/streaks/seen', 0, 200, `NETWORK ERROR: ${e.message}`);
+  }
+
+  // Input Validation — Mood Rating > 10 should fail (422)
+  try {
+    const r = await request('POST', '/api/mood', { rating: 15, note: 'Too high' }, true);
+    record('POST Mood Invalid Rating (rating=15)  /api/mood', r.status, 422, r.data?.errors ? JSON.stringify(r.data.errors) : '');
+  } catch (e) {
+    record('POST Mood Invalid Rating (rating=15)  /api/mood', 0, 422, `NETWORK ERROR: ${e.message}`);
+  }
+
+
   console.log('\n── SECTION 5: Journals ─────────────────────────────────\n');
 
   // Journals — list
