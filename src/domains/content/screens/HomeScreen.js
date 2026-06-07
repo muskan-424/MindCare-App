@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../../../constants/theme';
 import { Button } from 'react-native-elements';
 import api from '../../../utils/apiClient';
+import * as offlineSync from '../../../utils/offlineSync';
 import { connect } from 'react-redux';
 import TrackedTouchable from '../../../components/TrackedTouchable';
 import { updateConcerns } from '../../../redux/actions/profile';
@@ -112,6 +113,7 @@ const HomeScreen = props => {
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isOfflineMode, setIsOfflineMode] = useState(offlineSync.isOffline());
 
 
   const fetchNotifications = async () => {
@@ -173,6 +175,26 @@ const HomeScreen = props => {
 
   useEffect(() => {
     fetchQuoteOfTheDay();
+  }, []);
+
+  useEffect(() => {
+    offlineSync.startSyncInterval();
+
+    const unsubscribe = offlineSync.subscribe((offline) => {
+      setIsOfflineMode(offline);
+    });
+
+    offlineSync.checkOnlineStatus().then(online => {
+      offlineSync.setOffline(!online);
+      if (online) {
+        offlineSync.syncQueue();
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      offlineSync.stopSyncInterval();
+    };
   }, []);
 
   useEffect(() => {
@@ -239,6 +261,22 @@ const HomeScreen = props => {
   return (
     <ScrollView style={{ backgroundColor: isDarkMode ? '#121212' : '#FFFFFF' }}>
       <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#FFFFFF' }]}>
+        {isOfflineMode && (
+          <View style={[
+            styles.offlineBanner,
+            isDarkMode && { backgroundColor: 'rgba(239, 83, 80, 0.15)', borderColor: 'rgba(239, 83, 80, 0.3)' }
+          ]}>
+            <MaterialCommunityIcons 
+              name="cloud-off-outline" 
+              size={18} 
+              color={isDarkMode ? '#EF5350' : '#D32F2F'} 
+              style={{ marginRight: 8 }} 
+            />
+            <Text style={[styles.offlineText, isDarkMode && { color: '#FF8A80' }]}>
+              Offline Mode Active. Your logs and changes will sync automatically when online.
+            </Text>
+          </View>
+        )}
         {props.auth.welcomeMessage === 'login' && (
           <View style={styles.welcomeBanner}>
             <Text style={styles.welcomeText}>✓ Login successful! Welcome back.</Text>
@@ -499,6 +537,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffff',
+  },
+  offlineBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFEBEE',
+    borderColor: '#FFCDD2',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginHorizontal: 20,
+    marginTop: 15,
+    marginBottom: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  offlineText: {
+    color: '#C62828',
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
+    lineHeight: 18,
   },
   welcomeBanner: {
     backgroundColor: colors.primary,

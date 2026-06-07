@@ -37,15 +37,24 @@ const AddJournal = ({ navigation }) => {
   if (saved && aiResult) {
     return (
       <ScrollView contentContainerStyle={styles.resultContainer}>
-        <Text style={styles.resultTitle}>Journal saved ✓</Text>
+        <Text style={styles.resultTitle}>
+          {aiResult.offline ? 'Saved Offline ✓' : 'Journal saved ✓'}
+        </Text>
         <Text style={styles.resultPreview} numberOfLines={4}>{aiResult.content}</Text>
 
         {/* AI analysis card */}
-        <View style={styles.aiCard}>
-          <Text style={styles.aiCardTitle}>🤖 Tink's Analysis</Text>
+        <View style={[styles.aiCard, aiResult.offline && { borderColor: '#B0BEC5', borderWidth: 1 }]}>
+          <Text style={styles.aiCardTitle}>
+            {aiResult.offline ? '🤖 Queued for Analysis' : "🤖 Tink's Analysis"}
+          </Text>
           {aiResult.aiInsight ? (
             <Text style={styles.aiInsight}>"{aiResult.aiInsight}"</Text>
           ) : null}
+          {aiResult.offline && (
+            <Text style={{ fontSize: 13, color: '#757575', fontStyle: 'italic', marginTop: 10, textAlign: 'center', lineHeight: 18 }}>
+              We'll analyze your entry and update Tink's feedback automatically when connection returns.
+            </Text>
+          )}
           {aiResult.riskLevel ? (
             <View style={[styles.riskBadge, { backgroundColor: RISK_COLORS[aiResult.riskLevel] }]}>
               <Text style={styles.riskBadgeText}>{aiResult.riskLevel} risk</Text>
@@ -60,7 +69,7 @@ const AddJournal = ({ navigation }) => {
               ))}
             </View>
           ) : null}
-          {aiResult.sentimentScore != null ? (
+          {aiResult.sentimentScore != null && !aiResult.offline ? (
             <View style={styles.sentimentRow}>
               <Text style={styles.sentimentLabel}>Sentiment</Text>
               <View style={styles.sentimentBar}>
@@ -77,7 +86,7 @@ const AddJournal = ({ navigation }) => {
         <TouchableOpacity style={styles.doneBtn} onPress={() => navigation.goBack()}>
           <Text style={styles.doneBtnText}>Back to Journal</Text>
         </TouchableOpacity>
-        {aiResult.riskLevel === 'HIGH' || aiResult.riskLevel === 'CRITICAL' ? (
+        {!aiResult.offline && (aiResult.riskLevel === 'HIGH' || aiResult.riskLevel === 'CRITICAL') ? (
           <TouchableOpacity
             style={styles.talkToTinkBtn}
             onPress={() => navigation.navigate('Chat', { name: 'Tink' })}>
