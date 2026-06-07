@@ -8,6 +8,19 @@ import { colors } from '../../../constants/theme';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
+const getMaskedName = (userId) => {
+  const animals = ['Panda', 'Koala', 'Fox', 'Otter', 'Dolphin', 'Owl', 'Deer', 'Squirrel'];
+  const index = parseInt(userId.slice(-4), 16) || 0;
+  const animal = animals[index % animals.length];
+  return `Mindful ${animal}`;
+};
+
+const getCompatibilityScore = (sharedCount) => {
+  if (sharedCount >= 3) return { score: '95%', color: '#10B981' };
+  if (sharedCount === 2) return { score: '85%', color: '#3B82F6' };
+  return { score: '70%', color: '#F59E0B' };
+};
+
 const PeerMatchingScreen = ({ navigation }) => {
   const [isEnabled, setIsEnabled] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
@@ -158,29 +171,38 @@ const PeerMatchingScreen = ({ navigation }) => {
                     <Text style={styles.emptyStateText}>No new suggestions right now. Check back later!</Text>
                   </View>
                 ) : (
-                  suggestions.map(s => (
-                    <View key={s.userId} style={styles.peerCard}>
-                      <View style={styles.peerHeader}>
-                        <View style={styles.avatarPlaceholder}>
-                          <Text style={styles.avatarText}>{s.name[0]}</Text>
-                        </View>
-                        <View style={styles.peerInfo}>
-                          <Text style={styles.peerName}>{s.name}</Text>
-                          <View style={styles.concernRow}>
-                            {s.sharedConcerns.map(c => (
-                              <View key={c} style={styles.concernBadge}>
-                                <Text style={styles.concernLabel}>{c}</Text>
+                  suggestions.map(s => {
+                    const maskedName = getMaskedName(s.userId);
+                    const compat = getCompatibilityScore(s.sharedConcerns.length);
+                    return (
+                      <View key={s.userId} style={styles.peerCard}>
+                        <View style={styles.peerHeader}>
+                          <View style={[styles.avatarPlaceholder, { backgroundColor: '#ECEFF1' }]}>
+                            <MaterialCommunityIcons name="incognito" size={24} color="#546E7A" />
+                          </View>
+                          <View style={styles.peerInfo}>
+                            <View style={styles.nameScoreRow}>
+                              <Text style={styles.peerName}>{maskedName}</Text>
+                              <View style={[styles.compatBadge, { backgroundColor: `${compat.color}15` }]}>
+                                <Text style={[styles.compatLabel, { color: compat.color }]}>{compat.score} Match</Text>
                               </View>
-                            ))}
+                            </View>
+                            <View style={styles.concernRow}>
+                              {s.sharedConcerns.map(c => (
+                                <View key={c} style={styles.concernBadge}>
+                                  <Text style={styles.concernLabel}>{c}</Text>
+                                </View>
+                              ))}
+                            </View>
                           </View>
                         </View>
+                        <Text style={styles.peerBio} numberOfLines={2}>{s.peerBio || "No bio provided."}</Text>
+                        <TouchableOpacity style={styles.connectBtn} onPress={() => handleConnect(s.userId)}>
+                          <Text style={styles.connectBtnText}>Connect with Peer</Text>
+                        </TouchableOpacity>
                       </View>
-                      <Text style={styles.peerBio} numberOfLines={2}>{s.peerBio || "No bio provided."}</Text>
-                      <TouchableOpacity style={styles.connectBtn} onPress={() => handleConnect(s.userId)}>
-                        <Text style={styles.connectBtnText}>Send Connection Request</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))
+                    );
+                  })
                 )}
               </>
             )}
@@ -310,5 +332,21 @@ const styles = StyleSheet.create({
   enableBtn: { backgroundColor: colors.primary, marginTop: 30, paddingHorizontal: 40, paddingVertical: 15, borderRadius: 30 },
   enableBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   emptyState: { alignItems: 'center', marginTop: 60 },
-  emptyStateText: { color: '#999', marginTop: 15, textAlign: 'center' }
+  emptyStateText: { color: '#999', marginTop: 15, textAlign: 'center' },
+  nameScoreRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingRight: 12,
+  },
+  compatBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  compatLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+  }
 });

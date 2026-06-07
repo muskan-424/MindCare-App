@@ -318,3 +318,104 @@ describe('8. Badges Screen Working', () => {
   });
 });
 
+describe('9. Peer Matching Screen Working', () => {
+  const PeerMatchingScreen = require('../src/domains/community/screens/PeerMatchingScreen').default;
+
+  beforeEach(() => {
+    mockApiGet.mockImplementation((url) => {
+      if (url.includes('/api/profile/me')) {
+        return Promise.resolve({ data: { isPeerMatchingEnabled: true } });
+      }
+      if (url.includes('/api/peers/suggestions')) {
+        return Promise.resolve({
+          data: [
+            { userId: 'user-fox-1234', name: 'Original Name', peerBio: 'Looking to connect with others.', concerns: ['anxiety'], sharedConcerns: ['anxiety'] }
+          ]
+        });
+      }
+      if (url.includes('/api/peers/requests')) {
+        return Promise.resolve({ data: { incoming: [], outgoing: [] } });
+      }
+      if (url.includes('/api/peers/list')) {
+        return Promise.resolve({ data: [] });
+      }
+      return Promise.resolve({ data: {} });
+    });
+  });
+
+  it('renders peer matching suggestions with aliases and compatibility badges', async () => {
+    let tree;
+    await renderer.act(async () => {
+      tree = renderer.create(
+        <Provider store={makeStore()}>
+          <PeerMatchingScreen navigation={mockNavigation} />
+        </Provider>
+      );
+      await new Promise(resolve => setTimeout(resolve, 100));
+    });
+    const cache = new Set();
+    const json = JSON.stringify(tree.toJSON(), (k, v) => {
+      if (typeof v === 'object' && v !== null) {
+        if (cache.has(v)) return;
+        cache.add(v);
+      }
+      return v;
+    });
+    expect(json).toContain('Peer Matching');
+    expect(json).toContain('Enable Community Discovery');
+    expect(json).toContain('Discover');
+    expect(json).toContain('Mindful Dolphin');
+    expect(json).toContain('Match');
+  });
+});
+
+describe('10. Group Sessions Screen Working', () => {
+  const GroupSessionsScreen = require('../src/domains/community/screens/GroupSessionsScreen').default;
+
+  beforeEach(() => {
+    mockApiGet.mockImplementation((url) => {
+      if (url.includes('/api/groups/my-groups')) {
+        return Promise.resolve({
+          data: [
+            { _id: 'group-1', title: 'Meditation Circle', description: 'Weekly group meditation', scheduledDate: '2026-06-15T10:00:00Z', meetingLink: 'https://meet.jit.si/test', maxParticipants: 10, participants: ['user-1'], facilitatorName: 'Dr. Smith' }
+          ]
+        });
+      }
+      if (url.includes('/api/groups')) {
+        return Promise.resolve({
+          data: [
+            { _id: 'group-1', title: 'Meditation Circle', description: 'Weekly group meditation', scheduledDate: '2026-06-15T10:00:00Z', meetingLink: 'https://meet.jit.si/test', maxParticipants: 10, participants: ['user-1'], facilitatorName: 'Dr. Smith' },
+            { _id: 'group-2', title: 'Anxiety Support', description: 'Coping skills group', scheduledDate: '2026-06-16T14:00:00Z', meetingLink: 'https://meet.jit.si/test-2', maxParticipants: 8, participants: [], facilitatorName: 'Therapist Jane' }
+          ]
+        });
+      }
+      return Promise.resolve({ data: {} });
+    });
+  });
+
+  it('renders registered and explore tabs and sessions details', async () => {
+    let tree;
+    await renderer.act(async () => {
+      tree = renderer.create(
+        <GroupSessionsScreen navigation={mockNavigation} />
+      );
+      await new Promise(resolve => setTimeout(resolve, 100));
+    });
+    const cache = new Set();
+    const json = JSON.stringify(tree.toJSON(), (k, v) => {
+      if (typeof v === 'object' && v !== null) {
+        if (cache.has(v)) return;
+        cache.add(v);
+      }
+      return v;
+    });
+    expect(json).toContain('Group Therapy Sessions');
+    expect(json).toContain('Registered');
+    expect(json).toContain('Explore Sessions');
+    expect(json).toContain('Meditation Circle');
+    expect(json).toContain('Led by ');
+    expect(json).toContain('Dr. Smith');
+  });
+});
+
+

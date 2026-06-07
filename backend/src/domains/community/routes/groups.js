@@ -147,4 +147,50 @@ router.get('/my-groups', auth, async (req, res) => {
   }
 });
 
+// GET /api/groups
+// Normal user lists all active group sessions
+router.get('/', auth, async (req, res) => {
+  try {
+    const now = new Date();
+    const sessions = await GroupSession.find({
+      isActive: true,
+      scheduledDate: { $gte: now }
+    }).sort({ scheduledDate: 1 }).lean();
+
+    res.json(sessions);
+  } catch (err) {
+    console.error('Fetch group sessions error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch group sessions' });
+  }
+});
+
+// POST /api/groups/:id/join
+// Normal user joins a group session
+router.post('/:id/join', auth, async (req, res) => {
+  try {
+    const group = await GroupSession.findById(req.params.id);
+    if (!group) return res.status(404).json({ error: 'Group session not found' });
+
+    if (!group.isActive) {
+      return res.status(400).json({ error: 'This session is no longer active' });
+    }
+
+    if (group.participants.includes(req.user.id)) {
+      return res.status(400).json({ error: 'You are already registered for this session' });
+    }
+
+    if (group.participants.length >= group.maxParticipants) {
+      return res.status(400).json({ error: 'This session is full' });
+    }
+
+    group.participants.push(req.user.id);
+    await group.save();
+
+    res.json({ message: 'Joined group session successfully', session: group });
+  } catch (err) {
+    console.error('Join group session error:', err.message);
+    res.status(500).json({ error: 'Failed to join group session' });
+  }
+});
+
 module.exports = router;

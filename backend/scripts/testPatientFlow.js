@@ -379,6 +379,19 @@ async function run() {
     record('GET My Groups  /api/groups/my-groups', 0, 200, `NETWORK ERROR: ${e.message}`);
   }
 
+  // Groups — user endpoint (all groups)
+  try {
+    const r = await request('GET', '/api/groups', null, true);
+    record('GET All Groups  /api/groups', r.status, 200, `count=${Array.isArray(r.data) ? r.data.length : '?'}`);
+    if (r.status === 200 && Array.isArray(r.data) && r.data.length > 0) {
+      const sessionId = r.data[0]._id;
+      const joinRes = await request('POST', `/api/groups/${sessionId}/join`, null, true);
+      record('POST Join Group Session  /api/groups/:id/join', joinRes.status, [200, 400].includes(joinRes.status) ? joinRes.status : 200, `message=${joinRes.data?.message || joinRes.data?.error}`);
+    }
+  } catch (e) {
+    record('GET All Groups  /api/groups', 0, 200, `NETWORK ERROR: ${e.message}`);
+  }
+
   // Peers — suggestions
   try {
     const r = await request('GET', '/api/peers/suggestions', null, true);
