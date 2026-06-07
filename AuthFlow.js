@@ -1,10 +1,10 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { NavigationContainer } from '@react-navigation/native';
-import TabNavigation from './src/components/TabNavigation';
-import LoginStackNavigation from './src/components/LoginStackNavigation';
-import AdminStackNavigation from './src/components/AdminStackNavigation';
-import TherapistStackNavigation from './src/components/TherapistStackNavigation';
+import TabNavigation from './src/navigation/TabNavigation';
+import LoginStackNavigation from './src/navigation/LoginStackNavigation';
+import AdminStackNavigation from './src/navigation/AdminStackNavigation';
+import TherapistStackNavigation from './src/navigation/TherapistStackNavigation';
 
 const AuthFlow = () => {
   const auth = useSelector(state => state.auth);

@@ -119,7 +119,7 @@ describe('1. Validation Helper Utilities', () => {
 });
 
 describe('2. Login Screen Working', () => {
-  const Login = require('../src/screens/Login').default;
+  const Login = require('../src/domains/identity/screens/Login').default;
   const store = makeStore();
 
   it('renders Login screen elements', () => {
@@ -139,7 +139,7 @@ describe('2. Login Screen Working', () => {
 });
 
 describe('3. Signup Screen Working', () => {
-  const Signup = require('../src/screens/Signup').default;
+  const Signup = require('../src/domains/identity/screens/Signup').default;
   const store = makeStore();
 
   it('renders Signup form fields and detects role toggles', () => {
@@ -160,7 +160,7 @@ describe('3. Signup Screen Working', () => {
 });
 
 describe('4. Forgot Password Screen Working', () => {
-  const ForgotPasswordScreen = require('../src/screens/ForgotPasswordScreen').default;
+  const ForgotPasswordScreen = require('../src/domains/identity/screens/ForgotPasswordScreen').default;
 
   it('renders input box and instructions', () => {
     let tree;
@@ -177,7 +177,7 @@ describe('4. Forgot Password Screen Working', () => {
 });
 
 describe('5. Mood Tracker Screen Working', () => {
-  const MoodTrackerScreen = require('../src/screens/MoodTrackerScreen').default;
+  const MoodTrackerScreen = require('../src/domains/wellness/screens/MoodTrackerScreen').default;
   const store = makeStore();
 
   beforeEach(() => {
@@ -210,7 +210,7 @@ describe('5. Mood Tracker Screen Working', () => {
 });
 
 describe('6. Goal Tracker Screen Working', () => {
-  const GoalTrackingScreen = require('../src/screens/GoalTrackingScreen').default;
+  const GoalTrackingScreen = require('../src/domains/wellness/screens/GoalTrackingScreen').default;
 
   beforeEach(() => {
     mockApiGet.mockImplementation((url) => {
@@ -249,7 +249,7 @@ describe('6. Goal Tracker Screen Working', () => {
 });
 
 describe('7. Chat With Tink Screen Working', () => {
-  const ChatWithTink = require('../src/screens/ChatWithTink').default;
+  const ChatWithTink = require('../src/domains/community/screens/ChatWithTink').default;
 
   it('renders Tink welcome message and simulation', () => {
     const mockRoute = { params: { name: 'Muskan' } };
