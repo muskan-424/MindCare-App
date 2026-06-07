@@ -45,7 +45,7 @@ async function analyzeWithAI(category, severity, description, moodTag) {
 
   try {
     const llm = new ChatGoogleGenerativeAI({
-      modelName: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash',
       temperature: 0.2,
       apiKey,
     });
@@ -74,7 +74,7 @@ If the text suggests self-harm, suicide, or immediate danger, set riskLevel to "
     const match = text.match(/\{[\s\S]*\}/);
     if (match) return JSON.parse(match[0]);
   } catch (e) {
-    console.warn('Issue analysis AI error:', e.message);
+    console.warn('Issue analysis AI error:', e);
   }
   return null;
 }
