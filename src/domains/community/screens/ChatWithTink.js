@@ -24,7 +24,7 @@ import {
   getCapabilities,
   commitDraft,
 } from '../../../utils/tinkChat';
-import { FEATURE_FLAGS, DEFAULT_CHAT_TONE } from '../../../constants/featureFlags';
+import { FEATURE_FLAGS, DEFAULT_CHAT_TONE, CHAT_TONES } from '../../../constants/featureFlags';
 import {
   startListening,
   stopListening,
@@ -204,6 +204,7 @@ const ChatWithTink = props => {
   const [listening, setListening] = useState(false);
   const [speakEnabled, setSpeakEnabled] = useState(false);
   const [capabilities, setCapabilities] = useState(null);
+  const [chatTone, setChatTone] = useState(DEFAULT_CHAT_TONE);
   const [refiningId, setRefiningId] = useState(null);
   const [draftStatus, setDraftStatus] = useState({}); // messageId -> 'pending'|'committing'|'committed'|'dismissed'
 
@@ -298,7 +299,7 @@ const ChatWithTink = props => {
           history,
           conversationId,
           language,
-          tone: DEFAULT_CHAT_TONE,
+          tone: chatTone,
         });
         if (res.conversationId) setConversationId(res.conversationId);
 
@@ -331,7 +332,7 @@ const ChatWithTink = props => {
         ]);
       }
     },
-    [messages, isTyping, conversationId, language, t, scrollToEnd],
+    [messages, isTyping, conversationId, language, chatTone, t, scrollToEnd],
   );
 
   const handleSend = () => sendText(inputText);
@@ -676,6 +677,24 @@ const ChatWithTink = props => {
           </>
         }
       />
+
+      {/* Tone selector */}
+      <View style={styles.toneBar}>
+        <Text style={styles.toneLabel}>{t('chat.tone_label', 'Tone')}</Text>
+        {CHAT_TONES.map(opt => {
+          const active = chatTone === opt.id;
+          const label = t(`chat.tone_${opt.id}`, opt.label);
+          return (
+            <TouchableOpacity
+              key={opt.id}
+              style={[styles.toneChip, active && styles.toneChipActive]}
+              onPress={() => setChatTone(opt.id)}
+            >
+              <Text style={[styles.toneChipText, active && styles.toneChipTextActive]}>{label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
       {/* Input bar */}
       <View style={styles.inputContainer}>
@@ -1180,6 +1199,42 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   // Input
+  toneBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderColor: '#EFEFEF',
+    gap: 6,
+  },
+  toneLabel: {
+    fontSize: 12,
+    color: colors.gray,
+    fontWeight: '600',
+    marginRight: 4,
+  },
+  toneChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  toneChipActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.primary,
+  },
+  toneChipText: {
+    fontSize: 12,
+    color: colors.gray,
+    fontWeight: '600',
+  },
+  toneChipTextActive: {
+    color: colors.secondary,
+  },
   inputContainer: {
     flexDirection: 'row',
     padding: 10,

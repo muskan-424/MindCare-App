@@ -167,6 +167,10 @@ const translations = {
       rag_hybrid: 'Hybrid RAG',
       model_fast: 'Fast',
       model_quality: 'Quality',
+      tone_label: 'Tone',
+      tone_friendly: 'Friendly',
+      tone_professional: 'Professional',
+      tone_concise: 'Concise',
     },
   },
 
