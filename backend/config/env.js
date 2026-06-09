@@ -78,33 +78,52 @@ const config = {
 // Vars that MUST be present (and secure) before serving production traffic.
 const REQUIRED_IN_PROD = ['MONGODB_URI', 'JWT_SECRET', 'ADMIN_TOKEN'];
 
-/**
- * Validate configuration. Throws in production on missing/insecure values;
- * only warns in non-production so local dev stays frictionless.
- * @returns {typeof config}
- */
-function validateEnv() {
+let envStatus = { ok: true, problems: [] };
+
+function collectEnvProblems() {
   const problems = [];
 
-  for (const key of REQUIRED_IN_PROD) {
-    if (!process.env[key]) problems.push(`${key} is required`);
+  if (isProd) {
+    for (const key of REQUIRED_IN_PROD) {
+      if (!process.env[key]) problems.push(`${key} is required`);
+    }
+    if (!process.env.JWT_SECRET || process.env.JWT_SECRET === DEV_JWT_FALLBACK) {
+      problems.push('JWT_SECRET must be set to a strong, non-default value');
+    }
   }
 
-  // A real secret must be set in production — never ship the dev fallback.
-  if (isProd && (!process.env.JWT_SECRET || process.env.JWT_SECRET === DEV_JWT_FALLBACK)) {
-    problems.push('JWT_SECRET must be set to a strong, non-default value');
-  }
+  return problems;
+}
+
+/**
+ * Validate configuration.
+ * - Long-lived production: throws on missing/insecure values (fail fast).
+ * - Vercel/serverless: warns and records problems so /api/health still boots.
+ * - Development: warns only.
+ * @param {{ throwOnError?: boolean }} [options]
+ * @returns {{ ok: boolean, problems: string[], config: typeof config }}
+ */
+function validateEnv(options = {}) {
+  const problems = collectEnvProblems();
+  const onServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+  const throwOnError = options.throwOnError ?? (isProd && !onServerless);
+
+  envStatus = { ok: problems.length === 0, problems };
 
   if (problems.length) {
     const message = `[config] Environment problems:\n  - ${problems.join('\n  - ')}`;
-    if (isProd) {
+    if (throwOnError) {
       throw new Error(message);
     }
     // eslint-disable-next-line no-console
-    console.warn(`${message}\n[config] Continuing because NODE_ENV is "${environment}".`);
+    console.warn(`${message}\n[config] Continuing because NODE_ENV is "${environment}"${onServerless ? ' (serverless)' : ''}.`);
   }
 
-  return config;
+  return { ...envStatus, config };
 }
 
-module.exports = { config, validateEnv, DEV_JWT_FALLBACK };
+function getEnvStatus() {
+  return envStatus;
+}
+
+module.exports = { config, validateEnv, getEnvStatus, DEV_JWT_FALLBACK };

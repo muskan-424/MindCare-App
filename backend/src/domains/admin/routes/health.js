@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const { config } = require('../../../../config/env');
+const { config, getEnvStatus } = require('../../../../config/env');
 const { client: redisClient } = require('../../../../config/redis');
 
 let aiCapabilities = () => ({ geminiLive: false, mode: 'rule', ragMode: 'local' });
@@ -13,11 +13,15 @@ try {
 // ── GET /api/health ───────────────────────────────────────────────────────────
 // Liveness: cheap, always 200 when the process is up.
 router.get('/', (_req, res) => {
+  const { ok, problems } = getEnvStatus();
   res.json({
-    status: 'ok',
+    status: ok ? 'ok' : 'degraded',
+    configOk: ok,
+    configProblems: ok ? undefined : problems,
     env: config.env,
     version: '1.0.0',
     uptimeSeconds: Math.round(process.uptime()),
+    platform: process.env.VERCEL ? 'vercel' : 'node',
   });
 });
 

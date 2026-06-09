@@ -3,14 +3,15 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const connectDB = require('./config/db');
-const { validateEnv } = require('./config/env');
+const { validateEnv, getEnvStatus } = require('./config/env');
 const { requestLogger } = require('./middleware/requestLogger');
 const { apiLimiter, authLimiter } = require('./middleware/rateLimiters');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 const { metricsMiddleware } = require('./middleware/metrics');
 
-// Validate configuration before doing anything else (fail fast in production).
-validateEnv();
+// Validate configuration before doing anything else.
+// On Vercel, missing secrets defer to 503 responses instead of crashing cold start.
+const envCheck = validateEnv();
 
 const app = express();
 
@@ -31,6 +32,21 @@ app.use(cors());
 app.use(express.json());
 app.use(requestLogger);
 app.use(metricsMiddleware);
+
+// Block API traffic when required env vars are missing (serverless-friendly boot).
+if (!envCheck.ok) {
+  app.use((req, res, next) => {
+    const path = req.originalUrl.split('?')[0];
+    const exempt = ['/', '/api/health', '/api/health/ready', '/api/docs/openapi.json'];
+    if (exempt.includes(path) || path.startsWith('/api/docs')) return next();
+    const { problems } = getEnvStatus();
+    return res.status(503).json({
+      error: 'API not configured — set required environment variables in the deployment dashboard',
+      code: 'CONFIG_INVALID',
+      details: problems,
+    });
+  });
+}
 
 // ─── DB Connection ────────────────────────────────────────────────────────────
 // Called on every cold start. On warm invocations, connectDB returns

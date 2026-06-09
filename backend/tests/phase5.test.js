@@ -433,6 +433,28 @@ describe('Therapist DTO layer', () => {
   });
 });
 
+describe('Serverless / Vercel boot', () => {
+  test('validateEnv does not throw when VERCEL=1 and secrets are missing', () => {
+    const saved = { NODE_ENV: process.env.NODE_ENV, VERCEL: process.env.VERCEL, JWT_SECRET: process.env.JWT_SECRET, MONGODB_URI: process.env.MONGODB_URI, ADMIN_TOKEN: process.env.ADMIN_TOKEN };
+    try {
+      jest.resetModules();
+      process.env.NODE_ENV = 'production';
+      process.env.VERCEL = '1';
+      delete process.env.JWT_SECRET;
+      delete process.env.MONGODB_URI;
+      delete process.env.ADMIN_TOKEN;
+      const { validateEnv, getEnvStatus } = require('../config/env');
+      expect(() => validateEnv()).not.toThrow();
+      expect(getEnvStatus().ok).toBe(false);
+      expect(getEnvStatus().problems.length).toBeGreaterThan(0);
+    } finally {
+      Object.assign(process.env, saved);
+      jest.resetModules();
+    }
+  });
+
+});
+
 describe('Hybrid RAG (local fallback)', () => {
   test('help queries still return local RAG sources without Pinecone', async () => {
     const rag = require('../src/domains/community/services/tinkRagService');

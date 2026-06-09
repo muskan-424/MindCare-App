@@ -149,7 +149,7 @@ A priority-ordered plan to close the gaps found when benchmarking the MindCare
 | 6.1 | **Frontend client tests** — `tinkChat.js` REST + WebSocket helpers. | S | ✅ 12 tests in `__tests__/tinkChat.test.js` |
 | 6.2 | **Screen smoke tests** — fitness categories/plan, institution dashboard; ChatWithTink `act` fix. | M | ✅ `__tests__/ScreenSmoke.test.js` (108 frontend tests total) |
 | 6.3 | **CI green on main** — frontend + backend jobs on every push. | S | ⏳ verify on GitHub Actions after push |
-| 6.4 | **Deploy verification** — prod `/api/health` + `/api/docs/openapi.json`. | S | ⚠️ Vercel (`mind-care-app-five.vercel.app`) returned `FUNCTION_INVOCATION_FAILED` (Jun 2026); investigate serverless boot / env vars |
+| 6.4 | **Deploy verification** — prod `/api/health` + `/api/docs/openapi.json`. | S | 🔧 Fixed cold-start crash when env vars missing (`validateEnv` soft-fail on `VERCEL=1`); set `MONGODB_URI`, `JWT_SECRET`, `ADMIN_TOKEN` in Vercel dashboard (see `backend/.env.example`) |
 
 **Exit criteria:** client and server tested together; production API matches documented shapes.
 
