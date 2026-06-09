@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const IssueReport = require('../../admin/models/IssueReport');
 const { auth } = require('../../../../middleware/auth');
+const { shapeAssignedResource } = require('../../../shared/responseShapers');
 
 // GET /api/resources/assigned
 // Retrieve all curated resources assigned to the user directly from their verified risk reports
@@ -17,11 +18,10 @@ router.get('/assigned', auth, async (req, res) => {
     const allResources = [];
     reports.forEach(report => {
       report.assignedResources.forEach(resource => {
-        allResources.push({
-          ...resource,
+        allResources.push(shapeAssignedResource(resource, {
           assignedAt: report.createdAt,
-          reportCategory: report.category
-        });
+          reportCategory: report.category,
+        }));
       });
     });
 

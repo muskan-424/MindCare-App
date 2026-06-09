@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const WellnessPlan = require('../models/WellnessPlan');
 const { auth } = require('../../../../middleware/auth');
+const { shapeWellnessPlanResponse, shapeWellnessPlan } = require('../../../shared/responseShapers');
 
 // GET /api/wellness
 // Retrieve the user's active (or awaiting) wellness plan
@@ -10,19 +11,7 @@ router.get('/', auth, async (req, res) => {
     const plan = await WellnessPlan.findOne({ user: req.user.id })
       .sort({ createdAt: -1 })
       .lean();
-    if (!plan) return res.json({ exists: false });
-
-    res.json({
-      exists: true,
-      id: String(plan._id),
-      status: plan.status,
-      goals: plan.goals,
-      adminNote: plan.adminNote,
-      planFocus: plan.planFocus,
-      dailyPlans: plan.dailyPlans || [],
-      progress: plan.totalTasksCompleted || 0,
-      createdAt: plan.createdAt,
-    });
+    res.json(shapeWellnessPlanResponse(plan));
   } catch (err) {
     console.error('Get wellness plan error:', err.message);
     res.status(500).json({ error: 'Failed to retrieve wellness plan' });
@@ -55,7 +44,10 @@ router.post('/request', auth, async (req, res) => {
       activePlan.currentStruggles = currentStruggles;
       activePlan.preferredPace = preferredPace;
       await activePlan.save();
-      return res.status(200).json({ message: 'Wellness request updated. Admin is reviewing.', plan: activePlan });
+      return res.status(200).json({
+        message: 'Wellness request updated. Admin is reviewing.',
+        plan: shapeWellnessPlan(activePlan.toObject()),
+      });
     }
 
     // Create a new request
@@ -68,7 +60,10 @@ router.post('/request', auth, async (req, res) => {
     });
     await plan.save();
 
-    res.status(201).json({ message: 'Wellness request submitted successfully.', plan });
+    res.status(201).json({
+      message: 'Wellness request submitted successfully.',
+      plan: shapeWellnessPlan(plan.toObject()),
+    });
   } catch (err) {
     console.error('Submit wellness request error:', err.message);
     res.status(500).json({ error: 'Failed to submit wellness request' });
@@ -110,7 +105,11 @@ router.patch('/task/:dayId/:taskId/complete', auth, async (req, res) => {
     plan.totalTasksCompleted = done;
 
     await plan.save();
-    res.json({ success: true, totalTasksCompleted: done, plan });
+    res.json({
+      success: true,
+      totalTasksCompleted: done,
+      plan: shapeWellnessPlan(plan.toObject()),
+    });
   } catch (err) {
     console.error('Toggle task complete error:', err.message);
     res.status(500).json({ error: 'Failed to update task' });

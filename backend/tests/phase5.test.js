@@ -203,6 +203,36 @@ describe('Community & wellness DTO layer', () => {
     expect(shaped.userName).toBe('Peer');
   });
 
+  test('shapeWellnessPlan preserves nested day and task _id fields', () => {
+    const { shapeWellnessPlan } = require('../src/shared/responseShapers');
+    const shaped = shapeWellnessPlan({
+      _id: '507f1f77bcf86cd799439011',
+      __v: 0,
+      status: 'active',
+      goals: ['Better Sleep'],
+      totalTasksCompleted: 2,
+      dailyPlans: [{
+        _id: '507f1f77bcf86cd799439022',
+        dayNumber: 1,
+        tasks: [{ _id: '507f1f77bcf86cd799439033', title: 'Breathe', type: 'breathing', completed: false }],
+      }],
+    });
+    expect(shaped.__v).toBeUndefined();
+    expect(shaped.dailyPlans[0]._id).toBe('507f1f77bcf86cd799439022');
+    expect(shaped.dailyPlans[0].tasks[0]._id).toBe('507f1f77bcf86cd799439033');
+    expect(shaped.progress).toBe(2);
+  });
+
+  test('shapeBlogFeed stringifies post ids', () => {
+    const { shapeBlogFeed } = require('../src/shared/responseShapers');
+    const shaped = shapeBlogFeed({
+      featured: [{ _id: '507f1f77bcf86cd799439011', title: 'Post', author: 'A', __v: 0 }],
+      popular: [],
+    });
+    expect(shaped.featured[0].id).toBe('507f1f77bcf86cd799439011');
+    expect(shaped.featured[0].__v).toBeUndefined();
+  });
+
   test('shapeStreaksResponse enriches badges with metadata', () => {
     const { shapeStreaksResponse } = require('../src/shared/responseShapers');
     const shaped = shapeStreaksResponse({

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const BlogPost = require('../models/BlogPost');
+const { shapeBlogFeed } = require('../../../shared/responseShapers');
 
 const SEED_FEATURED = [
   { title: 'How Depression Made Me a Morning Person', author: 'McKay Cooper', likes: 100, profilePic: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940', image: 'https://miro.medium.com/max/788/1*bdezOVG_rWX8mXkVn62QOQ.jpeg', section: 'featured' },
@@ -25,24 +26,7 @@ router.get('/', async (_req, res) => {
     await ensureSeeded();
     const featured = await BlogPost.find({ section: 'featured', active: true }).sort({ likes: -1 }).lean();
     const popular = await BlogPost.find({ section: 'popular', active: true }).sort({ likes: -1 }).lean();
-    res.json({
-      featured: featured.map((p) => ({
-        id: p._id,
-        author: p.author,
-        likes: p.likes,
-        title: p.title,
-        profilePic: p.profilePic,
-        image: p.image,
-      })),
-      popular: popular.map((p) => ({
-        id: p._id,
-        title: p.title,
-        likes: p.likes,
-        image: p.image,
-        profilePic: p.profilePic,
-        author: p.author,
-      })),
-    });
+    res.json(shapeBlogFeed({ featured, popular }));
   } catch (err) {
     console.error('Error fetching blogs:', err.message);
     res.status(500).json({ error: 'Failed to load blogs' });

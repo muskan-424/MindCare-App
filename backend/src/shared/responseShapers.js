@@ -434,6 +434,93 @@ function shapeBadgeGoal(threshold, progress, metaMap = {}) {
   };
 }
 
+function shapeWellnessTask(task) {
+  const plain = toPlain(task);
+  const id = plain._id != null ? String(plain._id) : (plain.id != null ? String(plain.id) : undefined);
+  return {
+    id,
+    _id: id,
+    title: plain.title,
+    type: plain.type,
+    description: plain.description || '',
+    resourceLink: plain.resourceLink || '',
+    completed: Boolean(plain.completed),
+    completedAt: plain.completedAt || null,
+  };
+}
+
+function shapeWellnessDay(day) {
+  const plain = toPlain(day);
+  const id = plain._id != null ? String(plain._id) : (plain.id != null ? String(plain.id) : undefined);
+  return {
+    id,
+    _id: id,
+    dayNumber: plain.dayNumber,
+    date: plain.date || null,
+    tasks: (plain.tasks || []).map(shapeWellnessTask),
+  };
+}
+
+function shapeWellnessPlan(plan) {
+  if (!plan) return null;
+  const plain = shapeId(plan);
+  const totalTasksCompleted = plain.totalTasksCompleted || 0;
+  return {
+    id: plain.id || String(plain._id),
+    status: plain.status,
+    goals: plain.goals || [],
+    currentStruggles: plain.currentStruggles || '',
+    preferredPace: plain.preferredPace || 'Moderate',
+    adminNote: plain.adminNote || '',
+    planFocus: plain.planFocus || '',
+    planDurationDays: plain.planDurationDays,
+    dailyPlans: (plain.dailyPlans || []).map(shapeWellnessDay),
+    progress: totalTasksCompleted,
+    totalTasksCompleted,
+    startDate: plain.startDate || null,
+    endDate: plain.endDate || null,
+    createdAt: plain.createdAt,
+    updatedAt: plain.updatedAt,
+  };
+}
+
+function shapeWellnessPlanResponse(plan) {
+  if (!plan) return { exists: false };
+  return { exists: true, ...shapeWellnessPlan(plan) };
+}
+
+function shapeBlogPost(post) {
+  const plain = shapeId(post);
+  return {
+    id: plain.id || String(plain._id),
+    title: plain.title,
+    author: plain.author,
+    likes: plain.likes ?? 0,
+    profilePic: plain.profilePic,
+    image: plain.image,
+    section: plain.section,
+  };
+}
+
+function shapeBlogFeed({ featured = [], popular = [] } = {}) {
+  return {
+    featured: featured.map(shapeBlogPost),
+    popular: popular.map(shapeBlogPost),
+  };
+}
+
+function shapeAssignedResource(resource, { assignedAt, reportCategory } = {}) {
+  const plain = stripInternal(toPlain(resource));
+  return {
+    title: plain.title,
+    type: plain.type,
+    url: plain.url,
+    description: plain.description || '',
+    assignedAt: assignedAt || null,
+    reportCategory: reportCategory || null,
+  };
+}
+
 function shapeStreaksResponse({
   streak,
   badges,
@@ -507,6 +594,11 @@ module.exports = {
   shapeGroupSession,
   shapeGroupSessions,
   shapeStreaksResponse,
+  shapeWellnessPlan,
+  shapeWellnessPlanResponse,
+  shapeBlogPost,
+  shapeBlogFeed,
+  shapeAssignedResource,
   shapeConversationSummary,
   shapeConversationDetail,
   shapeChatResponse,
