@@ -25,7 +25,7 @@ function pickModels({ message = '', facts = '', history = [], role = 'reply' } =
   const fast = [config.ai.fastModel, ...GEMINI_FALLBACKS];
   const quality = [config.ai.qualityModel, ...GEMINI_FALLBACKS];
   if (role === 'classify' || role === 'summary' || role === 'refine' || role === 'translate') {
-    return [...new Set(fast)];
+    return { models: [...new Set(fast)], tier: 'fast' };
   }
   const complexity = String(message).length + String(facts).length + (history?.length || 0) * 50;
   const tier = complexity >= config.ai.complexityChars ? 'quality' : 'fast';

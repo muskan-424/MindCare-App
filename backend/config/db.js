@@ -15,22 +15,31 @@ const connectDB = async () => {
     return cachedConnection;
   }
 
-  try {
-    log('Attempting to connect to MongoDB...');
-    cachedConnection = await mongoose.connect(config.mongoUri, {
-      serverSelectionTimeoutMS: 10000, // fail fast after 10s
-      socketTimeoutMS: 45000,
-      maxPoolSize: 5,  // keep low for M0 free tier connection limits
-      minPoolSize: 1,  // keep 1 connection alive for fast subsequent requests
-    });
-    log(`MongoDB Connected: ${cachedConnection.connection.host}`);
-    return cachedConnection;
-  } catch (err) {
-    console.error('\n================================');
-    console.error('CRITICAL MONGODB CONNECTION ERROR:');
-    console.error(err);
-    console.error('================================\n');
-    cachedConnection = null;
+  const opts = {
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
+    maxPoolSize: 5,
+    minPoolSize: 1,
+  };
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      log(`Attempting to connect to MongoDB (${attempt}/${maxAttempts})...`);
+      cachedConnection = await mongoose.connect(config.mongoUri, opts);
+      log(`MongoDB Connected: ${cachedConnection.connection.host}`);
+      return cachedConnection;
+    } catch (err) {
+      if (attempt < maxAttempts) {
+        log(`MongoDB connect attempt ${attempt} failed — retrying in 3s`);
+        await new Promise(r => setTimeout(r, 3000));
+        continue;
+      }
+      console.error('\n================================');
+      console.error('CRITICAL MONGODB CONNECTION ERROR:');
+      console.error(err);
+      console.error('================================\n');
+      cachedConnection = null;
+    }
   }
 };
 
