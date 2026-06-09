@@ -107,6 +107,52 @@ describe('Goals DTO layer', () => {
   });
 });
 
+describe('Mood DTO layer', () => {
+  test('mood log response uses string id and omits __v', async () => {
+    const { res: reg } = await registerUser();
+    const auth = { Authorization: `Bearer ${reg.body.token}` };
+    const created = await request(app).post('/api/mood').set(auth).send({ rating: 7, note: 'ok day' });
+    expect(created.status).toBe(200);
+    expect(typeof created.body.id).toBe('string');
+    expect(created.body.__v).toBeUndefined();
+    expect(created.body.rating).toBe(7);
+    expect(typeof created.body.streak).toBe('number');
+  });
+});
+
+describe('Journal DTO layer', () => {
+  test('journal list and create responses omit __v', async () => {
+    const { res: reg } = await registerUser();
+    const auth = { Authorization: `Bearer ${reg.body.token}` };
+    const created = await request(app).post('/api/journals').set(auth).send({ content: 'Today was reflective.' });
+    expect(created.status).toBe(200);
+    expect(created.body.__v).toBeUndefined();
+    expect(typeof created.body.id).toBe('string');
+    expect(created.body.content).toBe('Today was reflective.');
+
+    const list = await request(app).get('/api/journals').set(auth);
+    expect(list.status).toBe(200);
+    expect(list.body[0].__v).toBeUndefined();
+    expect(list.body[0].date).toBeDefined();
+  });
+});
+
+describe('Therapist DTO layer', () => {
+  test('shapeTherapistListing strips __v and stringifies id', () => {
+    const { shapeTherapistListing } = require('../src/shared/responseShapers');
+    const shaped = shapeTherapistListing({
+      _id: '507f1f77bcf86cd799439011',
+      name: 'Dr. Test',
+      specialisation: 'Psychologist',
+      email: 'dr@test.com',
+      __v: 0,
+    });
+    expect(shaped.__v).toBeUndefined();
+    expect(shaped.id).toBe('507f1f77bcf86cd799439011');
+    expect(shaped.name).toBe('Dr. Test');
+  });
+});
+
 describe('Hybrid RAG (local fallback)', () => {
   test('help queries still return local RAG sources without Pinecone', async () => {
     const rag = require('../src/domains/community/services/tinkRagService');

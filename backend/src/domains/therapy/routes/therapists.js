@@ -4,6 +4,13 @@ const { body, param, validationResult } = require('express-validator');
 const Therapist = require('../models/Therapist');
 const { auth } = require('../../../../middleware/auth');
 const therapistOnly = require('../../../../middleware/therapistOnly');
+const {
+  shapeTherapistListing,
+  shapeTherapistProfile,
+  shapeTherapistNote,
+  shapeTherapistNotes,
+  shapeClinicalPatientProfile,
+} = require('../../../shared/responseShapers');
 
 // Seed data used only if the database is empty.
 const SEED_THERAPISTS = [
@@ -86,26 +93,18 @@ router.get('/', async (_req, res) => {
       const isSeeded = ['Dr. Brain Wofe', 'Dr. Selkon Kane', 'Dr. SN Mohanty', 'Kate Williams'].includes(t.name);
       if (!isSeeded && t.email) {
         seenEmails.add(t.email.toLowerCase());
-        results.push({
-          id: String(t._id),
-          name: t.name,
-          specialisation: t.specialisation || 'Mental Health Professional',
-          img: t.img || 'https://www.allsmilesdentist.com/wp-content/uploads/2017/08/Doctors-circle.png',
+        results.push(shapeTherapistListing({
+          ...t,
           bio: t.bio || 'Licensed clinician specializing in mental wellness.',
-          email: t.email,
-          contact_no: t.contact_no || '',
-          timing: t.timing || '9:00 AM - 5:00 PM',
-          fee: t.fee || '$15/session',
-          stars: t.stars || 5,
-        });
+        }));
       }
     });
 
     clinicians.forEach(u => {
       if (!seenEmails.has(u.email.toLowerCase())) {
         seenEmails.add(u.email.toLowerCase());
-        results.push({
-          id: String(u._id),
+        results.push(shapeTherapistListing({
+          _id: u._id,
           name: u.name || 'Professional Clinician',
           specialisation: u.role === 'clinician' ? 'Clinical Psychologist' : 'Psychiatrist',
           img: 'https://www.allsmilesdentist.com/wp-content/uploads/2017/08/Doctors-circle.png',
@@ -115,7 +114,7 @@ router.get('/', async (_req, res) => {
           timing: '9:00 AM - 5:00 PM',
           fee: '$15/session',
           stars: 5,
-        });
+        }));
       }
     });
 
@@ -147,18 +146,7 @@ router.get('/me', auth, async (req, res) => {
 
     if (!t) return res.status(404).json({ error: 'Therapist profile not found' });
 
-    res.json({
-      id: String(t._id),
-      name: t.name,
-      specialisation: t.specialisation,
-      img: t.img || 'https://www.allsmilesdentist.com/wp-content/uploads/2017/08/Doctors-circle.png',
-      bio: t.bio || 'Your bio here',
-      email: t.email,
-      contact_no: t.contact_no || '12345678',
-      timing: t.timing || '9:00 AM - 5:00 PM',
-      fee: t.fee || '$50/session',
-      stars: t.stars || 5,
-    });
+    res.json(shapeTherapistProfile(t));
   } catch (err) {
     console.error('Error fetching therapist self:', err.message);
     res.status(500).json({ error: 'Failed to load therapist profile' });
@@ -182,7 +170,7 @@ router.put('/me', auth, async (req, res) => {
     if (fee !== undefined) t.fee = fee;
     if (img !== undefined) t.img = img;
     await t.save();
-    res.json(t);
+    res.json(shapeTherapistProfile(t));
   } catch (err) {
     console.error('Error updating therapist self:', err.message);
     res.status(500).json({ error: 'Failed to update therapist profile' });
@@ -221,7 +209,7 @@ router.get('/notes/:userId', auth, therapistOnly, async (req, res) => {
     .sort({ sessionDate: -1 })
     .lean();
 
-    res.json(notes);
+    res.json(shapeTherapistNotes(notes));
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch notes' });
   }
@@ -243,14 +231,7 @@ router.get('/patient/:userId/profile', auth, therapistOnly, async (req, res) => 
 
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    res.json({
-      user: { id: user._id, name: user.name, email: user.email, age: user.age, gender: user.gender },
-      profile,
-      fusions: fusions.map(f => ({ id: String(f._id), riskLevel: f.riskLevel, riskScore: f.riskScore, aiMarkers: f.aiMarkers, recommendations: f.recommendations, createdAt: f.createdAt })),
-      issues: issues.map(i => ({ id: String(i._id), category: i.category, severity: i.severity, riskLevel: i.riskLevel, safetyTriggered: i.safetyTriggered, createdAt: i.createdAt })),
-      moods: moods.map(m => ({ id: String(m._id), rating: m.rating, note: m.note, date: m.date })),
-      journals: journals.map(j => ({ id: String(j._id), title: j.title, contentPreview: j.content?.substring(0, 50) + '...', date: j.date })),
-    });
+    res.json(shapeClinicalPatientProfile({ user, profile, fusions, issues, moods, journals }));
   } catch (err) {
     console.error('Clinician full profile error:', err.message);
     res.status(500).json({ error: 'Failed to load full profile' });
@@ -295,7 +276,7 @@ router.post(
       });
 
       await note.save();
-      res.status(201).json(note);
+      res.status(201).json(shapeTherapistNote(note));
     } catch (err) {
       console.error('Note creation error:', err.message);
       res.status(500).json({ error: 'Failed to save note' });
@@ -353,7 +334,7 @@ router.patch('/notes/:id', auth, async (req, res) => {
     );
 
     if (!note) return res.status(404).json({ error: 'Note not found or unauthorized' });
-    res.json(note);
+    res.json(shapeTherapistNote(note));
   } catch (err) {
     console.error('Note update error:', err.message);
     res.status(500).json({ error: 'Failed to update note' });

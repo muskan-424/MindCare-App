@@ -3,6 +3,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const JournalEntry = require('../models/JournalEntry');
 const { auth } = require('../../../../middleware/auth');
+const { shapeJournalEntry, shapeJournalEntries } = require('../../../shared/responseShapers');
 
 async function analyzeJournalSentiment(content) {
   const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
@@ -48,18 +49,7 @@ router.get('/', auth, async (req, res) => {
       .sort({ date: -1 })
       .limit(100)
       .lean();
-    res.json(
-      entries.map((e) => ({
-        id: e._id,
-        date: new Date(e.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-        time: new Date(e.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-        content: e.content,
-        sentimentScore: e.sentimentScore,
-        emotionTags: e.emotionTags,
-        riskLevel: e.riskLevel,
-        aiInsight: e.aiInsight,
-      }))
-    );
+    res.json(shapeJournalEntries(entries));
   } catch (err) {
     console.error('Error fetching journals:', err.message);
     res.status(500).json({ error: 'Failed to load journals' });
@@ -101,16 +91,7 @@ router.post(
         await entry.save();
       }
 
-      res.json({
-        id: entry._id,
-        date: new Date(entry.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-        time: new Date(entry.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-        content: entry.content,
-        sentimentScore: entry.sentimentScore,
-        emotionTags: entry.emotionTags,
-        riskLevel: entry.riskLevel,
-        aiInsight: entry.aiInsight,
-      });
+      res.json(shapeJournalEntry(entry));
     } catch (err) {
       console.error('Error creating journal:', err.message);
       res.status(500).json({ error: 'Failed to save journal' });

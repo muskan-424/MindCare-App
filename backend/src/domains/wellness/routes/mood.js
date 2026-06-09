@@ -6,6 +6,7 @@ const UserStreak = require('../models/UserStreak');
 const Badge = require('../models/Badge');
 const { auth } = require('../../../../middleware/auth');
 const { evaluateBurnoutRisk } = require('../../therapy/services/burnoutPredictionService');
+const { shapeMoodLogResponse, shapeMoodToday } = require('../../../shared/responseShapers');
 
 // Badge thresholds: [badgeKey, streakRequired, totalCheckinsRequired]
 const BADGE_THRESHOLDS = [
@@ -120,13 +121,7 @@ router.post(
       // Asynchronously trigger advanced burnout prediction logic
       evaluateBurnoutRisk(userId).catch(e => console.error('Burnout Trigger Error:', e.message));
 
-      res.json({
-        id: entry._id,
-        date: entry.date,
-        rating: entry.rating,
-        streak: streakData.currentStreak,
-        newBadge: streakData.newBadge,
-      });
+      res.json(shapeMoodLogResponse(entry, streakData));
     } catch (err) {
       console.error('Mood log error:', err.message);
       res.status(500).json({ error: 'Failed to save mood' });
@@ -182,10 +177,7 @@ router.get('/today', auth, async (req, res) => {
     const entry = await MoodEntry.findOne({ user: userId, date: { $gte: startOfToday } })
       .sort({ date: -1 })
       .lean();
-    res.json({
-      loggedToday: !!entry,
-      entry: entry ? { date: entry.date, rating: entry.rating, note: entry.note } : null,
-    });
+    res.json(shapeMoodToday(entry));
   } catch (err) {
     console.error('Mood today check error:', err.message);
     res.status(500).json({ loggedToday: false, entry: null });
