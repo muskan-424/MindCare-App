@@ -7,6 +7,7 @@ const therapistOnly = require('../../../../middleware/therapistOnly');
 const {
   shapeAppointmentPatientViews,
   shapeAppointmentPatientView,
+  shapeAppointmentTherapistView,
   shapeAppointmentTherapistViews,
   shapeAppointmentCreateResponse,
 } = require('../../../shared/responseShapers');

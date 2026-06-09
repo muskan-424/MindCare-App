@@ -123,7 +123,12 @@ A priority-ordered plan to close the gaps found when benchmarking the MindCare
 > `GET /api/docs/openapi.json`. Introduced a **response DTO layer**
 > (`src/shared/responseShapers.js`) applied to chat + goals routes so payloads
 > never leak `__v`/password hashes and `_id` is consistently stringified.
-> 9 new tests added (now 35 passing); `swagger-jsdoc` + `swagger-ui-express` added.
+> Extended the DTO layer across admin, fitness, institutions, therapy, wellness, and
+> public content routes (`responseShapers.js` — 40+ shapers). OpenAPI now documents
+> fitness, admin dashboard, pending verification, therapist directory, and institution
+> join endpoints plus `x-admin-token` auth. WebSocket Tink chat (`/api/chat/ws`) shares
+> `chatAgentService` with REST. **75 backend tests** passing; **93 frontend tests**
+> passing (including `tinkChat` client unit tests). `swagger-jsdoc` + `swagger-ui-express`.
 
 | # | Task | Effort | Acceptance criteria |
 |---|------|--------|---------------------|
@@ -133,6 +138,20 @@ A priority-ordered plan to close the gaps found when benchmarking the MindCare
 | 5.4 | **Response schema layer** — shared response shapers/DTOs so payloads are consistent and never leak internal fields (Mongoose `__v`, password hashes, etc.). | M | No endpoint returns internal-only fields; shapes are centralized. |
 
 **Exit criteria:** Tink matches air-tasker's AI cost/quality controls and the API is self-documented.
+
+---
+
+## Phase 6 — Frontend Alignment & Release Readiness (P3) 🔄 IN PROGRESS
+> Goal: keep the React Native client in sync with the shaped API and verify end-to-end in CI.
+
+| # | Task | Effort | Acceptance criteria |
+|---|------|--------|---------------------|
+| 6.1 | **Frontend client tests** — unit tests for `tinkChat.js` (REST normalize, WS URL, socket helpers). | S | `npm test` covers chat client without network; green in CI. |
+| 6.2 | **Screen smoke tests** — ChatWithTink, fitness, institution join screens render with mocked API. | M | No regressions on shaped response fields (`id` vs `_id`, no `__v`). |
+| 6.3 | **CI green on main** — frontend + backend jobs pass on every push. | S | GitHub Actions `frontend-ci` + `backend-ci` both green. |
+| 6.4 | **Deploy verification** — confirm Vercel/Render health + `/api/docs` reachable in prod. | S | `/api/health` 200; OpenAPI loads; WS documented as long-lived-only. |
+
+**Exit criteria:** client and server tested together; production API matches documented shapes.
 
 ---
 

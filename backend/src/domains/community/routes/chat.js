@@ -9,6 +9,7 @@ const {
   refineReply,
   translateText,
   getCapabilities,
+  classifyIntent,
 } = require('../services/tinkChatService');
 const { processAgenticChat } = require('../services/chatAgentService');
 const {
