@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const HomeConfig = require('../models/HomeConfig');
+const { shapeHomeConfig } = require('../../../shared/responseShapers');
 
 const SEED_SELF_HELP = [
   { id: 'Breathing', screen: 'Breathing', label: 'Breathing', icon: 'https://cdn-icons-png.flaticon.com/512/4151/4151607.png', order: 0, active: true },
@@ -34,22 +35,22 @@ router.get('/', async (_req, res) => {
     await ensureSeeded();
     const doc = await HomeConfig.findOne({ key: 'default' }).lean();
     if (!doc) {
-      return res.json({
+      return res.json(shapeHomeConfig({
         selfHelpTiles: SEED_SELF_HELP,
         contentCategories: SEED_CONTENT_CATEGORIES,
-      });
+      }));
     }
     const selfHelpTiles = (doc.selfHelpTiles || [])
       .filter(t => t.active !== false && t.id !== 'MoodCheck')
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     const contentCategories = (doc.contentCategories || []).filter(c => c.active !== false).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    res.json({ selfHelpTiles, contentCategories });
+    res.json(shapeHomeConfig({ selfHelpTiles, contentCategories }));
   } catch (err) {
     console.error('Error fetching home config:', err.message);
-    res.status(500).json({
+    res.status(500).json(shapeHomeConfig({
       selfHelpTiles: SEED_SELF_HELP,
       contentCategories: SEED_CONTENT_CATEGORIES,
-    });
+    }));
   }
 });
 

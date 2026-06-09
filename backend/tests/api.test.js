@@ -290,6 +290,25 @@ describe('Admin API (token + DTO)', () => {
 });
 
 describe('Public content (DTO)', () => {
+  test('GET /api/home returns shaped tiles and categories', async () => {
+    const res = await request(app).get('/api/home');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.selfHelpTiles)).toBe(true);
+    expect(Array.isArray(res.body.contentCategories)).toBe(true);
+    if (res.body.selfHelpTiles.length) {
+      expect(res.body.selfHelpTiles[0].__v).toBeUndefined();
+      expect(res.body.selfHelpTiles[0].id).toBeTruthy();
+    }
+  });
+
+  test('GET /api/quotes returns quote and author', async () => {
+    const res = await request(app).get('/api/quotes');
+    expect(res.status).toBe(200);
+    expect(typeof res.body.quote).toBe('string');
+    expect(typeof res.body.author).toBe('string');
+    expect(res.body.__v).toBeUndefined();
+  });
+
   test('GET /api/blogs returns featured and popular feeds', async () => {
     const res = await request(app).get('/api/blogs');
     expect(res.status).toBe(200);

@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Profile = require('../models/Profile');
 const { config } = require('../../../../config/env');
-const { shapeAuthResponse } = require('../../../shared/responseShapers');
+const { shapeAuthResponse, shapeBroadcastNotifications } = require('../../../shared/responseShapers');
 
 // @route   POST /api/user
 // @desc    Register a new user
@@ -114,7 +114,7 @@ router.get('/notifications', async (req, res) => {
     .limit(30)
     .lean();
 
-    res.json(notifications);
+    res.json(shapeBroadcastNotifications(notifications));
   } catch (err) {
     console.error('Fetch notifications error:', err.message);
     res.status(500).json({ error: 'Failed to fetch notifications' });

@@ -3,6 +3,7 @@ const router = express.Router();
 const { ChatGoogleGenerativeAI } = require('@langchain/google-genai');
 const IssueReport = require('../models/IssueReport');
 const { auth } = require('../../../../middleware/auth');
+const { shapeIssueReportCreated, shapeBurnoutAlertResponse } = require('../../../shared/responseShapers');
 
 const CATEGORIES = [
   'academic_stress',
@@ -125,25 +126,7 @@ router.post('/report', auth, async (req, res) => {
     });
     await report.save();
 
-    res.json({
-      reportId: report._id,
-      timestamp: report.createdAt,
-      sentimentScore: report.sentimentScore,
-      riskLevel: report.riskLevel,
-      emotionTags: report.emotionTags,
-      recommendations: report.recommendations,
-      safety: {
-        showEmergencyScreen: safetyTriggered,
-        helplines: safetyTriggered
-          ? [
-              { name: 'Vandrevala Foundation', number: '1860-2662-345' },
-              { name: 'iCall', number: '9152987821' },
-              { name: 'Crisis Text Line', number: 'Text HOME to 741741' },
-            ]
-          : [],
-        showCounselorPrompt: safetyTriggered,
-      },
-    });
+    res.json(shapeIssueReportCreated(report.toObject(), safetyTriggered));
   } catch (err) {
     console.error('Issue report error:', err.message);
     res.status(500).json({ error: 'Failed to save report' });
@@ -161,7 +144,7 @@ router.get('/burnout-alert', auth, async (req, res) => {
       createdAt: { $gte: twoDaysAgo }
     }).sort({ createdAt: -1 }).lean();
     
-    res.json({ active: !!alert, alert });
+    res.json(shapeBurnoutAlertResponse(alert));
   } catch (err) {
     console.error('Burnout check error:', err.message);
     res.status(500).json({ active: false });

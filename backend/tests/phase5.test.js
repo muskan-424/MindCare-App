@@ -248,6 +248,40 @@ describe('Community & wellness DTO layer', () => {
   });
 });
 
+describe('Content & issues DTO layer', () => {
+  test('shapeHomeConfig strips internal tile fields', () => {
+    const { shapeHomeConfig } = require('../src/shared/responseShapers');
+    const shaped = shapeHomeConfig({
+      selfHelpTiles: [{ id: 'Breathing', screen: 'Breathing', label: 'Breathing', order: 0, active: true, __v: 0 }],
+      contentCategories: [{ id: 'sleep', label: 'Sleep', order: 1 }],
+    });
+    expect(shaped.selfHelpTiles[0].id).toBe('Breathing');
+    expect(shaped.selfHelpTiles[0].__v).toBeUndefined();
+    expect(shaped.selfHelpTiles[0].active).toBeUndefined();
+  });
+
+  test('shapeIssueReportCreated stringifies reportId', () => {
+    const { shapeIssueReportCreated } = require('../src/shared/responseShapers');
+    const shaped = shapeIssueReportCreated({
+      _id: '507f1f77bcf86cd799439011',
+      sentimentScore: -0.3,
+      riskLevel: 'MEDIUM',
+      emotionTags: ['stress'],
+      recommendations: ['rest'],
+      createdAt: new Date('2026-06-01'),
+    }, false);
+    expect(shaped.reportId).toBe('507f1f77bcf86cd799439011');
+    expect(shaped.safety.showEmergencyScreen).toBe(false);
+  });
+
+  test('shapeQuote provides fallback text', () => {
+    const { shapeQuote } = require('../src/shared/responseShapers');
+    const shaped = shapeQuote({});
+    expect(shaped.quote).toContain('Be yourself');
+    expect(shaped.author).toBe('MindCare');
+  });
+});
+
 describe('Admin DTO layer', () => {
   test('shapeAdminUserListing omits password and __v', () => {
     const { shapeAdminUserListing } = require('../src/shared/responseShapers');

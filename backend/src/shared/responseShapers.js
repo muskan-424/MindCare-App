@@ -670,6 +670,214 @@ function shapeAdminWellnessPlan(plan) {
   return shaped;
 }
 
+function shapeAdminMoodEntry(entry) {
+  const plain = shapeId(entry);
+  const user = plain.user && typeof plain.user === 'object' ? plain.user : null;
+  return {
+    id: plain.id || String(plain._id),
+    userId: user ? String(user._id || user.id) : String(plain.user),
+    userName: user?.name,
+    userEmail: user?.email,
+    date: plain.date,
+    rating: plain.rating,
+    note: plain.note || '',
+  };
+}
+
+function shapeActivityFeedEntry(log) {
+  const plain = shapeId(log);
+  const user = plain.user && typeof plain.user === 'object' ? plain.user : null;
+  return {
+    id: plain.id || String(plain._id),
+    userId: user ? String(user._id || user.id) : String(plain.user),
+    userName: user?.name || 'Unknown User',
+    action: plain.action,
+    metadata: plain.metadata || {},
+    timestamp: plain.timestamp || plain.createdAt,
+  };
+}
+
+function shapeBroadcastNotification(notification) {
+  const plain = shapeId(notification);
+  return {
+    id: plain.id || String(plain._id),
+    title: plain.title,
+    body: plain.body,
+    audience: plain.audience,
+    sentBy: plain.sentBy || 'admin',
+    recipientCount: plain.recipientCount,
+    createdAt: plain.createdAt,
+  };
+}
+
+function shapeBroadcastNotifications(notifications) {
+  return (notifications || []).map(shapeBroadcastNotification);
+}
+
+const CRISIS_HELPLINES = [
+  { name: 'Vandrevala Foundation', number: '1860-2662-345' },
+  { name: 'iCall', number: '9152987821' },
+  { name: 'Crisis Text Line', number: 'Text HOME to 741741' },
+];
+
+function shapeIssueReportCreated(report, safetyTriggered) {
+  const plain = shapeId(report);
+  return {
+    reportId: plain.id || String(plain._id),
+    timestamp: plain.createdAt,
+    sentimentScore: plain.sentimentScore,
+    riskLevel: plain.riskLevel,
+    emotionTags: plain.emotionTags || [],
+    recommendations: plain.recommendations || [],
+    safety: {
+      showEmergencyScreen: Boolean(safetyTriggered),
+      helplines: safetyTriggered ? CRISIS_HELPLINES : [],
+      showCounselorPrompt: Boolean(safetyTriggered),
+    },
+  };
+}
+
+function shapeBurnoutAlertResponse(alert) {
+  if (!alert) return { active: false, alert: null };
+  const plain = shapeId(alert);
+  return {
+    active: true,
+    alert: {
+      id: plain.id || String(plain._id),
+      category: plain.category,
+      riskLevel: plain.riskLevel,
+      recommendations: plain.recommendations || [],
+      createdAt: plain.createdAt,
+    },
+  };
+}
+
+function shapeEmergencyContactSubmit(contact) {
+  const plain = shapeId(contact);
+  return {
+    id: plain.id || String(plain._id),
+    name: plain.name,
+    relationship: plain.relationship,
+    status: plain.status,
+    message: 'Emergency contact submitted. An admin will verify it shortly.',
+  };
+}
+
+function shapeEmergencyContactUserView(contact) {
+  if (!contact) return { exists: false };
+  const plain = shapeId(contact);
+  const p = plain.phone || '';
+  const masked = p.length > 4 ? p.slice(0, -4).replace(/\d/g, 'X') + p.slice(-4) : 'XXXX';
+  return {
+    exists: true,
+    id: plain.id || String(plain._id),
+    name: plain.name,
+    relationship: plain.relationship,
+    phoneMasked: masked,
+    reachVia: plain.reachVia,
+    userMessage: plain.userMessage || '',
+    status: plain.status,
+    adminNote: plain.adminNote || '',
+    rejectionReason: plain.rejectionReason || '',
+    callLogCount: plain.callLog?.length || 0,
+    lastCalledAt: plain.callLog?.length ? plain.callLog[plain.callLog.length - 1].calledAt : null,
+  };
+}
+
+function shapeHomeTile(tile) {
+  const plain = stripInternal(toPlain(tile));
+  return {
+    id: plain.id,
+    screen: plain.screen,
+    label: plain.label,
+    icon: plain.icon,
+    order: plain.order ?? 0,
+  };
+}
+
+function shapeContentCategory(category) {
+  const plain = stripInternal(toPlain(category));
+  return {
+    id: plain.id,
+    label: plain.label,
+    order: plain.order ?? 0,
+  };
+}
+
+function shapeHomeConfig({ selfHelpTiles = [], contentCategories = [] } = {}) {
+  return {
+    selfHelpTiles: selfHelpTiles.map(shapeHomeTile),
+    contentCategories: contentCategories.map(shapeContentCategory),
+  };
+}
+
+function shapeQuote({ quote, author }) {
+  return {
+    quote: quote || 'Be yourself no matter what they say!',
+    author: author || 'MindCare',
+  };
+}
+
+function shapeAdminAnalytics({ riskTrend = [], moodHeatmap = [], kpis = {} } = {}) {
+  return {
+    riskTrend: riskTrend.map(r => ({
+      date: r._id?.date || r._id,
+      count: r.count,
+      avgSeverity: r.avgSeverity,
+    })),
+    moodHeatmap: moodHeatmap.map(m => ({
+      date: m._id,
+      avgRating: m.avgRating,
+      count: m.count,
+    })),
+    kpis,
+  };
+}
+
+function shapeAssessmentSessionStart({ session, questions }) {
+  const plain = shapeId(session);
+  return {
+    sessionId: plain.id || String(plain._id),
+    status: plain.status,
+    requiredModalities: plain.requiredModalities || [],
+    questions: questions || [],
+  };
+}
+
+function shapeFusionResult(result) {
+  if (!result) return null;
+  const plain = shapeId(result);
+  return {
+    riskScore: plain.riskScore,
+    riskLevel: plain.riskLevel,
+    confidence: plain.confidence,
+    contradictionFlags: plain.contradictionFlags || [],
+    recommendations: plain.recommendations || [],
+    modelVersion: plain.modelVersion,
+  };
+}
+
+function shapeAssessmentReport({ session, featureVector, fusion }) {
+  const s = shapeId(session);
+  return {
+    session: {
+      id: s.id || String(s._id),
+      status: s.status,
+      triggerType: s.triggerType,
+      requiredModalities: s.requiredModalities || [],
+      completedModalities: s.completedModalities || [],
+      startedAt: s.startedAt || s.createdAt,
+      completedAt: s.completedAt || null,
+    },
+    modalities: {
+      text: featureVector?.text || null,
+      voice: featureVector?.voice || null,
+      vision: featureVector?.vision || null,
+    },
+    fusion: shapeFusionResult(fusion),
+  };
+}
+
 function shapeChatResponse(payload) {
   return {
     reply: payload.reply,
@@ -731,6 +939,20 @@ module.exports = {
   shapeAdminResource,
   shapeAdminAuditLogEntry,
   shapeAdminWellnessPlan,
+  shapeAdminMoodEntry,
+  shapeActivityFeedEntry,
+  shapeBroadcastNotification,
+  shapeBroadcastNotifications,
+  shapeIssueReportCreated,
+  shapeBurnoutAlertResponse,
+  shapeEmergencyContactSubmit,
+  shapeEmergencyContactUserView,
+  shapeHomeConfig,
+  shapeQuote,
+  shapeAdminAnalytics,
+  shapeAssessmentSessionStart,
+  shapeFusionResult,
+  shapeAssessmentReport,
   shapeConversationSummary,
   shapeConversationDetail,
   shapeChatResponse,

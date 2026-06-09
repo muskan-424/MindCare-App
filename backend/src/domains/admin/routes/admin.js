@@ -24,6 +24,10 @@ const {
   shapeAdminResource,
   shapeAdminAuditLogEntry,
   shapeAdminWellnessPlan,
+  shapeAdminMoodEntry,
+  shapeActivityFeedEntry,
+  shapeBroadcastNotification,
+  shapeAdminAnalytics,
   shapeTherapistProfile,
 } = require('../../../shared/responseShapers');
 
@@ -162,17 +166,7 @@ router.get('/mood', adminAuth, async (req, res) => {
       .sort({ date: -1 })
       .populate('user', 'name email')
       .lean();
-    res.json(
-      moods.map((m) => ({
-        id: String(m._id),
-        userId: String(m.user?._id || m.user),
-        userName: m.user?.name,
-        userEmail: m.user?.email,
-        date: m.date,
-        rating: m.rating,
-        note: m.note,
-      }))
-    );
+    res.json(moods.map(shapeAdminMoodEntry));
   } catch (err) {
     console.error('Admin mood error:', err.message);
     res.status(500).json({ error: 'Failed to load moods' });
@@ -209,15 +203,7 @@ router.get('/activity_feed', adminAuth, async (req, res) => {
       .populate('user', 'name email')
       .lean();
     
-    const result = logs.map(l => ({
-      id: String(l._id),
-      userId: String(l.user?._id || l.user),
-      userName: l.user?.name || 'Unknown User',
-      action: l.action,
-      metadata: l.metadata,
-      timestamp: l.timestamp
-    }));
-    res.json(result);
+    res.json(logs.map(shapeActivityFeedEntry));
   } catch (err) {
     console.error('Admin feed error:', err.message);
     res.status(500).json({ error: 'Failed to load activity feed' });
@@ -1127,15 +1113,7 @@ router.get('/notifications', adminAuth, async (req, res) => {
     ]);
     res.json({
       total,
-      notifications: notifications.map(n => ({
-        id: String(n._id),
-        title: n.title,
-        body: n.body,
-        audience: n.audience,
-        sentBy: n.sentBy,
-        recipientCount: n.recipientCount,
-        createdAt: n.createdAt,
-      })),
+      notifications: notifications.map(shapeBroadcastNotification),
     });
   } catch (err) {
     console.error('Get notifications error:', err.message);
@@ -1188,16 +1166,16 @@ router.get('/analytics', adminAuth, async (req, res) => {
       Appointment.countDocuments({ status: 'awaiting_admin' })
     ]);
 
-    res.json({
-      riskTrend: riskTrend.map(r => ({ _id: { date: r._id }, count: r.count, avgSeverity: r.avgSeverity })),
-      moodHeatmap: moodHeatmap.map(m => ({ _id: m._id, avgRating: m.avgRating, count: m.count })),
+    res.json(shapeAdminAnalytics({
+      riskTrend,
+      moodHeatmap,
       kpis: {
         totalUsers,
         escalatedReports,
         activeTherapists,
-        pendingAppointments
-      }
-    });
+        pendingAppointments,
+      },
+    }));
   } catch (error) {
     console.error('Analytics Error:', error);
     res.status(500).json({ error: 'Failed to generate analytics' });

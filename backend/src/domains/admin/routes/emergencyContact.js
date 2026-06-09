@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const EmergencyContact = require('../models/EmergencyContact');
 const { auth } = require('../../../../middleware/auth');
+const { shapeEmergencyContactSubmit, shapeEmergencyContactUserView } = require('../../../shared/responseShapers');
 
 // POST /api/emergency-contact — user submits/updates their emergency contact
 router.post('/', auth, async (req, res) => {
@@ -41,13 +42,7 @@ router.post('/', auth, async (req, res) => {
       { upsert: true, new: true }
     );
 
-    res.status(201).json({
-      id: String(contact._id),
-      name: contact.name,
-      relationship: contact.relationship,
-      status: contact.status,
-      message: 'Emergency contact submitted. An admin will verify it shortly.',
-    });
+    res.status(201).json(shapeEmergencyContactSubmit(contact.toObject()));
   } catch (err) {
     console.error('Emergency contact submit error:', err.message);
     res.status(500).json({ error: 'Failed to save emergency contact' });
@@ -58,26 +53,7 @@ router.post('/', auth, async (req, res) => {
 router.get('/', auth, async (req, res) => {
   try {
     const contact = await EmergencyContact.findOne({ user: req.user.id }).lean();
-    if (!contact) return res.json({ exists: false });
-
-    // Mask phone for privacy: +91-XXXXX-X5678
-    const p = contact.phone;
-    const masked = p.length > 4 ? p.slice(0, -4).replace(/\d/g, 'X') + p.slice(-4) : 'XXXX';
-
-    res.json({
-      exists: true,
-      id: String(contact._id),
-      name: contact.name,
-      relationship: contact.relationship,
-      phoneMasked: masked,
-      reachVia: contact.reachVia,
-      userMessage: contact.userMessage,
-      status: contact.status,
-      adminNote: contact.adminNote,
-      rejectionReason: contact.rejectionReason,
-      callLogCount: contact.callLog?.length || 0,
-      lastCalledAt: contact.callLog?.length ? contact.callLog[contact.callLog.length - 1].calledAt : null,
-    });
+    res.json(shapeEmergencyContactUserView(contact));
   } catch (err) {
     console.error('Get emergency contact error:', err.message);
     res.status(500).json({ error: 'Failed to get emergency contact' });

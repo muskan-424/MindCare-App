@@ -10,6 +10,11 @@ const { assessVisionPayload } = require('../services/ai/visionAssessmentService'
 const { fuseAssessment } = require('../services/ai/fusionAssessmentService');
 const { getSessionQuestions } = require('../services/ai/questionPolicyService');
 const { assessMoodTrend } = require('../services/ai/moodTrendService');
+const {
+  shapeAssessmentSessionStart,
+  shapeFusionResult,
+  shapeAssessmentReport,
+} = require('../../../shared/responseShapers');
 
 router.use(auth);
 
@@ -43,12 +48,10 @@ router.post('/session/start', async (req, res) => {
 
     await AssessmentFeatureVector.create({ session: session._id, user: userId });
 
-    res.status(201).json({
-      sessionId: session._id,
-      status: session.status,
-      requiredModalities: session.requiredModalities,
+    res.status(201).json(shapeAssessmentSessionStart({
+      session: session.toObject(),
       questions: getSessionQuestions(),
-    });
+    }));
   } catch (err) {
     console.error('AI Intake session start error:', err);
     res.status(500).json({ error: 'Failed to start AI intake session', details: err.message, stack: err.stack });
@@ -184,14 +187,8 @@ router.post('/session/:sessionId/fusion/run', async (req, res) => {
 
     res.json({
       success: true,
-      sessionId: session._id,
-      result: {
-        riskScore: result.riskScore,
-        riskLevel: result.riskLevel,
-        confidence: result.confidence,
-        contradictionFlags: result.contradictionFlags,
-        recommendations: result.recommendations,
-      },
+      sessionId: String(session._id),
+      result: shapeFusionResult(result.toObject()),
     });
   } catch (err) {
     console.error('AI Intake fusion error:', err.message);
@@ -210,32 +207,7 @@ router.get('/session/:sessionId/report', async (req, res) => {
     const featureVector = await AssessmentFeatureVector.findOne({ session: session._id }).lean();
     const fusion = await AssessmentFusionResult.findOne({ session: session._id }).lean();
 
-    res.json({
-      session: {
-        id: session._id,
-        status: session.status,
-        triggerType: session.triggerType,
-        requiredModalities: session.requiredModalities,
-        completedModalities: session.completedModalities,
-        startedAt: session.startedAt,
-        completedAt: session.completedAt,
-      },
-      modalities: {
-        text: featureVector?.text || null,
-        voice: featureVector?.voice || null,
-        vision: featureVector?.vision || null,
-      },
-      fusion: fusion
-        ? {
-            riskScore: fusion.riskScore,
-            riskLevel: fusion.riskLevel,
-            confidence: fusion.confidence,
-            contradictionFlags: fusion.contradictionFlags,
-            recommendations: fusion.recommendations,
-            modelVersion: fusion.modelVersion,
-          }
-        : null,
-    });
+    res.json(shapeAssessmentReport({ session, featureVector, fusion }));
   } catch (err) {
     console.error('AI Intake report fetch error:', err.message);
     res.status(500).json({ error: 'Failed to fetch assessment report' });

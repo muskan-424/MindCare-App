@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Quote = require('../models/Quote');
 const { client } = require('../../../../config/redis');
+const { shapeQuote } = require('../../../shared/responseShapers');
 
 // Safe Redis helpers — gracefully no-op when Redis is not connected locally
 async function safeRedisGet(key) {
@@ -37,12 +38,12 @@ router.get('/', async (req, res) => {
     // 2. If not in cache, fetch from MongoDB
     const count = await Quote.countDocuments();
     if (count === 0) {
-      return res.json({ quote: 'Be yourself no matter what they say!', author: 'MindCare' });
+      return res.json(shapeQuote({}));
     }
     const random = Math.floor(Math.random() * count);
     const quoteDoc = await Quote.findOne().skip(random);
 
-    const responseData = { quote: quoteDoc.quote, author: quoteDoc.author };
+    const responseData = shapeQuote({ quote: quoteDoc.quote, author: quoteDoc.author });
 
     // 3. Save to Redis Cache (expire in 1 hour) — skipped when Redis is offline
     await safeRedisSet('quote_of_the_day', 3600, JSON.stringify(responseData));
