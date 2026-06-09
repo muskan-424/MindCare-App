@@ -3,6 +3,11 @@ const router = express.Router();
 const PeerConnection = require('../models/PeerConnection');
 const Profile = require('../../identity/models/Profile');
 const { auth } = require('../../../../middleware/auth');
+const {
+  shapePeerSuggestion,
+  shapePeerRequestsResponse,
+  shapePeerConnection,
+} = require('../../../shared/responseShapers');
 
 router.use(auth);
 
@@ -33,14 +38,10 @@ router.get('/suggestions', async (req, res) => {
       .limit(10)
       .lean();
 
-    const result = matches.map((m) => ({
-      userId: String(m.userId),
-      name: m.name,
-      peerBio: m.peerBio || '',
-      sharedConcerns: m.concerns.filter((c) => myProfile.concerns.includes(c)),
-    }));
-
-    res.json(result);
+    res.json(matches.map((m) => shapePeerSuggestion(
+      m,
+      m.concerns.filter((c) => myProfile.concerns.includes(c)),
+    )));
   } catch (err) {
     console.error('Suggestions error:', err.message);
     res.status(500).json({ error: 'Failed to find suggested peers' });
@@ -92,20 +93,7 @@ router.get('/requests', async (req, res) => {
       .populate('recipient', 'name email')
       .lean();
 
-    res.json({
-        incoming: incoming.map(i => ({
-            requestId: String(i._id),
-            userId: String(i.requester?._id),
-            userName: i.requester?.name,
-            sharedConcerns: i.sharedConcerns
-        })),
-        outgoing: outgoing.map(o => ({
-            requestId: String(o._id),
-            userId: String(o.recipient?._id),
-            userName: o.recipient?.name,
-            sharedConcerns: o.sharedConcerns
-        }))
-    });
+    res.json(shapePeerRequestsResponse(incoming, outgoing));
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch requests' });
   }
@@ -149,18 +137,7 @@ router.get('/list', async (req, res) => {
     .populate('recipient', 'name email')
     .lean();
 
-    const peers = conns.map(c => {
-        const isRequester = String(c.requester?._id) === String(req.user.id);
-        const otherUser = isRequester ? c.recipient : c.requester;
-        return {
-            userId: String(otherUser?._id),
-            userName: otherUser?.name,
-            sharedConcerns: c.sharedConcerns,
-            connectedAt: c.updatedAt
-        };
-    });
-
-    res.json(peers);
+    res.json(conns.map(c => shapePeerConnection(c, req.user.id)));
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch peers' });
   }

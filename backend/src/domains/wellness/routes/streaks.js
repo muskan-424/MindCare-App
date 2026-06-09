@@ -3,6 +3,7 @@ const router = express.Router();
 const { auth } = require('../../../../middleware/auth');
 const UserStreak = require('../models/UserStreak');
 const Badge = require('../models/Badge');
+const { shapeStreaksResponse } = require('../../../shared/responseShapers');
 
 // ─── Badge metadata (label, icon name, color, description) ───────────────────
 const BADGE_META = {
@@ -36,33 +37,13 @@ router.get('/me', auth, async (req, res) => {
       { key: 'centurion', target: 100 },
     ];
 
-    const earnedKeys = new Set(badges.map(b => b.badgeKey));
-    const currentStreak = streak?.currentStreak || 0;
-    const totalCheckins = streak?.totalCheckins || 0;
-
-    // Find next unlockable streak badge
-    const nextStreakBadge = streakThresholds.find(t => !earnedKeys.has(t.key));
-    // Find next unlockable checkin badge
-    const nextCheckinBadge = checkinThresholds.find(t => !earnedKeys.has(t.key));
-
-    res.json({
-      currentStreak,
-      longestStreak: streak?.longestStreak || 0,
-      totalCheckins,
-      lastCheckinDate: streak?.lastCheckinDate || null,
-      badges: badges.map(b => ({
-        key: b.badgeKey,
-        earnedAt: b.earnedAt,
-        seen: b.seen,
-        ...BADGE_META[b.badgeKey],
-      })),
-      nextStreakGoal: nextStreakBadge
-        ? { key: nextStreakBadge.key, target: nextStreakBadge.target, progress: currentStreak, ...BADGE_META[nextStreakBadge.key] }
-        : null,
-      nextCheckinGoal: nextCheckinBadge
-        ? { key: nextCheckinBadge.key, target: nextCheckinBadge.target, progress: totalCheckins, ...BADGE_META[nextCheckinBadge.key] }
-        : null,
-    });
+    res.json(shapeStreaksResponse({
+      streak,
+      badges,
+      badgeMeta: BADGE_META,
+      streakThresholds,
+      checkinThresholds,
+    }));
   } catch (err) {
     console.error('Streaks fetch error:', err.message);
     res.status(500).json({ error: 'Failed to load streak data' });

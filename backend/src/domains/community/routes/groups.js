@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const GroupSession = require('../models/GroupSession');
 const { auth } = require('../../../../middleware/auth');
+const { shapeGroupSession, shapeGroupSessions } = require('../../../shared/responseShapers');
 
 // Note: Admin authentication middleware (you'd typically import this)
 function adminAuth(req, res, next) {
@@ -44,7 +45,7 @@ router.post('/', adminAuth, async (req, res) => {
     });
 
     await newGroup.save();
-    res.status(201).json({ message: 'Group session created', session: newGroup });
+    res.status(201).json({ message: 'Group session created', session: shapeGroupSession(newGroup.toObject()) });
   } catch (err) {
     console.error('Create group error:', err.message);
     res.status(500).json({ error: 'Failed to create group session' });
@@ -57,8 +58,9 @@ router.get('/admin', adminAuth, async (req, res) => {
   try {
     const groups = await GroupSession.find()
       .sort({ scheduledDate: 1 })
-      .populate('participants', 'name email');
-    res.json(groups);
+      .populate('participants', 'name email')
+      .lean();
+    res.json(shapeGroupSessions(groups, { populateParticipants: true }));
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch groups' });
   }
@@ -84,8 +86,10 @@ router.patch('/:id/assign', adminAuth, async (req, res) => {
     await group.save();
     
     // Optionally return populated group
-    const populated = await GroupSession.findById(req.params.id).populate('participants', 'name email');
-    res.json({ message: 'User assigned to group successfully', session: populated });
+    const populated = await GroupSession.findById(req.params.id)
+      .populate('participants', 'name email')
+      .lean();
+    res.json({ message: 'User assigned to group successfully', session: shapeGroupSession(populated, { populateParticipants: true }) });
   } catch (err) {
     console.error('Assign user to group error:', err.message);
     res.status(500).json({ error: 'Failed to assign user' });
@@ -103,8 +107,10 @@ router.patch('/:id/remove', adminAuth, async (req, res) => {
     group.participants = group.participants.filter(id => id.toString() !== userId);
     await group.save();
 
-    const populated = await GroupSession.findById(req.params.id).populate('participants', 'name email');
-    res.json({ message: 'User removed from group successfully', session: populated });
+    const populated = await GroupSession.findById(req.params.id)
+      .populate('participants', 'name email')
+      .lean();
+    res.json({ message: 'User removed from group successfully', session: shapeGroupSession(populated, { populateParticipants: true }) });
   } catch (err) {
     console.error('Remove user from group error:', err.message);
     res.status(500).json({ error: 'Failed to remove user' });
@@ -138,9 +144,9 @@ router.get('/my-groups', auth, async (req, res) => {
       participants: req.user.id,
       isActive: true,
       scheduledDate: { $gte: past24h }
-    }).sort({ scheduledDate: 1 });
-    
-    res.json(assignedGroups);
+    }).sort({ scheduledDate: 1 }).lean();
+
+    res.json(shapeGroupSessions(assignedGroups));
   } catch (err) {
     console.error('Fetch my groups error:', err.message);
     res.status(500).json({ error: 'Failed to fetch assigned groups' });
@@ -157,7 +163,7 @@ router.get('/', auth, async (req, res) => {
       scheduledDate: { $gte: now }
     }).sort({ scheduledDate: 1 }).lean();
 
-    res.json(sessions);
+    res.json(shapeGroupSessions(sessions));
   } catch (err) {
     console.error('Fetch group sessions error:', err.message);
     res.status(500).json({ error: 'Failed to fetch group sessions' });
@@ -186,7 +192,7 @@ router.post('/:id/join', auth, async (req, res) => {
     group.participants.push(req.user.id);
     await group.save();
 
-    res.json({ message: 'Joined group session successfully', session: group });
+    res.json({ message: 'Joined group session successfully', session: shapeGroupSession(group.toObject()) });
   } catch (err) {
     console.error('Join group session error:', err.message);
     res.status(500).json({ error: 'Failed to join group session' });

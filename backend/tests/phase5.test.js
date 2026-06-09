@@ -172,6 +172,52 @@ describe('Appointment DTO layer', () => {
   });
 });
 
+describe('Community & wellness DTO layer', () => {
+  test('shapeGroupSession exposes id and _id without __v', () => {
+    const { shapeGroupSession } = require('../src/shared/responseShapers');
+    const shaped = shapeGroupSession({
+      _id: '507f1f77bcf86cd799439011',
+      __v: 0,
+      title: 'Anxiety Circle',
+      description: 'Weekly support',
+      scheduledDate: new Date('2026-06-15'),
+      meetingLink: 'https://meet.jit.si/test',
+      participants: ['507f1f77bcf86cd799439099'],
+      maxParticipants: 10,
+    });
+    expect(shaped.__v).toBeUndefined();
+    expect(shaped._id).toBe('507f1f77bcf86cd799439011');
+    expect(shaped.participants).toEqual(['507f1f77bcf86cd799439099']);
+  });
+
+  test('shapePeerConnection maps the other user', () => {
+    const { shapePeerConnection } = require('../src/shared/responseShapers');
+    const shaped = shapePeerConnection({
+      _id: '507f1f77bcf86cd799439011',
+      requester: { _id: '507f1f77bcf86cd799439022', name: 'Me' },
+      recipient: { _id: '507f1f77bcf86cd799439033', name: 'Peer' },
+      sharedConcerns: ['anxiety'],
+      updatedAt: new Date('2026-06-01'),
+    }, '507f1f77bcf86cd799439022');
+    expect(shaped.userId).toBe('507f1f77bcf86cd799439033');
+    expect(shaped.userName).toBe('Peer');
+  });
+
+  test('shapeStreaksResponse enriches badges with metadata', () => {
+    const { shapeStreaksResponse } = require('../src/shared/responseShapers');
+    const shaped = shapeStreaksResponse({
+      streak: { currentStreak: 3, longestStreak: 5, totalCheckins: 12 },
+      badges: [{ badgeKey: 'mood_explorer', earnedAt: new Date(), seen: false, __v: 0 }],
+      badgeMeta: { mood_explorer: { label: 'Mood Explorer', icon: 'compass' } },
+      streakThresholds: [{ key: 'week_warrior', target: 7 }],
+      checkinThresholds: [{ key: 'mood_explorer', target: 10 }],
+    });
+    expect(shaped.badges[0].label).toBe('Mood Explorer');
+    expect(shaped.badges[0].__v).toBeUndefined();
+    expect(shaped.nextStreakGoal.target).toBe(7);
+  });
+});
+
 describe('Therapist DTO layer', () => {
   test('shapeTherapistListing strips __v and stringifies id', () => {
     const { shapeTherapistListing } = require('../src/shared/responseShapers');

@@ -327,6 +327,137 @@ function shapeDeletionRequest(request) {
   };
 }
 
+function shapePeerSuggestion(profile, sharedConcerns = []) {
+  const plain = shapeId(profile);
+  return {
+    userId: String(plain.userId || plain.id),
+    name: plain.name,
+    peerBio: plain.peerBio || '',
+    sharedConcerns,
+  };
+}
+
+function shapePeerRequest(conn, direction) {
+  const plain = shapeId(conn);
+  const isIncoming = direction === 'incoming';
+  const other = isIncoming ? plain.requester : plain.recipient;
+  const otherObj = other && typeof other === 'object' ? other : null;
+  return {
+    requestId: plain.id || String(plain._id),
+    userId: otherObj ? String(otherObj._id || otherObj.id) : String(other),
+    userName: otherObj?.name,
+    sharedConcerns: plain.sharedConcerns || [],
+  };
+}
+
+function shapePeerRequestsResponse(incoming, outgoing) {
+  return {
+    incoming: (incoming || []).map(c => shapePeerRequest(c, 'incoming')),
+    outgoing: (outgoing || []).map(c => shapePeerRequest(c, 'outgoing')),
+  };
+}
+
+function shapePeerConnection(conn, myUserId) {
+  const plain = shapeId(conn);
+  const requesterId = String(plain.requester?._id || plain.requester);
+  const isRequester = requesterId === String(myUserId);
+  const other = isRequester ? plain.recipient : plain.requester;
+  const otherObj = other && typeof other === 'object' ? other : null;
+  return {
+    userId: otherObj ? String(otherObj._id || otherObj.id) : String(other),
+    userName: otherObj?.name,
+    sharedConcerns: plain.sharedConcerns || [],
+    connectedAt: plain.updatedAt,
+  };
+}
+
+function shapeGroupParticipant(participant) {
+  if (!participant) return null;
+  if (typeof participant === 'object') {
+    return {
+      id: String(participant._id || participant.id),
+      name: participant.name,
+      email: participant.email,
+    };
+  }
+  return String(participant);
+}
+
+function shapeGroupSession(session, { populateParticipants = false } = {}) {
+  const plain = shapeId(session);
+  const id = plain.id || String(plain._id);
+  const rawParticipants = plain.participants || [];
+  const participants = populateParticipants
+    ? rawParticipants.map(shapeGroupParticipant).filter(Boolean)
+    : rawParticipants.map(p => (typeof p === 'object' ? String(p._id || p.id) : String(p)));
+
+  return {
+    id,
+    _id: id,
+    title: plain.title,
+    description: plain.description,
+    scheduledDate: plain.scheduledDate,
+    meetingLink: plain.meetingLink,
+    maxParticipants: plain.maxParticipants ?? 10,
+    participants,
+    facilitatorName: plain.facilitatorName || 'MindCare Team',
+    isActive: plain.isActive !== false,
+    createdAt: plain.createdAt,
+    updatedAt: plain.updatedAt,
+  };
+}
+
+function shapeGroupSessions(sessions, options = {}) {
+  return (sessions || []).map(s => shapeGroupSession(s, options));
+}
+
+function shapeBadgeWithMeta(badge, metaMap = {}) {
+  const plain = shapeId(badge);
+  const key = plain.badgeKey || plain.key;
+  const meta = metaMap[key] || {};
+  return {
+    key,
+    earnedAt: plain.earnedAt,
+    seen: Boolean(plain.seen),
+    ...meta,
+  };
+}
+
+function shapeBadgeGoal(threshold, progress, metaMap = {}) {
+  if (!threshold) return null;
+  const meta = metaMap[threshold.key] || {};
+  return {
+    key: threshold.key,
+    target: threshold.target,
+    progress,
+    ...meta,
+  };
+}
+
+function shapeStreaksResponse({
+  streak,
+  badges,
+  badgeMeta = {},
+  streakThresholds = [],
+  checkinThresholds = [],
+}) {
+  const earnedKeys = new Set((badges || []).map(b => b.badgeKey));
+  const currentStreak = streak?.currentStreak || 0;
+  const totalCheckins = streak?.totalCheckins || 0;
+  const nextStreakBadge = streakThresholds.find(t => !earnedKeys.has(t.key));
+  const nextCheckinBadge = checkinThresholds.find(t => !earnedKeys.has(t.key));
+
+  return {
+    currentStreak,
+    longestStreak: streak?.longestStreak || 0,
+    totalCheckins,
+    lastCheckinDate: streak?.lastCheckinDate || null,
+    badges: (badges || []).map(b => shapeBadgeWithMeta(b, badgeMeta)),
+    nextStreakGoal: shapeBadgeGoal(nextStreakBadge, currentStreak, badgeMeta),
+    nextCheckinGoal: shapeBadgeGoal(nextCheckinBadge, totalCheckins, badgeMeta),
+  };
+}
+
 function shapeChatResponse(payload) {
   return {
     reply: payload.reply,
@@ -370,6 +501,12 @@ module.exports = {
   shapeAppointmentTherapistViews,
   shapeAppointmentCreateResponse,
   shapeDeletionRequest,
+  shapePeerSuggestion,
+  shapePeerRequestsResponse,
+  shapePeerConnection,
+  shapeGroupSession,
+  shapeGroupSessions,
+  shapeStreaksResponse,
   shapeConversationSummary,
   shapeConversationDetail,
   shapeChatResponse,
