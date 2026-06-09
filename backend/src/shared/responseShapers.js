@@ -247,6 +247,86 @@ function shapeClinicalPatientProfile({ user, profile, fusions, issues, moods, jo
   };
 }
 
+function shapeAppointmentPatientView(appt) {
+  const plain = shapeId(appt);
+  const therapist = plain.therapist;
+  const therapistObj = therapist && typeof therapist === 'object' ? therapist : null;
+  return {
+    id: plain.id || String(plain._id),
+    requestedSpeciality: plain.requestedSpeciality || '',
+    preferredDates: plain.preferredDates || [],
+    preferredTime: plain.preferredTime || '',
+    userNote: plain.userNote || '',
+    therapistId: therapistObj ? String(therapistObj._id || therapistObj.id) : (therapist ? String(therapist) : null),
+    therapistName: therapistObj?.name || null,
+    therapistImg: therapistObj?.img || null,
+    specialisation: therapistObj?.specialisation || null,
+    date: plain.date || null,
+    timeSlot: plain.timeSlot || null,
+    adminNote: plain.adminNote || '',
+    status: plain.status,
+    createdAt: plain.createdAt,
+  };
+}
+
+function shapeAppointmentPatientViews(appts) {
+  return (appts || []).map(shapeAppointmentPatientView);
+}
+
+function shapeAppointmentTherapistView(appt) {
+  const plain = shapeId(appt);
+  const id = plain.id || String(plain._id);
+  const user = plain.user;
+  const userObj = user && typeof user === 'object' ? user : null;
+  return {
+    id,
+    _id: id,
+    requestedSpeciality: plain.requestedSpeciality || '',
+    preferredDates: plain.preferredDates || [],
+    preferredTime: plain.preferredTime || '',
+    userNote: plain.userNote || '',
+    date: plain.date || null,
+    timeSlot: plain.timeSlot || null,
+    adminNote: plain.adminNote || '',
+    status: plain.status,
+    createdAt: plain.createdAt,
+    updatedAt: plain.updatedAt,
+    user: userObj ? {
+      id: String(userObj._id || userObj.id),
+      _id: String(userObj._id || userObj.id),
+      name: userObj.name,
+      email: userObj.email,
+      age: userObj.age,
+      gender: userObj.gender,
+    } : (user ? { id: String(user), _id: String(user) } : null),
+  };
+}
+
+function shapeAppointmentTherapistViews(appts) {
+  return (appts || []).map(shapeAppointmentTherapistView);
+}
+
+function shapeAppointmentCreateResponse(appt, message) {
+  const view = shapeAppointmentPatientView(appt);
+  return {
+    ...view,
+    message: message || 'Your consultation request has been submitted.',
+  };
+}
+
+function shapeDeletionRequest(request) {
+  const plain = shapeId(request);
+  return {
+    id: plain.id || String(plain._id),
+    user: plain.user ? String(plain.user) : undefined,
+    reason: plain.reason,
+    status: plain.status,
+    adminNote: plain.adminNote || '',
+    createdAt: plain.createdAt,
+    updatedAt: plain.updatedAt,
+  };
+}
+
 function shapeChatResponse(payload) {
   return {
     reply: payload.reply,
@@ -284,6 +364,12 @@ module.exports = {
   shapeTherapistNote,
   shapeTherapistNotes,
   shapeClinicalPatientProfile,
+  shapeAppointmentPatientView,
+  shapeAppointmentPatientViews,
+  shapeAppointmentTherapistView,
+  shapeAppointmentTherapistViews,
+  shapeAppointmentCreateResponse,
+  shapeDeletionRequest,
   shapeConversationSummary,
   shapeConversationDetail,
   shapeChatResponse,

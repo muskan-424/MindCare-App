@@ -4,6 +4,12 @@ const { body, validationResult } = require('express-validator');
 const Appointment = require('../models/Appointment');
 const { auth } = require('../../../../middleware/auth');
 const therapistOnly = require('../../../../middleware/therapistOnly');
+const {
+  shapeAppointmentPatientViews,
+  shapeAppointmentPatientView,
+  shapeAppointmentTherapistViews,
+  shapeAppointmentCreateResponse,
+} = require('../../../shared/responseShapers');
 
 // POST /api/appointments — submit a consultation REQUEST (no therapist assigned yet)
 router.post(
@@ -33,16 +39,10 @@ router.post(
       });
       await appointment.save();
 
-      res.status(201).json({
-        id: appointment._id,
-        requestedSpeciality: appointment.requestedSpeciality,
-        preferredDates: appointment.preferredDates,
-        preferredTime: appointment.preferredTime,
-        userNote: appointment.userNote,
-        status: appointment.status,
-        createdAt: appointment.createdAt,
-        message: 'Your consultation request has been submitted. An admin will assign a therapist and confirm your slot shortly.',
-      });
+      res.status(201).json(shapeAppointmentCreateResponse(
+        appointment,
+        'Your consultation request has been submitted. An admin will assign a therapist and confirm your slot shortly.',
+      ));
     } catch (err) {
       console.error('Book appointment error:', err.message);
       res.status(500).json({ error: 'Failed to submit consultation request' });
@@ -58,22 +58,7 @@ router.get('/', auth, async (req, res) => {
       .populate('therapist', 'name img specialisation timing fee email contact_no')
       .lean();
 
-    res.json(appointments.map(a => ({
-      id: String(a._id),
-      requestedSpeciality: a.requestedSpeciality,
-      preferredDates: a.preferredDates,
-      preferredTime: a.preferredTime,
-      userNote: a.userNote,
-      therapistId: a.therapist ? String(a.therapist._id) : null,
-      therapistName: a.therapist?.name || null,
-      therapistImg: a.therapist?.img || null,
-      specialisation: a.therapist?.specialisation || null,
-      date: a.date || null,
-      timeSlot: a.timeSlot || null,
-      adminNote: a.adminNote,
-      status: a.status,
-      createdAt: a.createdAt,
-    })));
+    res.json(shapeAppointmentPatientViews(appointments));
   } catch (err) {
     console.error('Get appointments error:', err.message);
     res.status(500).json({ error: 'Failed to load appointments' });
@@ -97,7 +82,7 @@ router.get('/therapist/me', auth, therapistOnly, async (req, res) => {
       .populate('user', 'name email age gender')
       .sort({ createdAt: -1 })
       .lean();
-    res.json(appointments);
+    res.json(shapeAppointmentTherapistViews(appointments));
   } catch (err) {
     console.error('Therapist patients fetch error:', err.message);
     res.status(500).json({ error: 'Failed to load assigned patients' });
@@ -125,7 +110,7 @@ router.get('/open', auth, therapistOnly, async (req, res) => {
       .populate('user', 'name email age gender')
       .sort({ createdAt: -1 })
       .lean();
-    res.json(appointments);
+    res.json(shapeAppointmentTherapistViews(appointments));
   } catch (err) {
     console.error('Open appointments fetch error:', err.message);
     res.status(500).json({ error: 'Failed to load open requests' });
@@ -148,7 +133,7 @@ router.post('/:id/claim', auth, therapistOnly, async (req, res) => {
     appt.status = 'confirmed';
     
     await appt.save();
-    res.json({ success: true, appointment: appt });
+    res.json({ success: true, appointment: shapeAppointmentTherapistView(appt.toObject()) });
   } catch (err) {
     console.error('Claim appointment error:', err.message);
     res.status(500).json({ error: 'Failed to claim request' });
@@ -225,7 +210,7 @@ router.patch('/:id/modify', auth, async (req, res) => {
     if (userNote !== undefined) appt.userNote = userNote;
 
     await appt.save();
-    res.json({ success: true, appointment: appt });
+    res.json({ success: true, appointment: shapeAppointmentPatientView(appt.toObject()) });
   } catch (err) {
     console.error('Modify appointment error:', err.message);
     res.status(500).json({ error: 'Failed to modify appointment' });

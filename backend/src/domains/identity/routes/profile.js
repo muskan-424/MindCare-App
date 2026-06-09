@@ -3,6 +3,7 @@ const router = express.Router();
 const Profile = require('../models/Profile');
 const DeletionRequest = require('../models/DeletionRequest');
 const { auth } = require('../../../../middleware/auth');
+const { shapeProfile, shapeDeletionRequest } = require('../../../shared/responseShapers');
 
 // @route   POST /api/profile/add-concerns
 // @desc    Update user concerns
@@ -21,7 +22,7 @@ router.post('/add-concerns', auth, async (req, res) => {
       return res.status(404).json({ errors: [{ msg: 'Profile not found' }] });
     }
 
-    res.json(profile);
+    res.json(shapeProfile(profile));
   } catch (err) {
     console.error('Update concerns error:', err.message);
     res.status(500).json({ errors: [{ msg: 'Server error' }] });
@@ -59,7 +60,7 @@ router.post('/edit-profile', auth, async (req, res) => {
       return res.status(404).json({ errors: [{ msg: 'Profile not found' }] });
     }
 
-    res.json(profile);
+    res.json(shapeProfile(profile));
 
   } catch (err) {
     console.error('Edit profile error:', err.message);
@@ -85,7 +86,7 @@ router.post('/delete-request', auth, async (req, res) => {
       { new: true, upsert: true }
     );
 
-    res.json({ success: true, message: 'Deletion request submitted', request });
+    res.json({ success: true, message: 'Deletion request submitted', request: shapeDeletionRequest(request) });
   } catch (err) {
     console.error('Delete request error:', err.message);
     res.status(500).json({ error: 'Failed to submit deletion request' });
@@ -101,7 +102,7 @@ router.get('/me', auth, async (req, res) => {
     if (!profile) {
       return res.status(404).json({ error: 'Profile not found' });
     }
-    res.json(profile);
+    res.json(shapeProfile(profile));
   } catch (err) {
     console.error('Get profile error:', err.message);
     res.status(500).json({ error: 'Server error' });
@@ -130,7 +131,7 @@ router.patch('/update', auth, async (req, res) => {
       return res.status(404).json({ error: 'Profile not found' });
     }
 
-    res.json(profile);
+    res.json(shapeProfile(profile));
   } catch (err) {
     console.error('Update profile error:', err.message);
     res.status(500).json({ error: 'Server error' });

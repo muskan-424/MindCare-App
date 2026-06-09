@@ -138,6 +138,40 @@ describe('Journal DTO layer', () => {
   });
 });
 
+describe('Appointment DTO layer', () => {
+  test('shapeAppointmentPatientView omits __v and maps therapist fields', () => {
+    const { shapeAppointmentPatientView } = require('../src/shared/responseShapers');
+    const shaped = shapeAppointmentPatientView({
+      _id: '507f1f77bcf86cd799439011',
+      __v: 0,
+      requestedSpeciality: 'Psychologist',
+      preferredDates: ['2026-06-10'],
+      preferredTime: 'morning',
+      userNote: 'Need help',
+      status: 'awaiting_admin',
+      therapist: { _id: '507f1f77bcf86cd799439012', name: 'Dr. A', img: 'x.png', specialisation: 'Psychologist' },
+      createdAt: new Date('2026-06-01'),
+    });
+    expect(shaped.__v).toBeUndefined();
+    expect(shaped.id).toBe('507f1f77bcf86cd799439011');
+    expect(shaped.therapistName).toBe('Dr. A');
+    expect(shaped.therapistId).toBe('507f1f77bcf86cd799439012');
+  });
+
+  test('shapeAppointmentTherapistView preserves _id for therapist UI', () => {
+    const { shapeAppointmentTherapistView } = require('../src/shared/responseShapers');
+    const shaped = shapeAppointmentTherapistView({
+      _id: '507f1f77bcf86cd799439011',
+      __v: 0,
+      status: 'confirmed',
+      user: { _id: '507f1f77bcf86cd799439099', name: 'Patient', email: 'p@test.com', password: 'secret' },
+    });
+    expect(shaped._id).toBe('507f1f77bcf86cd799439011');
+    expect(shaped.user._id).toBe('507f1f77bcf86cd799439099');
+    expect(shaped.user.password).toBeUndefined();
+  });
+});
+
 describe('Therapist DTO layer', () => {
   test('shapeTherapistListing strips __v and stringifies id', () => {
     const { shapeTherapistListing } = require('../src/shared/responseShapers');
