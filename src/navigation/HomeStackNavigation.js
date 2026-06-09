@@ -9,6 +9,7 @@ import AppointmentsScreen from '../domains/therapy/screens/AppointmentsScreen';
 import TrackPlayer from '../domains/content/screens/TrackPlayer';
 import TrackList from '../domains/content/screens/TrackList';
 import ChatWithTink from '../domains/community/screens/ChatWithTink';
+import ChatHistoryScreen from '../domains/community/screens/ChatHistoryScreen';
 import CreateMeme from '../domains/content/screens/CreateMeme';
 import BreathingScreen from '../domains/content/screens/BreathingScreen';
 import AffirmationsScreen from '../domains/content/screens/AffirmationsScreen';
@@ -52,6 +53,7 @@ const HomeStackNavigator = () => {
       <Stack.Screen name="Appointments" component={AppointmentsScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="Chat" component={ChatWithTink} />
+      <Stack.Screen name="ChatHistory" component={ChatHistoryScreen} />
       <Stack.Screen name="CreateMeme" component={CreateMeme} />
       <Stack.Screen name="TrackList" component={TrackList} />
       <Stack.Screen name="Track" component={TrackPlayer} />

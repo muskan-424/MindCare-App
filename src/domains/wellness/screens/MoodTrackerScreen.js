@@ -9,6 +9,7 @@ import { connect } from 'react-redux';
 import api from '../../../utils/apiClient';
 import { colors, sizes } from '../../../constants/theme';
 import { LineChart, ContributionGraph } from 'react-native-chart-kit';
+import useTranslation from '../../../utils/i18n';
 
 const RATING_LABELS = { 1: 'Terrible', 2: 'Very Low', 3: 'Low', 4: 'Below Okay', 5: 'Okay', 6: 'Decent', 7: 'Good', 8: 'Great', 9: 'Very Good', 10: 'Excellent' };
 const RATING_COLORS = { low: '#E57373', mid: '#FFB74D', high: '#81C784' };
@@ -24,6 +25,7 @@ const BADGE_META = {
 };
 
 const MoodTrackerScreen = ({ auth, navigation }) => {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(5);
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
@@ -98,8 +100,8 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
         <Text style={styles.backText}>← Back</Text>
       </TouchableOpacity>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Log your mood</Text>
-        <Text style={styles.subtitle}>Rate how you're feeling (1–10)</Text>
+        <Text style={styles.title}>{t('mood.title')}</Text>
+        <Text style={styles.subtitle}>{t('mood.how_feeling')}</Text>
 
         {/* Stats cards */}
         {stats && (
@@ -131,12 +133,12 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
             </TouchableOpacity>
           ))}
         </View>
-        <Text style={[styles.rateLabel, { color: getRatingColor(rating) }]}>{RATING_LABELS[rating]}</Text>
+        <Text style={[styles.rateLabel, { color: getRatingColor(rating) }]}>{t(`mood.mood_labels.${rating}`, String(rating))}</Text>
 
-        <Text style={styles.label}>Note (optional)</Text>
+        <Text style={styles.label}>{t('mood.add_note')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="How are you today?"
+          placeholder={t('mood.note_placeholder')}
           placeholderTextColor={colors.gray}
           value={note}
           onChangeText={setNote}
@@ -144,9 +146,9 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
         />
 
         <TouchableOpacity style={styles.submitBtn} onPress={submit} disabled={loading}>
-          {loading ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.submitBtnText}>Save Mood</Text>}
+          {loading ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.submitBtnText}>{t('mood.submit')}</Text>}
         </TouchableOpacity>
-        {saved ? <Text style={styles.savedText}>✓ Mood saved successfully!</Text> : null}
+        {saved ? <Text style={styles.savedText}>{t('mood.saved')}</Text> : null}
 
         {/* Trend header with window toggle */}
         <View style={styles.trendHeader}>

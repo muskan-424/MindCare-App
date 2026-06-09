@@ -24,7 +24,7 @@ async function evaluateBurnoutRisk(userId) {
     };
 
     // 2. Query Python ML Server
-    const mlResponse = await axios.post('http://127.0.0.1:8000/predict/burnout', payload, { timeout: 5000 }).catch(err => null);
+    const mlResponse = await axios.post('http://127.0.0.1:8000/predict/burnout', payload, { timeout: 5000 }).catch(() => null);
     
     if (!mlResponse || !mlResponse.data) {
         console.log('Python ML Server unreachable or model not trained.');

@@ -41,8 +41,8 @@ function request(method, path, body, auth = false) {
       });
     });
     req.on('error', reject);
-    req.setTimeout(15000, () => {
-      req.destroy(new Error('Request timed out (15s)'));
+    req.setTimeout(45000, () => {
+      req.destroy(new Error('Request timed out (45s)'));
     });
     if (data) req.write(data);
     req.end();
@@ -503,6 +503,49 @@ async function run() {
       record('GET AI Session Report  /session/:id/report', r.status, 200, `status=${r.data?.session?.status}`);
     } catch (e) {
       record('GET AI Session Report  /session/:id/report', 0, 200, `NETWORK ERROR: ${e.message}`);
+    }
+  }
+
+  // ─── CODE-MIXED CHAT (Multi-language Tink) ───────────────────────────────────
+  console.log('\n══════════════════════════════════════════════════════');
+  console.log('  CODE-MIXED CHAT — Tink Multi-Language Support');
+  console.log('══════════════════════════════════════════════════════');
+
+  const codeMixedMessages = [
+    {
+      name: 'Hinglish message to Tink',
+      msg:  'bohot stress ho raha hai aaj, help me please',
+    },
+    {
+      name: 'Punjlish message to Tink',
+      msg:  'aaj bahut anxiety feel ho ri aa, ki karna chahida hai?',
+    },
+    {
+      name: 'Banglish message to Tink',
+      msg:  'ami khub stressed, ki korbo bolte paro?',
+    },
+    {
+      name: 'Pure Hindi message to Tink',
+      msg:  'मुझे बहुत तनाव हो रहा है, मुझे क्या करना चाहिए?',
+    },
+    {
+      name: 'English message to Tink',
+      msg:  'I feel really anxious today, can you help me calm down?',
+    },
+  ];
+
+  for (const { name, msg } of codeMixedMessages) {
+    try {
+      const r = await request('POST', '/api/chat', { message: msg, history: [] }, false);
+      const hasReply = r.data && typeof r.data.reply === 'string' && r.data.reply.trim().length > 0;
+      record(
+        `POST /api/chat — ${name}`,
+        hasReply ? 200 : r.status,
+        200,
+        hasReply ? `reply="${r.data.reply.slice(0, 60)}..."` : `no reply returned`
+      );
+    } catch (e) {
+      record(`POST /api/chat — ${name}`, 0, 200, `NETWORK ERROR: ${e.message}`);
     }
   }
 

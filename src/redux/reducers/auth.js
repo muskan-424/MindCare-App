@@ -5,7 +5,9 @@ import {
   CONCERN_UPDATE,
   UPDATE_USER,
   LOGOUT,
+  SET_LANGUAGE,
 } from '../actions/type';
+
 
 const initialState = {
   isLogin: false,
@@ -15,7 +17,9 @@ const initialState = {
     name: 'Ritika Tomar',
   },
   welcomeMessage: null,
+  language: 'en',
 };
+
 
 export default function(state = initialState, action) {
   switch (action.type) {
@@ -54,6 +58,11 @@ export default function(state = initialState, action) {
         ...state,
         // user:action.payload.user,
         profile: action.payload,
+      };
+    case SET_LANGUAGE:
+      return {
+        ...state,
+        language: action.payload,
       };
     default:
       return state;

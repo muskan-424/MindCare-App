@@ -84,8 +84,7 @@ Every daily login triggers a full **Multidimensional Intake Session** that gathe
 
 | Property | Value |
 |---|---|
-| **File** | `ml/burnout_model_v2.pkl` |
-| **Training Script** | `ml/train_burnout_v2.py` |
+| **File** | `ml/burnout_model_v2.pkl` (trained artifact shipped in repo) |
 | **Dataset** | `dataset/EPAT_mental_health_dataset.csv` |
 | **Algorithm** | Gradient Boosting Classifier |
 | **Task** | Multi-class classification (0=Low, 1=Mild, 2=Moderate, 3=High burnout) |
@@ -156,8 +155,7 @@ risk_score = (proba[Mild]*0.33) + (proba[Moderate]*0.66) + (proba[High]*1.0)
 
 | Property | Value |
 |---|---|
-| **File** | `ml/text_classifier.pkl` + `ml/text_risk_labels.pkl` |
-| **Training Script** | `ml/train_text_sentiment.py` |
+| **File** | `ml/text_classifier.pkl` + `ml/text_risk_labels.pkl` (trained artifacts shipped in repo) |
 | **Dataset** | `dataset/Sentiment_Mental_health_dataset.csv` (~24 MB, 7 Reddit categories) |
 | **Algorithm** | TF-IDF Vectorizer → Logistic Regression (sklearn Pipeline) |
 | **Task** | Multi-class text classification (4 risk levels) |
@@ -218,8 +216,7 @@ const CRITICAL_TERMS = [
 
 | Property | Value |
 |---|---|
-| **File** | `ml/vision_model.pkl` |
-| **Training Script** | `ml/train_vision.py` |
+| **File** | `ml/vision_model.pkl` (trained artifact shipped in repo) |
 | **Dataset** | `dataset/EPAT_mental_health_dataset.csv` (Facial_Emotion_Label column) |
 | **Algorithm** | Random Forest Classifier |
 | **On-Device** | `@react-native-ml-kit/face-detection` (emotion extraction from still photo) |
@@ -270,8 +267,7 @@ X = df[['Facial_Emotion_Label', 'Facial_Emotion_Confidence']]
 
 | Property | Value |
 |---|---|
-| **File** | `ml/mood_trend_model.pkl` + `ml/mood_trend_features.pkl` |
-| **Training Script** | `ml/train_mood_trend.py` |
+| **File** | `ml/mood_trend_model.pkl` + `ml/mood_trend_features.pkl` (trained artifacts shipped in repo) |
 | **Dataset** | `dataset/Daylio_Abid.csv` (941 daily entries, ~3 years personal tracker) |
 | **Algorithm** | Gradient Boosting Classifier |
 | **Task** | Binary prediction — will **tomorrow** be a Bad/Awful mood day? |
@@ -369,7 +365,7 @@ confidence = min(snrNorm, durationNorm)
 
 ## 8. Fusion Engine
 
-The fusion engine lives entirely in **Node.js** (`backend/services/ai/fusionAssessmentService.js`). It is a **weighted linear combination** of the three modality scores.
+The fusion engine lives entirely in **Node.js** (`backend/src/domains/assessment/services/ai/fusionAssessmentService.js`). It is a **weighted linear combination** of the three modality scores.
 
 ### Weights
 
@@ -504,13 +500,12 @@ GET /health
 ### Service Architecture
 
 ```
-backend/services/ai/
+backend/src/domains/assessment/services/ai/
 ├── textAssessmentService.js    — Calls /analyze/text-local, heuristic fallback
 ├── voiceAssessmentService.js   — Calls /analyze/voice, heuristic fallback
 ├── visionAssessmentService.js  — Calls /analyze/vision, heuristic fallback
 ├── fusionAssessmentService.js  — Pure JS weighted fusion (no HTTP call)
-├── questionPolicyService.js    — Random 8-of-20 question selection per session
-└── geminiAiService.js          — Gemini AI integration (chat/supplementary)
+└── questionPolicyService.js    — Random 8-of-20 question selection per session
 ```
 
 ### Fallback Strategy
@@ -563,13 +558,11 @@ MentalHealthApp/
 │   ├── vision_model.pkl                ← Random Forest (vision)
 │   ├── mood_trend_model.pkl            ← Gradient Boosting (mood)
 │   ├── mood_trend_features.pkl         ← Feature column name list
-│   ├── train_burnout_v2.py
-│   ├── train_text_sentiment.py
-│   ├── train_vision.py
-│   ├── train_mood_trend.py
 │   └── requirements.txt
+│   (Note: only the trained .pkl artifacts are shipped; the offline
+│    training scripts are kept outside the repo.)
 │
-├── backend/
+├── backend/src/domains/assessment/
 │   ├── routes/
 │   │   └── aiIntake.js                 ← Session lifecycle API routes
 │   └── services/ai/
@@ -577,10 +570,9 @@ MentalHealthApp/
 │       ├── voiceAssessmentService.js
 │       ├── visionAssessmentService.js
 │       ├── fusionAssessmentService.js
-│       ├── questionPolicyService.js
-│       └── geminiAiService.js
+│       └── questionPolicyService.js
 │
-├── src/screens/
+├── src/domains/assessment/screens/
 │   └── MultidimensionalIntakeScreen.js ← Full 4-step intake UI
 │
 ├── dataset/
@@ -627,18 +619,11 @@ npx react-native run-android
 npx react-native start
 ```
 
-### Retrain Any Model
+### Retraining
 
-```bash
-cd c:\Projects\MentalHealthApp\ml
+The repository ships the **pre-trained `.pkl` model artifacts** (loaded by `ml/server.py` at startup) along with the source datasets under `dataset/`. The offline training scripts that produced these artifacts are **not included in the repo**.
 
-python train_burnout_v2.py        # Retrains burnout_model_v2.pkl
-python train_text_sentiment.py    # Retrains text_classifier.pkl
-python train_vision.py            # Retrains vision_model.pkl
-python train_mood_trend.py        # Retrains mood_trend_model.pkl
-```
-
-> **Note:** After retraining, restart `python server.py` to hot-reload the new `.pkl` files. No code changes needed.
+To regenerate a model, retrain it offline against the corresponding dataset (see each model's section above for algorithm + hyperparameters), drop the resulting `.pkl` into `ml/`, and restart `python server.py` to hot-reload it. No backend code changes are needed.
 
 ---
 

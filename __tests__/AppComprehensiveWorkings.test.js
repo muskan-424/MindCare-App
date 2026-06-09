@@ -71,12 +71,6 @@ jest.mock('../src/utils/apiClient', () => ({
   delete: (...args) => mockApiDelete(...args),
 }));
 
-// Mock Gemini Service for Tink Chat
-const mockSendMessageToGemini = jest.fn();
-jest.mock('../src/utils/geminiService', () => ({
-  sendMessageToGemini: (...args) => mockSendMessageToGemini(...args),
-}));
-
 // ─── Redux store factory ──────────────────────────────────────────────────────
 const makeStore = ({ role = 'user', name = 'Test User' } = {}) => {
   const initialState = {
@@ -208,10 +202,11 @@ describe('5. Mood Tracker Screen Working', () => {
       );
     });
     const json = JSON.stringify(tree.toJSON());
-    expect(json).toContain('Log your mood');
+    // Title and submit text are now translated (English): 'Mood Check-in' replaces 'Log your mood', 'Log Mood' replaces 'Save Mood'
+    expect(json).toContain('Mood Check-in');
     expect(json).toContain('Avg (30d)');
     expect(json).toContain('Streak');
-    expect(json).toContain('Save Mood');
+    expect(json).toContain('Log Mood');
   }, 15000);
 });
 
@@ -257,18 +252,29 @@ describe('6. Goal Tracker Screen Working', () => {
 describe('7. Chat With Tink Screen Working', () => {
   const ChatWithTink = require('../src/domains/community/screens/ChatWithTink').default;
 
-  it('renders Tink welcome message and simulation', () => {
-    const mockRoute = { params: { name: 'Muskan' } };
+  it('renders Tink welcome message and input', () => {
+    const mockRoute = { params: {} };
+    const store = makeStore({ name: 'Muskan' });
     let tree;
     renderer.act(() => {
       tree = renderer.create(
-        <ChatWithTink route={mockRoute} />
+        <Provider store={store}>
+          <ChatWithTink route={mockRoute} navigation={mockNavigation} />
+        </Provider>
       );
     });
-    const json = JSON.stringify(tree.toJSON());
+    const cache = new Set();
+    const json = JSON.stringify(tree.toJSON(), (k, v) => {
+      if (typeof v === 'object' && v !== null) {
+        if (cache.has(v)) return;
+        cache.add(v);
+      }
+      return v;
+    });
+    // Welcome greets the user by first name and the header shows Tink + placeholder
     expect(json).toContain('Muskan');
-    expect(json).toContain("your MindCare assistant");
-    expect(json).toContain("Message Tink");
+    expect(json).toContain('Tink');
+    expect(json).toContain('Message Tink');
   });
 });
 
@@ -394,10 +400,13 @@ describe('10. Group Sessions Screen Working', () => {
   });
 
   it('renders registered and explore tabs and sessions details', async () => {
+    const store = require('../src/redux/store').default;
     let tree;
     await renderer.act(async () => {
       tree = renderer.create(
-        <GroupSessionsScreen navigation={mockNavigation} />
+        <Provider store={store}>
+          <GroupSessionsScreen navigation={mockNavigation} />
+        </Provider>
       );
       await new Promise(resolve => setTimeout(resolve, 100));
     });
@@ -409,11 +418,12 @@ describe('10. Group Sessions Screen Working', () => {
       }
       return v;
     });
+    // Header and tab text are now translated; English defaults match original strings
     expect(json).toContain('Group Therapy Sessions');
     expect(json).toContain('Registered');
     expect(json).toContain('Explore Sessions');
     expect(json).toContain('Meditation Circle');
-    expect(json).toContain('Led by ');
+    expect(json).toContain('Led by');
     expect(json).toContain('Dr. Smith');
   });
 });

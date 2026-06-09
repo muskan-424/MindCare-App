@@ -1,4 +1,6 @@
-import { REGISTER_SUCCESS, CLEAR_WELCOME, LOGOUT } from './type';
+import { REGISTER_SUCCESS, CLEAR_WELCOME, LOGOUT, SET_LANGUAGE } from './type';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import api from '../../utils/apiClient';
 import { ToastAndroid, Platform } from 'react-native';
 
@@ -58,3 +60,15 @@ export const logout = () => dispatch => {
   dispatch({ type: LOGOUT });
 };
 
+/**
+ * setLanguage — persists the selected language code and updates Redux state.
+ * @param {string} lang - ISO 639-1 language code, e.g. 'hi', 'pa', 'mr'
+ */
+export const setLanguage = (lang) => async dispatch => {
+  try {
+    await AsyncStorage.setItem('MindCare_language', lang);
+  } catch (_) {
+    // Ignore storage errors — state change still happens
+  }
+  dispatch({ type: SET_LANGUAGE, payload: lang });
+};

@@ -36,6 +36,31 @@ jest.mock('react-native-svg', () => {
   };
 });
 
+// ── Voice (speech-to-text) ───────────────────────────────────────────────────
+jest.mock('@react-native-voice/voice', () => ({
+  __esModule: true,
+  default: {
+    start: jest.fn(() => Promise.resolve()),
+    stop: jest.fn(() => Promise.resolve()),
+    destroy: jest.fn(() => Promise.resolve()),
+    removeAllListeners: jest.fn(),
+    onSpeechResults: null,
+    onSpeechPartialResults: null,
+    onSpeechError: null,
+    onSpeechEnd: null,
+  },
+}));
+
+// ── TTS (text-to-speech) ──────────────────────────────────────────────────────
+jest.mock('react-native-tts', () => ({
+  __esModule: true,
+  default: {
+    speak: jest.fn(),
+    stop: jest.fn(),
+    setDefaultLanguage: jest.fn(),
+  },
+}));
+
 // ── Redux store (prevent unresolved modules) ───────────────────────────────────
 jest.mock('./src/redux/store', () => ({
   __esModule: true,

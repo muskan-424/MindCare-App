@@ -216,7 +216,9 @@ describe('Portal 1 — User Portal (HomeScreen)', () => {
       );
     });
     const json = JSON.stringify(tree.toJSON());
-    expect(json).toContain('Hello !');
+    // Greeting is now dynamic (Good Morning / Good Afternoon / Good Evening) based on time-of-day
+    const hasGreeting = json.includes('Good Morning') || json.includes('Good Afternoon') || json.includes('Good Evening');
+    expect(hasGreeting).toBe(true);
   });
 
   it('shows the TINK chatbot section', async () => {

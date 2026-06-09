@@ -7,6 +7,7 @@ import api from '../../../utils/apiClient';
 import { colors } from '../../../constants/theme';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import useTranslation from '../../../utils/i18n';
 
 const getMaskedName = (userId) => {
   const animals = ['Panda', 'Koala', 'Fox', 'Otter', 'Dolphin', 'Owl', 'Deer', 'Squirrel'];
@@ -22,6 +23,7 @@ const getCompatibilityScore = (sharedCount) => {
 };
 
 const PeerMatchingScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [isEnabled, setIsEnabled] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [requests, setRequests] = useState({ incoming: [], outgoing: [] });
@@ -114,7 +116,7 @@ const PeerMatchingScreen = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <AntDesign name="arrowleft" size={26} color={colors.white} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Peer Matching</Text>
+        <Text style={styles.headerTitle}>{t('peer.title')}</Text>
       </View>
 
       {/* Opt-in Card */}
@@ -184,7 +186,7 @@ const PeerMatchingScreen = ({ navigation }) => {
                             <View style={styles.nameScoreRow}>
                               <Text style={styles.peerName}>{maskedName}</Text>
                               <View style={[styles.compatBadge, { backgroundColor: `${compat.color}15` }]}>
-                                <Text style={[styles.compatLabel, { color: compat.color }]}>{compat.score} Match</Text>
+                                <Text style={[styles.compatLabel, { color: compat.color }]}>{compat.score} {t('peer.match_score')}</Text>
                               </View>
                             </View>
                             <View style={styles.concernRow}>
@@ -198,7 +200,7 @@ const PeerMatchingScreen = ({ navigation }) => {
                         </View>
                         <Text style={styles.peerBio} numberOfLines={2}>{s.peerBio || "No bio provided."}</Text>
                         <TouchableOpacity style={styles.connectBtn} onPress={() => handleConnect(s.userId)}>
-                          <Text style={styles.connectBtnText}>Connect with Peer</Text>
+                          <Text style={styles.connectBtnText}>{t('peer.connect')}</Text>
                         </TouchableOpacity>
                       </View>
                     );

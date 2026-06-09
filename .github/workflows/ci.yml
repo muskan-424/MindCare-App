@@ -52,3 +52,9 @@ jobs:
         # Using npm install instead of npm ci in case backend lacks a package-lock.json, 
         # but Render runs npm install directly anyway.
         run: npm install
+
+      - name: Run Backend Linter
+        run: npm run lint
+
+      - name: Run Backend Tests
+        run: npm test

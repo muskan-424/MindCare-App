@@ -18,9 +18,6 @@ const IssueReport = require('../models/IssueReport');
 
 const SLA_CRITICAL_MINUTES = parseInt(process.env.SLA_CRITICAL_MINUTES || '60', 10);
 const SLA_HIGH_MINUTES = parseInt(process.env.SLA_HIGH_MINUTES || '240', 10);
-const CHECK_INTERVAL_MS = parseInt(process.env.SLA_CHECK_INTERVAL_MS || '300000', 10); // 5 min default
-
-let monitorInterval = null;
 
 async function runSLACheck() {
   const now = new Date();
@@ -63,19 +60,7 @@ async function runSLACheck() {
   }
 }
 
-function startSLAMonitor() {
-  if (monitorInterval) return; // Already running
-  console.log(`[SLA Monitor] Starting — CRITICAL SLA: ${SLA_CRITICAL_MINUTES}min | HIGH SLA: ${SLA_HIGH_MINUTES}min | Check every: ${CHECK_INTERVAL_MS / 60000}min`);
-  // Run immediately on boot, then on interval
-  runSLACheck();
-  monitorInterval = setInterval(runSLACheck, CHECK_INTERVAL_MS);
-}
-
-function stopSLAMonitor() {
-  if (monitorInterval) {
-    clearInterval(monitorInterval);
-    monitorInterval = null;
-  }
-}
-
-module.exports = { startSLAMonitor, stopSLAMonitor, runSLACheck };
+// Scheduling is owned by the background job queue (jobs/index.js registers
+// `sla.check` → runSLACheck). This module just exposes the check itself so it
+// can be run by the queue, by a cron, or on demand from an admin endpoint.
+module.exports = { runSLACheck };

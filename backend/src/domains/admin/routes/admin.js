@@ -368,7 +368,7 @@ router.get('/therapist-availability', adminAuth, async (req, res) => {
     const { generateSlots } = require('../../therapy/routes/appointments');
     let allSlots = generateSlots(therapist.timing);
 
-    function localParseTime(str) {
+    const localParseTime = (str) => {
       if (!str) return 0;
       const [time, period] = str.split(' ');
       if (!time || !period) return 0;
@@ -376,7 +376,7 @@ router.get('/therapist-availability', adminAuth, async (req, res) => {
       if (period === 'PM' && h !== 12) h += 12;
       if (period === 'AM' && h === 12) h = 0;
       return h * 60 + (m || 0);
-    }
+    };
 
     if (appointmentId) {
       const appt = await Appointment.findById(appointmentId).lean();

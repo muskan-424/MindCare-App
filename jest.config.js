@@ -1,5 +1,7 @@
 module.exports = {
   preset: 'react-native',
+  // Backend has its own Jest config (backend/jest.config.js) — keep suites separate.
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/backend/'],
   setupFiles: [
     './node_modules/react-native-gesture-handler/jestSetup.js',
   ],

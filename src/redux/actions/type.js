@@ -1,6 +1,5 @@
 export const SrrET_LOGIN_TRUE = 'SET_LOGIN_TRUE';
 
-export const SET_USER = 'SET_USER'
 export const UPDATE_USER= 'UPDATE_USER'
 export const REGISTER_SUCCESS = 'REGISTER_SUCCESS';
 export const REGISTER_FAIL = 'REGISTER_FAIL';
@@ -8,4 +7,5 @@ export const CLEAR_WELCOME = 'CLEAR_WELCOME';
 export const CONCERN_UPDATE = 'CONCERN_UPDATE';
 export const UPDATE_QUOTE_OF_THE_DAY = 'UPDATE_QUOTE_OF_THE_DAY';
 export const LOGOUT = 'LOGOUT';
+export const SET_LANGUAGE = 'SET_LANGUAGE';
 

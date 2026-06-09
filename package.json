@@ -48,6 +48,7 @@
     "react-native-sound-player": "^0.14.5",
     "react-native-svg": "^15.15.3",
     "react-native-touchable-scale": "^2.2.0",
+    "react-native-tts": "^4.1.1",
     "react-native-vector-icons": "^10.3.0",
     "react-native-vision-camera": "^5.0.7",
     "react-native-webview": "^13.16.1",

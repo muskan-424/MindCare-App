@@ -5,11 +5,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Profile = require('../models/Profile');
+const { config } = require('../../../../config/env');
+const audit = require('../../admin/services/auditService');
+const { shapeAuthResponse } = require('../../../shared/responseShapers');
 
-const ADMIN_EMAILS = [
-  process.env.ADMIN_EMAIL_1 && process.env.ADMIN_EMAIL_1.toLowerCase(),
-  process.env.ADMIN_EMAIL_2 && process.env.ADMIN_EMAIL_2.toLowerCase(),
-].filter(Boolean);
+const ADMIN_EMAILS = config.adminEmails;
 
 // @route   POST /api/auth
 // @desc    Login user
@@ -38,6 +38,7 @@ router.post(
       // Compare password
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
+        audit.record({ action: 'auth.login_failed', actorId: user._id, meta: { email } }, req);
         return res.status(400).json({ errors: [{ msg: 'Invalid credentials' }] });
       }
 
@@ -75,34 +76,16 @@ router.post(
           role,
         },
       };
-      const token = jwt.sign(payload, process.env.JWT_SECRET || 'dev_jwt_secret_change_me', {
-        expiresIn: '7d',
+      const token = jwt.sign(payload, config.jwtSecret, {
+        expiresIn: config.jwtExpiresIn,
       });
 
-      // Return user + profile + token (matching frontend expectation)
-      res.json({
-        token,
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          age: user.age,
-          gender: user.gender,
-          role,
-          specialisation: therapistListing ? therapistListing.specialisation : null,
-        },
-        profile: {
-          _id: profile._id,
-          userId: profile.userId,
-          name: profile.name,
-          email: profile.email,
-          phone_no: profile.phone_no,
-          age: profile.age,
-          gender: profile.gender,
-          bio: profile.bio,
-          concerns: profile.concerns,
-        },
-      });
+      audit.record({ action: 'auth.login', actorId: user._id, targetType: 'User', targetId: user._id, meta: { role } }, req);
+
+      const response = shapeAuthResponse({ token, user, profile });
+      response.user.role = role;
+      if (therapistListing) response.user.specialisation = therapistListing.specialisation;
+      res.json(response);
     } catch (err) {
       console.error('Login error:', err.message);
       res.status(500).json({ errors: [{ msg: 'Server error' }] });

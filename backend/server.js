@@ -2,9 +2,15 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
+const { validateEnv } = require('./config/env');
 const { requestLogger } = require('./middleware/requestLogger');
+const { apiLimiter, authLimiter } = require('./middleware/rateLimiters');
+const { notFound, errorHandler } = require('./middleware/errorHandler');
+const { metricsMiddleware } = require('./middleware/metrics');
+
+// Validate configuration before doing anything else (fail fast in production).
+validateEnv();
 
 const app = express();
 
@@ -14,22 +20,17 @@ app.set('trust proxy', 1);
 // ─── Security Middleware ─────────────────────────────────────────────────────
 app.use(helmet()); // Adds secure HTTP headers (XSS protection, no-sniff, etc.)
 
-// Global Rate Limiting: Max 200 requests per 15 minutes per IP
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, 
-  message: { error: 'Too many requests from this IP, please try again later.' },
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-});
-// Apply rate limiter to all /api routes
+// Global rate limit for all /api traffic; stricter limit on credential routes.
 app.use('/api', apiLimiter);
+app.use('/api/auth', authLimiter);
+app.use('/api/user', authLimiter);
 
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
 app.use(requestLogger);
+app.use(metricsMiddleware);
 
 // ─── DB Connection ────────────────────────────────────────────────────────────
 // Called on every cold start. On warm invocations, connectDB returns
@@ -42,6 +43,11 @@ connectDB().catch(err =>
 app.get('/', (req, res) => {
   res.json({ status: 'MindCare API is running', version: '1.0.0' });
 });
+
+// ─── Observability ────────────────────────────────────────────────────────────
+app.use('/api/health', require('./src/domains/admin/routes/health'));
+app.use('/api/metrics', require('./src/domains/admin/routes/metrics'));
+app.use('/api/docs', require('./src/domains/admin/routes/docs'));
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 app.use('/api/user', require('./src/domains/identity/routes/user'));
@@ -70,6 +76,10 @@ app.use('/api/institutions', require('./src/domains/identity/routes/institutions
 app.use('/api/aiIntake', require('./src/domains/assessment/routes/aiIntake'));
 app.use('/api/analytics', require('./src/domains/admin/routes/analytics'));
 
+// ─── 404 + Central Error Handler (must be last) ───────────────────────────────
+app.use(notFound);
+app.use(errorHandler);
+
 // ─── Local Dev Server ─────────────────────────────────────────────────────────
 // When running locally (node server.js / npm run dev), start the HTTP server
 // AND the SLA monitor background job. On Vercel, this block is skipped because
@@ -81,9 +91,10 @@ if (require.main === module) {
     console.log(`✅ MindCare API running on port ${PORT}`);
     console.log('===================================\n');
 
-    // SLA monitor only runs in traditional server mode (not serverless)
-    const { startSLAMonitor } = require('./src/domains/admin/services/slaMonitor');
-    startSLAMonitor();
+    // Background jobs (incl. the SLA monitor) only run in traditional server
+    // mode, not serverless — intervals don't fire reliably on Vercel.
+    const { startBackgroundJobs } = require('./jobs');
+    startBackgroundJobs();
   });
 }
 

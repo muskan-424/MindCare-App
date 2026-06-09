@@ -26,6 +26,7 @@ import { fetchQuoteOfTheDay } from '../../../redux/actions/quote';
 import { clearWelcome } from '../../../redux/actions/auth';
 import { getAvatarForGender } from '../../../utils/avatar';
 import StreakBanner from '../../wellness/components/StreakBanner';
+import useTranslation from '../../../utils/i18n';
 
 const SEVERITY_LABELS = { 1: 'A bit', 2: 'Somewhat', 3: 'Moderate', 4: 'Quite a bit', 5: 'Very much' };
 const MOOD_TAGS = ['calm', 'anxious', 'sad', 'angry', 'tired', 'hopeful', 'overwhelmed', 'okay'];
@@ -100,6 +101,7 @@ const fallbackContentByCategory = {
 };
 
 const HomeScreen = props => {
+  const { t } = useTranslation();
   const welcomeMessage = props.auth.welcomeMessage;
   const clearWelcomeMessage = props.clearWelcome;
   const [contentFeed, setContentFeed] = useState([]);
@@ -252,7 +254,14 @@ const HomeScreen = props => {
         )}
         <View style={[styles.header, { backgroundColor: isDarkMode ? '#1C2030' : colors.primary }]}>
           <View>
-            <Text style={styles.helloText}>Hello !</Text>
+            <Text style={styles.helloText}>
+              {(() => {
+                const h = new Date().getHours();
+                if (h < 12) return t('home.greeting_morning');
+                if (h < 17) return t('home.greeting_afternoon');
+                return t('home.greeting_evening');
+              })()}!
+            </Text>
             <Text style={styles.nameText}>{props.auth.profile.name}</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -370,7 +379,7 @@ const HomeScreen = props => {
             <TouchableOpacity
               onPress={() => {
                 props.navigation.navigate('Chat', {
-                  name: 'Eva Gupta',
+                  name: props.auth?.profile?.name,
                 });
               }}>
               <View style={styles.button}>
@@ -382,7 +391,7 @@ const HomeScreen = props => {
                       fontWeight: 'bold',
                       textTransform: 'uppercase',
                     }}>
-                    Let's talk
+                    {t('home.talk_to_tink')}
                   </Text>
                 </View>
               </View>
@@ -422,7 +431,7 @@ const HomeScreen = props => {
         </View>
 
         <View style={styles.selfHelpContainer}>
-          <Text style={[styles.selfHelpTitle, { color: isDarkMode ? '#8CC063' : colors.secondary }]}>Self-help</Text>
+          <Text style={[styles.selfHelpTitle, { color: isDarkMode ? '#8CC063' : colors.secondary }]}>{t('home.self_help')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selfHelpScroll}>
             {selfHelpTiles.map(opt => (
               <TrackedTouchable
@@ -447,7 +456,7 @@ const HomeScreen = props => {
           </View>
         </View>
         <View style={styles.tracksContainer}>
-          <Text style={[styles.trackTitle, { color: isDarkMode ? '#8CC063' : colors.secondary }]}>Mindful Content</Text>
+          <Text style={[styles.trackTitle, { color: isDarkMode ? '#8CC063' : colors.secondary }]}>{t('home.wellness_content')}</Text>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipContainer}>
             {contentCategories.map(cat => (

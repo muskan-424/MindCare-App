@@ -5,6 +5,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Profile = require('../models/Profile');
+const { config } = require('../../../../config/env');
+const { shapeAuthResponse } = require('../../../shared/responseShapers');
 
 // @route   POST /api/user
 // @desc    Register a new user
@@ -88,33 +90,11 @@ router.post(
           role: user.role,
         },
       };
-      const token = jwt.sign(payload, process.env.JWT_SECRET || 'dev_jwt_secret_change_me', {
-        expiresIn: '7d',
+      const token = jwt.sign(payload, config.jwtSecret, {
+        expiresIn: config.jwtExpiresIn,
       });
 
-      // Return user + profile + token (frontend can store token if needed)
-      res.json({
-        token,
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          age: user.age,
-          gender: user.gender,
-          role: user.role,
-        },
-        profile: {
-          _id: profile._id,
-          userId: profile.userId,
-          name: profile.name,
-          email: profile.email,
-          phone_no: profile.phone_no,
-          age: profile.age,
-          gender: profile.gender,
-          bio: profile.bio,
-          concerns: profile.concerns,
-        },
-      });
+      res.json(shapeAuthResponse({ token, user, profile }));
     } catch (err) {
       console.error('Register error:', err.message);
       res.status(500).json({ errors: [{ msg: 'Server error' }] });

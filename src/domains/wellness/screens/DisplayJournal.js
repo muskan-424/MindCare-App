@@ -84,7 +84,7 @@ const DisplayJournal = ({ route, navigation }) => {
         {data.riskLevel === 'HIGH' || data.riskLevel === 'CRITICAL' ? (
           <TouchableOpacity
             style={styles.talkBtn}
-            onPress={() => navigation.navigate('Chat', { name: 'Tink' })}>
+            onPress={() => navigation.navigate('HomeTab', { screen: 'Chat' })}>
             <Text style={styles.talkBtnText}>Talk to Tink 💜</Text>
           </TouchableOpacity>
         ) : null}

@@ -14,8 +14,10 @@ import api from '../../../utils/apiClient';
 import { colors } from '../../../constants/theme';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import useTranslation from '../../../utils/i18n';
 
 const GroupSessionsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [myGroups, setMyGroups] = useState([]);
   const [allGroups, setAllGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -84,20 +86,20 @@ const GroupSessionsScreen = ({ navigation }) => {
 
         <View style={styles.facilitatorRow}>
           <MaterialCommunityIcons name="account-tie" size={18} color="#64748B" />
-          <Text style={styles.facilitator}>Led by {item.facilitatorName}</Text>
+          <Text style={styles.facilitator}>{t('groups.led_by')} {item.facilitatorName}</Text>
         </View>
 
         <View style={styles.cardFooter}>
           <View style={styles.spotsBadge}>
             <MaterialCommunityIcons name="account-group" size={16} color={colors.primary} style={{ marginRight: 4 }} />
             <Text style={styles.spotsText}>
-              {spotsFilled} / {maxSpots} spots filled
+              {spotsFilled} / {maxSpots} {t('groups.spots_filled')}
             </Text>
           </View>
 
           {activeTab === 'registered' ? (
             <TouchableOpacity style={styles.joinBtn} onPress={() => openLink(item.meetingLink)}>
-              <Text style={styles.joinBtnText}>Join Room</Text>
+              <Text style={styles.joinBtnText}>{t('groups.join_room')}</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -110,7 +112,7 @@ const GroupSessionsScreen = ({ navigation }) => {
               onPress={() => handleRegister(item._id)}
             >
               <Text style={[styles.joinBtnText, isRegistered && styles.registeredBtnText]}>
-                {isRegistered ? 'Registered' : isFull ? 'Full' : 'Register'}
+                {isRegistered ? t('groups.joined') : isFull ? t('groups.full') : t('groups.join')}
               </Text>
             </TouchableOpacity>
           )}
@@ -134,7 +136,7 @@ const GroupSessionsScreen = ({ navigation }) => {
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <AntDesign name="arrowleft" size={24} color={colors.secondary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Group Therapy Sessions</Text>
+        <Text style={styles.headerTitle}>{t('groups.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -145,7 +147,7 @@ const GroupSessionsScreen = ({ navigation }) => {
           onPress={() => setActiveTab('registered')}
         >
           <Text style={[styles.tabText, activeTab === 'registered' && styles.activeTabText]}>
-            Registered ({myGroups.length})
+            {t('groups.registered')} ({myGroups.length})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -153,7 +155,7 @@ const GroupSessionsScreen = ({ navigation }) => {
           onPress={() => setActiveTab('discover')}
         >
           <Text style={[styles.tabText, activeTab === 'discover' && styles.activeTabText]}>
-            Explore Sessions ({allGroups.length})
+            {t('groups.explore')} ({allGroups.length})
           </Text>
         </TouchableOpacity>
       </View>
@@ -172,8 +174,8 @@ const GroupSessionsScreen = ({ navigation }) => {
             />
             <Text style={styles.emptyText}>
               {activeTab === 'registered'
-                ? "You don't have any upcoming group sessions."
-                : 'No other group sessions are available to explore right now.'}
+                ? t('groups.no_registered')
+                : t('groups.no_sessions')}
             </Text>
           </View>
         }

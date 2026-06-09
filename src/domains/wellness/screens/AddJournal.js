@@ -80,7 +80,7 @@ const AddJournal = ({ navigation }) => {
         {aiResult.riskLevel === 'HIGH' || aiResult.riskLevel === 'CRITICAL' ? (
           <TouchableOpacity
             style={styles.talkToTinkBtn}
-            onPress={() => navigation.navigate('Chat', { name: 'Tink' })}>
+            onPress={() => navigation.navigate('HomeTab', { screen: 'Chat' })}>
             <Text style={styles.doneBtnText}>Talk to Tink 💜</Text>
           </TouchableOpacity>
         ) : null}

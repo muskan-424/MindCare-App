@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { config } = require('../config/env');
 
 /**
  * Auth middleware — verifies JWT sent in Authorization header.
@@ -13,7 +14,7 @@ function auth(req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev_jwt_secret_change_me');
+    const decoded = jwt.verify(token, config.jwtSecret);
     req.user = decoded.user; // { id, role }
     next();
   } catch (err) {

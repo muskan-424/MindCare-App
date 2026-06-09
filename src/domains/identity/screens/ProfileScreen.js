@@ -9,11 +9,11 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
-  Alert
+  Alert,
+  FlatList,
 } from 'react-native';
 import api from '../../../utils/apiClient';
 import {Chip} from 'react-native-paper';
-//import { AntDesign,MaterialIcons,Feather,FontAwesome5,MaterialCommunityIcons,Ionicons} from '@expo/vector-icons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Feather from 'react-native-vector-icons/Feather';
@@ -25,9 +25,30 @@ import futureData from '../../../constants/futureData';
 import Appointments from '../../therapy/components/Appointments';
 import {connect} from 'react-redux';
 import { getAvatarForGender } from '../../../utils/avatar';
-import { logout } from '../../../redux/actions/auth';
+import { logout, setLanguage } from '../../../redux/actions/auth';
+import useTranslation from '../../../utils/i18n';
+
+const LANGUAGES = [
+  { code: 'en', label: 'English',    native: 'English',    flag: '🇬🇧' },
+  { code: 'hi', label: 'Hindi',      native: 'हिन्दी',       flag: '🇮🇳' },
+  { code: 'pa', label: 'Punjabi',    native: 'ਪੰਜਾਬੀ',      flag: '🇮🇳' },
+  { code: 'mr', label: 'Marathi',   native: 'मराठी',       flag: '🇮🇳' },
+  { code: 'bn', label: 'Bengali',   native: 'বাংলা',        flag: '🇮🇳' },
+  { code: 'te', label: 'Telugu',    native: 'తెలుగు',       flag: '🇮🇳' },
+  { code: 'ta', label: 'Tamil',     native: 'தமிழ்',        flag: '🇮🇳' },
+  { code: 'gu', label: 'Gujarati',  native: 'ગુજરાતી',     flag: '🇮🇳' },
+  { code: 'kn', label: 'Kannada',   native: 'ಕನ್ನಡ',        flag: '🇮🇳' },
+  { code: 'ml', label: 'Malayalam', native: 'മലയാളം',      flag: '🇮🇳' },
+  { code: 'es', label: 'Spanish',   native: 'Español',     flag: '🇪🇸' },
+  { code: 'fr', label: 'French',    native: 'Français',    flag: '🇫🇷' },
+  { code: 'de', label: 'German',    native: 'Deutsch',     flag: '🇩🇪' },
+  { code: 'pt', label: 'Portuguese',native: 'Português',   flag: '🇵🇹' },
+  { code: 'ar', label: 'Arabic',    native: 'العربية',     flag: '🇸🇦' },
+  { code: 'zh', label: 'Chinese',   native: '中文',         flag: '🇨🇳' },
+];
 
 const ProfileScreen = props => {
+  const { t } = useTranslation();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -35,6 +56,8 @@ const ProfileScreen = props => {
   const [instModalVisible, setInstModalVisible] = useState(false);
   const [accessCode, setAccessCode] = useState('');
   const [instLoading, setInstLoading] = useState(false);
+
+  const [langModalVisible, setLangModalVisible] = useState(false);
 
   const handleJoinInstitution = async () => {
     if (!accessCode.trim()) return Alert.alert('Required', 'Please enter an access code.');
@@ -209,12 +232,29 @@ const ProfileScreen = props => {
         activeOpacity={0.8}>
         <MaterialCommunityIcons name="account-group" size={24} color="#F06292" />
         <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.historyText}>Peer Matching</Text>
-          <Text style={styles.historySubtext}>Connect with others on a similar journey</Text>
+          <Text style={styles.historyText}>{t('profile.peer_matching')}</Text>
+          <Text style={styles.historySubtext}>{t('profile.peer_subtitle')}</Text>
         </View>
         <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
       </TouchableOpacity>
-      
+
+      {/* Language Row */}
+      <TouchableOpacity
+        style={[styles.historyRow, { marginTop: 10, borderLeftColor: '#26C6DA' }]}
+        onPress={() => setLangModalVisible(true)}
+        activeOpacity={0.8}>
+        <MaterialCommunityIcons name="translate" size={24} color="#26C6DA" />
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={styles.historyText}>{t('profile.language')}</Text>
+          <Text style={styles.historySubtext}>{t('profile.language_subtitle')}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={{ fontSize: 12, color: colors.gray, marginRight: 4 }}>
+            {LANGUAGES.find(l => l.code === (props.auth.language || 'en'))?.native || 'English'}
+          </Text>
+          <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
+        </View>
+      </TouchableOpacity>
       {/* Institution Row */}
       {props.auth.user.institutionId ? (
         <TouchableOpacity
@@ -284,6 +324,52 @@ const ProfileScreen = props => {
         </TouchableOpacity>
 
       </View>
+
+      {/* Language Selection Modal */}
+      <Modal visible={langModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '80%' }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+              <MaterialCommunityIcons name="translate" size={24} color={colors.primary} />
+              <Text style={[styles.modalTitle, { color: colors.primary, marginLeft: 8, marginBottom: 0 }]}>
+                {t('language.select')}
+              </Text>
+            </View>
+            <FlatList
+              data={LANGUAGES}
+              keyExtractor={item => item.code}
+              renderItem={({ item }) => {
+                const isActive = (props.auth.language || 'en') === item.code;
+                return (
+                  <TouchableOpacity
+                    style={[styles.langRow, isActive && styles.langRowActive]}
+                    onPress={() => {
+                      props.setLanguage(item.code);
+                      setLangModalVisible(false);
+                    }}>
+                    <Text style={styles.langFlag}>{item.flag}</Text>
+                    <View style={{ flex: 1, marginLeft: 12 }}>
+                      <Text style={[styles.langLabel, isActive && { color: colors.primary }]}>
+                        {item.native}
+                      </Text>
+                      <Text style={styles.langSub}>{item.label}</Text>
+                    </View>
+                    {isActive && (
+                      <MaterialCommunityIcons name="check-circle" size={22} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+              showsVerticalScrollIndicator={false}
+            />
+            <TouchableOpacity
+              style={[styles.modalBtn, { backgroundColor: colors.gray3, marginTop: 12 }]}
+              onPress={() => setLangModalVisible(false)}>
+              <Text style={[styles.modalBtnText, { color: colors.secondary }]}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <Modal visible={deleteModalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
@@ -366,7 +452,7 @@ const mapStateToProps = state => ({
   auth: state.auth,
 });
 
-export default connect(mapStateToProps, { logout })(ProfileScreen);
+export default connect(mapStateToProps, { logout, setLanguage })(ProfileScreen);
 
 const styles = StyleSheet.create({
   container: {
@@ -531,5 +617,29 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: 'bold',
     fontSize: 16
-  }
+  },
+  langRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  langRowActive: {
+    backgroundColor: `${colors.primary}18`,
+  },
+  langFlag: {
+    fontSize: 22,
+  },
+  langLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.secondary,
+  },
+  langSub: {
+    fontSize: 12,
+    color: colors.gray,
+    marginTop: 1,
+  },
 });
