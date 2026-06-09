@@ -144,12 +144,12 @@ A priority-ordered plan to close the gaps found when benchmarking the MindCare
 ## Phase 6 — Frontend Alignment & Release Readiness (P3) 🔄 IN PROGRESS
 > Goal: keep the React Native client in sync with the shaped API and verify end-to-end in CI.
 
-| # | Task | Effort | Acceptance criteria |
-|---|------|--------|---------------------|
-| 6.1 | **Frontend client tests** — unit tests for `tinkChat.js` (REST normalize, WS URL, socket helpers). | S | `npm test` covers chat client without network; green in CI. |
-| 6.2 | **Screen smoke tests** — ChatWithTink, fitness, institution join screens render with mocked API. | M | No regressions on shaped response fields (`id` vs `_id`, no `__v`). |
-| 6.3 | **CI green on main** — frontend + backend jobs pass on every push. | S | GitHub Actions `frontend-ci` + `backend-ci` both green. |
-| 6.4 | **Deploy verification** — confirm Vercel/Render health + `/api/docs` reachable in prod. | S | `/api/health` 200; OpenAPI loads; WS documented as long-lived-only. |
+| # | Task | Effort | Status |
+|---|------|--------|--------|
+| 6.1 | **Frontend client tests** — `tinkChat.js` REST + WebSocket helpers. | S | ✅ 12 tests in `__tests__/tinkChat.test.js` |
+| 6.2 | **Screen smoke tests** — fitness categories/plan, institution dashboard; ChatWithTink `act` fix. | M | ✅ `__tests__/ScreenSmoke.test.js` (108 frontend tests total) |
+| 6.3 | **CI green on main** — frontend + backend jobs on every push. | S | ⏳ verify on GitHub Actions after push |
+| 6.4 | **Deploy verification** — prod `/api/health` + `/api/docs/openapi.json`. | S | ⚠️ Vercel (`mind-care-app-five.vercel.app`) returned `FUNCTION_INVOCATION_FAILED` (Jun 2026); investigate serverless boot / env vars |
 
 **Exit criteria:** client and server tested together; production API matches documented shapes.
 

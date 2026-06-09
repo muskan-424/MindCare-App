@@ -71,6 +71,27 @@ jest.mock('../src/utils/apiClient', () => ({
   delete: (...args) => mockApiDelete(...args),
 }));
 
+jest.mock('../src/utils/tinkChat', () => ({
+  sendChatMessage: jest.fn(() => Promise.resolve({
+    reply: 'Hello',
+    suggestions: [],
+    cards: [],
+    crisis: false,
+    mode: 'rule',
+  })),
+  getCapabilities: jest.fn(() => Promise.resolve({
+    geminiLive: false,
+    mode: 'rule',
+    ragMode: 'local',
+    websocket: true,
+  })),
+  buildChatWsUrl: jest.fn(() => 'ws://localhost/api/chat/ws'),
+  createChatSocket: jest.fn(() => null),
+  sendChatSocketMessage: jest.fn(() => false),
+  refineMessage: jest.fn((args) => Promise.resolve(args.text)),
+  translateMessage: jest.fn((args) => Promise.resolve(args.text)),
+}));
+
 // ─── Redux store factory ──────────────────────────────────────────────────────
 const makeStore = ({ role = 'user', name = 'Test User' } = {}) => {
   const initialState = {
@@ -252,16 +273,17 @@ describe('6. Goal Tracker Screen Working', () => {
 describe('7. Chat With Tink Screen Working', () => {
   const ChatWithTink = require('../src/domains/community/screens/ChatWithTink').default;
 
-  it('renders Tink welcome message and input', () => {
+  it('renders Tink welcome message and input', async () => {
     const mockRoute = { params: {} };
     const store = makeStore({ name: 'Muskan' });
     let tree;
-    renderer.act(() => {
+    await renderer.act(async () => {
       tree = renderer.create(
         <Provider store={store}>
           <ChatWithTink route={mockRoute} navigation={mockNavigation} />
         </Provider>
       );
+      await Promise.resolve();
     });
     const cache = new Set();
     const json = JSON.stringify(tree.toJSON(), (k, v) => {
