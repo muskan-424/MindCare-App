@@ -248,6 +248,33 @@ describe('Community & wellness DTO layer', () => {
   });
 });
 
+describe('Admin DTO layer', () => {
+  test('shapeAdminUserListing omits password and __v', () => {
+    const { shapeAdminUserListing } = require('../src/shared/responseShapers');
+    const shaped = shapeAdminUserListing(
+      { _id: '507f1f77bcf86cd799439011', name: 'Pat', email: 'p@test.com', password: 'secret', __v: 0 },
+      { phone_no: '123', concerns: ['anxiety'] },
+    );
+    expect(shaped.id).toBe('507f1f77bcf86cd799439011');
+    expect(shaped.password).toBeUndefined();
+    expect(shaped.__v).toBeUndefined();
+    expect(shaped.profile.concerns).toEqual(['anxiety']);
+  });
+
+  test('shapeAdminResource stringifies id', () => {
+    const { shapeAdminResource } = require('../src/shared/responseShapers');
+    const shaped = shapeAdminResource({
+      _id: '507f1f77bcf86cd799439011',
+      title: 'Guide',
+      type: 'article',
+      url: 'https://example.com',
+      __v: 0,
+    });
+    expect(shaped.id).toBe('507f1f77bcf86cd799439011');
+    expect(shaped.__v).toBeUndefined();
+  });
+});
+
 describe('Therapist DTO layer', () => {
   test('shapeTherapistListing strips __v and stringifies id', () => {
     const { shapeTherapistListing } = require('../src/shared/responseShapers');

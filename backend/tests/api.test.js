@@ -263,6 +263,45 @@ describe('Agentic chat (offline / rule-based)', () => {
   });
 });
 
+const ADMIN_HEADERS = { 'x-admin-token': 'test_admin_token' };
+
+describe('Admin API (token + DTO)', () => {
+  test('rejects requests without admin token', async () => {
+    const res = await request(app).get('/api/admin/users');
+    expect(res.status).toBe(401);
+  });
+
+  test('lists users with shaped payloads (no password / __v)', async () => {
+    await registerUser();
+    const res = await request(app).get('/api/admin/users').set(ADMIN_HEADERS);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThan(0);
+    expect(res.body[0].password).toBeUndefined();
+    expect(res.body[0].__v).toBeUndefined();
+    expect(typeof res.body[0].id).toBe('string');
+  });
+
+  test('lists resources with string ids', async () => {
+    const res = await request(app).get('/api/admin/resources').set(ADMIN_HEADERS);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+});
+
+describe('Public content (DTO)', () => {
+  test('GET /api/blogs returns featured and popular feeds', async () => {
+    const res = await request(app).get('/api/blogs');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.featured)).toBe(true);
+    expect(Array.isArray(res.body.popular)).toBe(true);
+    if (res.body.featured.length) {
+      expect(typeof res.body.featured[0].id).toBe('string');
+      expect(res.body.featured[0].__v).toBeUndefined();
+    }
+  });
+});
+
 describe('Appointments (auth + DTO)', () => {
   test('submits and lists a consultation request', async () => {
     const { res: reg } = await registerUser();

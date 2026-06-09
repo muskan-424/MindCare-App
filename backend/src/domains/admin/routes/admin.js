@@ -15,6 +15,17 @@ const Resource = require('../../content/models/Resource');
 const Therapist = require('../../therapy/models/Therapist');
 const Notification = require('../models/Notification');
 const AssessmentFusionResult = require('../../assessment/models/AssessmentFusionResult');
+const {
+  shapeAdminUserListing,
+  shapeClinicalPatientProfile,
+  shapeAdminIssueReport,
+  shapeAdminAppointment,
+  shapeAdminEmergencyContact,
+  shapeAdminResource,
+  shapeAdminAuditLogEntry,
+  shapeAdminWellnessPlan,
+  shapeTherapistProfile,
+} = require('../../../shared/responseShapers');
 
 function adminAuth(req, res, next) {
   const token = req.headers['x-admin-token'];
@@ -52,25 +63,7 @@ router.get('/users', adminAuth, async (_req, res) => {
     profiles.forEach((p) => {
       profileByUser[String(p.userId)] = p;
     });
-    const result = users.map((u) => ({
-      id: String(u._id),
-      name: u.name,
-      email: u.email,
-      age: u.age,
-      gender: u.gender,
-      role: u.role || 'user',
-      suspended: u.suspended || false,
-      flagged: u.flagged || false,
-      flagReason: u.flagReason || '',
-      createdAt: u.createdAt,
-      profile: profileByUser[String(u._id)]
-        ? {
-            phone_no: profileByUser[String(u._id)].phone_no,
-            concerns: profileByUser[String(u._id)].concerns || [],
-          }
-        : null,
-    }));
-    res.json(result);
+    res.json(users.map((u) => shapeAdminUserListing(u, profileByUser[String(u._id)])));
   } catch (err) {
     console.error('Admin users error:', err.message);
     res.status(500).json({ error: 'Failed to load users' });
@@ -92,14 +85,7 @@ router.get('/users/:id/full-profile', adminAuth, async (req, res) => {
 
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    res.json({
-      user: { id: user._id, name: user.name, email: user.email, age: user.age, gender: user.gender, role: user.role, suspended: user.suspended, flagged: user.flagged },
-      profile,
-      fusions: fusions.map(f => ({ id: String(f._id), riskLevel: f.riskLevel, riskScore: f.riskScore, aiMarkers: f.aiMarkers, recommendations: f.recommendations, createdAt: f.createdAt })),
-      issues: issues.map(i => ({ id: String(i._id), category: i.category, severity: i.severity, riskLevel: i.riskLevel, safetyTriggered: i.safetyTriggered, createdAt: i.createdAt })),
-      moods: moods.map(m => ({ id: String(m._id), rating: m.rating, note: m.note, date: m.date })),
-      journals: journals.map(j => ({ id: String(j._id), title: j.title, contentPreview: j.content?.substring(0, 50) + '...', date: j.date })),
-    });
+    res.json(shapeClinicalPatientProfile({ user, profile, fusions, issues, moods, journals }));
   } catch (err) {
     console.error('Admin full profile error:', err.message);
     res.status(500).json({ error: 'Failed to load full profile' });
@@ -160,23 +146,7 @@ router.get('/issues', adminAuth, async (req, res) => {
       .sort({ createdAt: -1 })
       .populate('user', 'name email')
       .lean();
-    res.json(
-      reports.map((r) => ({
-        id: String(r._id),
-        userId: String(r.user?._id || r.user),
-        userName: r.user?.name,
-        userEmail: r.user?.email,
-        createdAt: r.createdAt,
-        category: r.category,
-        severity: r.severity,
-        description: r.description,
-        moodTag: r.moodTag,
-        riskLevel: r.riskLevel,
-        sentimentScore: r.sentimentScore,
-        emotionTags: r.emotionTags,
-        recommendations: r.recommendations,
-      }))
-    );
+    res.json(reports.map(shapeAdminIssueReport));
   } catch (err) {
     console.error('Admin issues error:', err.message);
     res.status(500).json({ error: 'Failed to load issues' });
@@ -328,24 +298,7 @@ router.get('/appointments', adminAuth, async (req, res) => {
       .populate('user', 'name email')
       .populate('therapist', 'name specialisation img timing')
       .lean();
-    res.json(appointments.map(a => ({
-      id: String(a._id),
-      userName: a.user?.name || 'Unknown',
-      userEmail: a.user?.email || '',
-      requestedSpeciality: a.requestedSpeciality,
-      preferredDates: a.preferredDates,
-      preferredTime: a.preferredTime,
-      userNote: a.userNote,
-      therapistId: a.therapist ? String(a.therapist._id) : null,
-      therapistName: a.therapist?.name || null,
-      therapistSpeciality: a.therapist?.specialisation || null,
-      therapistTiming: a.therapist?.timing || null,
-      date: a.date || null,
-      timeSlot: a.timeSlot || null,
-      adminNote: a.adminNote,
-      status: a.status,
-      createdAt: a.createdAt,
-    })));
+    res.json(appointments.map(shapeAdminAppointment));
   } catch (err) {
     console.error('Admin appointments error:', err.message);
     res.status(500).json({ error: 'Failed to load appointments' });
@@ -653,20 +606,7 @@ router.get('/emergency-contacts', adminAuth, async (req, res) => {
       .sort({ createdAt: 1 })
       .populate('user', 'name email')
       .lean();
-    res.json(contacts.map(c => ({
-      id: String(c._id),
-      userId: String(c.user?._id),
-      userName: c.user?.name || 'Unknown',
-      userEmail: c.user?.email || '',
-      contactName: c.name,
-      relationship: c.relationship,
-      phone: c.phone,  // full phone visible to admin only
-      reachVia: c.reachVia,
-      userMessage: c.userMessage,
-      status: c.status,
-      callLogCount: c.callLog?.length || 0,
-      createdAt: c.createdAt,
-    })));
+    res.json(contacts.map(shapeAdminEmergencyContact));
   } catch (err) {
     console.error('Admin get EC error:', err.message);
     res.status(500).json({ error: 'Failed to load emergency contacts' });
@@ -802,7 +742,7 @@ router.post('/wellness-plans/:id/assign', adminAuth, async (req, res) => {
       totalDays: planDurationDays || 30,
       taskCount: dailyPlans.reduce((s, d) => s + (d.tasks?.length || 0), 0),
     });
-    res.json({ success: true, plan });
+    res.json({ success: true, plan: shapeAdminWellnessPlan(plan.toObject()) });
   } catch (err) {
     console.error('Admin assign wellness plan error:', err.message);
     res.status(500).json({ error: 'Failed to assign wellness plan' });
@@ -965,7 +905,7 @@ router.post('/therapists/:id/link-user', adminAuth, async (req, res) => {
       therapistId: String(therapist._id),
       userId: userId || null
     });
-    res.json({ success: true, therapist });
+    res.json({ success: true, therapist: shapeTherapistProfile(therapist.toObject()) });
   } catch (err) {
     console.error('Admin link therapist error:', err.message);
     if (err.code === 11000) {
@@ -997,7 +937,7 @@ router.put('/therapists/:id', adminAuth, async (req, res) => {
       therapistId: String(therapist._id),
       changes: Object.keys(update),
     });
-    res.json({ success: true, therapist });
+    res.json({ success: true, therapist: shapeTherapistProfile(therapist.toObject()) });
   } catch (err) {
     console.error('Admin update therapist error:', err.message);
     res.status(500).json({ error: 'Failed to update therapist' });
@@ -1027,15 +967,7 @@ router.delete('/therapists/:id', adminAuth, async (req, res) => {
 router.get('/resources', adminAuth, async (req, res) => {
   try {
     const resources = await Resource.find({}).sort({ createdAt: -1 }).lean();
-    res.json(resources.map(r => ({
-      id: String(r._id),
-      title: r.title,
-      type: r.type,
-      url: r.url,
-      description: r.description,
-      active: r.active,
-      createdAt: r.createdAt,
-    })));
+    res.json(resources.map(shapeAdminResource));
   } catch (err) {
     console.error('Admin get resources error:', err.message);
     res.status(500).json({ error: 'Failed to load resources' });
@@ -1090,7 +1022,7 @@ router.put('/resources/:id', adminAuth, async (req, res) => {
       resourceId: String(resource._id),
       changes: Object.keys(update),
     });
-    res.json({ success: true, resource });
+    res.json({ success: true, resource: shapeAdminResource(resource.toObject()) });
   } catch (err) {
     console.error('Admin update resource error:', err.message);
     res.status(500).json({ error: 'Failed to update resource' });
@@ -1129,15 +1061,7 @@ router.get('/audit-logs', adminAuth, async (req, res) => {
     const total = await AdminAuditLog.countDocuments();
     res.json({
       total,
-      logs: logs.map(l => ({
-        id: String(l._id),
-        adminId: l.adminId,
-        action: l.action,
-        targetUserName: l.targetUser?.name || null,
-        targetUserEmail: l.targetUser?.email || null,
-        metadata: l.metadata,
-        createdAt: l.createdAt,
-      })),
+      logs: logs.map(shapeAdminAuditLogEntry),
     });
   } catch (err) {
     console.error('Admin audit log error:', err.message);

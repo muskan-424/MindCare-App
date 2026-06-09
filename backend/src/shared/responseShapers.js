@@ -545,6 +545,131 @@ function shapeStreaksResponse({
   };
 }
 
+function shapeAdminUserListing(user, profile = null) {
+  const plain = shapeUser(user);
+  return {
+    id: plain.id || String(plain._id),
+    name: plain.name,
+    email: plain.email,
+    age: plain.age,
+    gender: plain.gender,
+    role: plain.role || 'user',
+    suspended: plain.suspended || false,
+    flagged: plain.flagged || false,
+    flagReason: plain.flagReason || '',
+    createdAt: plain.createdAt,
+    profile: profile ? {
+      phone_no: profile.phone_no,
+      concerns: profile.concerns || [],
+    } : null,
+  };
+}
+
+function shapeAdminAppointment(appt) {
+  const plain = shapeId(appt);
+  const therapist = plain.therapist && typeof plain.therapist === 'object' ? plain.therapist : null;
+  const user = plain.user && typeof plain.user === 'object' ? plain.user : null;
+  return {
+    id: plain.id || String(plain._id),
+    userName: user?.name || 'Unknown',
+    userEmail: user?.email || '',
+    requestedSpeciality: plain.requestedSpeciality || '',
+    preferredDates: plain.preferredDates || [],
+    preferredTime: plain.preferredTime || '',
+    userNote: plain.userNote || '',
+    therapistId: therapist ? String(therapist._id || therapist.id) : null,
+    therapistName: therapist?.name || null,
+    therapistSpeciality: therapist?.specialisation || null,
+    therapistTiming: therapist?.timing || null,
+    date: plain.date || null,
+    timeSlot: plain.timeSlot || null,
+    adminNote: plain.adminNote || '',
+    status: plain.status,
+    createdAt: plain.createdAt,
+  };
+}
+
+function shapeAdminIssueReport(report) {
+  const plain = shapeId(report);
+  const user = plain.user && typeof plain.user === 'object' ? plain.user : null;
+  return {
+    id: plain.id || String(plain._id),
+    userId: user ? String(user._id || user.id) : String(plain.user),
+    userName: user?.name,
+    userEmail: user?.email,
+    createdAt: plain.createdAt,
+    category: plain.category,
+    severity: plain.severity,
+    description: plain.description,
+    moodTag: plain.moodTag,
+    riskLevel: plain.riskLevel,
+    sentimentScore: plain.sentimentScore,
+    emotionTags: plain.emotionTags || [],
+    recommendations: plain.recommendations || [],
+  };
+}
+
+function shapeAdminEmergencyContact(contact) {
+  const plain = shapeId(contact);
+  const user = plain.user && typeof plain.user === 'object' ? plain.user : null;
+  return {
+    id: plain.id || String(plain._id),
+    userId: user ? String(user._id || user.id) : String(plain.user),
+    userName: user?.name || 'Unknown',
+    userEmail: user?.email || '',
+    contactName: plain.name,
+    relationship: plain.relationship,
+    phone: plain.phone,
+    reachVia: plain.reachVia,
+    userMessage: plain.userMessage || '',
+    status: plain.status,
+    callLogCount: plain.callLog?.length || 0,
+    createdAt: plain.createdAt,
+  };
+}
+
+function shapeAdminResource(resource) {
+  const plain = shapeId(resource);
+  return {
+    id: plain.id || String(plain._id),
+    title: plain.title,
+    type: plain.type,
+    url: plain.url,
+    description: plain.description || '',
+    active: plain.active !== false,
+    createdAt: plain.createdAt,
+    updatedAt: plain.updatedAt,
+  };
+}
+
+function shapeAdminAuditLogEntry(log) {
+  const plain = shapeId(log);
+  const target = plain.targetUser && typeof plain.targetUser === 'object' ? plain.targetUser : null;
+  return {
+    id: plain.id || String(plain._id),
+    adminId: plain.adminId,
+    action: plain.action,
+    targetUserName: target?.name || null,
+    targetUserEmail: target?.email || null,
+    metadata: plain.metadata || {},
+    createdAt: plain.createdAt,
+  };
+}
+
+function shapeAdminWellnessPlan(plan) {
+  const shaped = shapeWellnessPlan(plan);
+  if (!shaped) return null;
+  const user = plan.user;
+  if (user && typeof user === 'object') {
+    shaped.user = {
+      id: String(user._id || user.id),
+      name: user.name,
+      email: user.email,
+    };
+  }
+  return shaped;
+}
+
 function shapeChatResponse(payload) {
   return {
     reply: payload.reply,
@@ -599,6 +724,13 @@ module.exports = {
   shapeBlogPost,
   shapeBlogFeed,
   shapeAssignedResource,
+  shapeAdminUserListing,
+  shapeAdminAppointment,
+  shapeAdminIssueReport,
+  shapeAdminEmergencyContact,
+  shapeAdminResource,
+  shapeAdminAuditLogEntry,
+  shapeAdminWellnessPlan,
   shapeConversationSummary,
   shapeConversationDetail,
   shapeChatResponse,
