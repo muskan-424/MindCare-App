@@ -5,9 +5,26 @@ const { startMemoryDb, clearDb, stopMemoryDb } = require('./helpers/testDb');
 
 let app;
 let httpServer;
+let wss;
 let wsPort;
 let attachChatWebSocket;
 let processAgenticChat;
+
+async function closeHttpStack() {
+  if (wss) {
+    await new Promise((resolve) => {
+      wss.clients.forEach((client) => {
+        try { client.terminate(); } catch (_) { /* ignore */ }
+      });
+      wss.close(() => resolve());
+    });
+    wss = null;
+  }
+  if (httpServer) {
+    await new Promise((resolve) => httpServer.close(resolve));
+    httpServer = null;
+  }
+}
 
 function connectChatWs(token) {
   const q = token ? `?token=${encodeURIComponent(token)}` : '';
@@ -50,15 +67,13 @@ beforeAll(async () => {
   ({ attachChatWebSocket } = require('../src/domains/community/ws/chatWs'));
   ({ processAgenticChat } = require('../src/domains/community/services/chatAgentService'));
   httpServer = http.createServer(app);
-  attachChatWebSocket(httpServer);
+  wss = attachChatWebSocket(httpServer);
   await new Promise((resolve) => httpServer.listen(0, '127.0.0.1', resolve));
   wsPort = httpServer.address().port;
 });
 
 afterAll(async () => {
-  if (httpServer) {
-    await new Promise((resolve) => httpServer.close(resolve));
-  }
+  await closeHttpStack();
   await stopMemoryDb();
 }, 15000);
 
@@ -245,6 +260,61 @@ describe('Agentic chat (offline / rule-based)', () => {
 
   test('processAgenticChat rejects an empty message', async () => {
     await expect(processAgenticChat({ message: '   ' })).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe('Appointments (auth + DTO)', () => {
+  test('submits and lists a consultation request', async () => {
+    const { res: reg } = await registerUser();
+    const auth = { Authorization: `Bearer ${reg.body.token}` };
+
+    const created = await request(app).post('/api/appointments').set(auth).send({
+      requestedSpeciality: 'Psychologist',
+      preferredDates: ['2026-06-15'],
+      preferredTime: 'morning',
+      userNote: 'Need support',
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.id).toBeTruthy();
+    expect(created.body.__v).toBeUndefined();
+    expect(created.body.status).toBe('awaiting_admin');
+
+    const list = await request(app).get('/api/appointments').set(auth);
+    expect(list.status).toBe(200);
+    expect(list.body).toHaveLength(1);
+    expect(list.body[0].id).toBe(created.body.id);
+    expect(list.body[0].__v).toBeUndefined();
+  });
+});
+
+describe('Wellness plans (auth + DTO)', () => {
+  test('returns exists:false when the user has no plan', async () => {
+    const { res: reg } = await registerUser();
+    const auth = { Authorization: `Bearer ${reg.body.token}` };
+    const res = await request(app).get('/api/wellness').set(auth);
+    expect(res.status).toBe(200);
+    expect(res.body.exists).toBe(false);
+  });
+
+  test('submits a wellness request and retrieves a shaped plan', async () => {
+    const { res: reg } = await registerUser();
+    const auth = { Authorization: `Bearer ${reg.body.token}` };
+
+    const created = await request(app).post('/api/wellness/request').set(auth).send({
+      goals: ['Reduce Anxiety'],
+      currentStruggles: 'Work stress',
+      preferredPace: 'Moderate',
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.plan.id).toBeTruthy();
+    expect(created.body.plan.__v).toBeUndefined();
+    expect(created.body.plan.status).toBe('awaiting_admin');
+
+    const get = await request(app).get('/api/wellness').set(auth);
+    expect(get.status).toBe(200);
+    expect(get.body.exists).toBe(true);
+    expect(get.body.goals).toContain('Reduce Anxiety');
+    expect(get.body.__v).toBeUndefined();
   });
 });
 

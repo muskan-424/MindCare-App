@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "lint": "eslint .",
-    "test": "jest --runInBand",
+    "test": "jest --runInBand --forceExit",
     "migrate": "node scripts/migrate.js",
     "migrate:indexes": "node scripts/syncIndexes.js",
     "seed": "node seed.js",

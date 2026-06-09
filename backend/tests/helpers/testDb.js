@@ -14,7 +14,12 @@
 
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
-let mongod = null;
+async function getSharedMongod() {
+  if (!global.__MONGOD__) {
+    global.__MONGOD__ = await MongoMemoryServer.create();
+  }
+  return global.__MONGOD__;
+}
 
 async function waitForConnection(mongoose, timeoutMs = 30000) {
   const start = Date.now();
@@ -32,9 +37,7 @@ async function waitForConnection(mongoose, timeoutMs = 30000) {
 let appInstance = null;
 
 async function startMemoryDb() {
-  if (!mongod) {
-    mongod = await MongoMemoryServer.create();
-  }
+  const mongod = await getSharedMongod();
   process.env.NODE_ENV = 'test';
   process.env.MONGODB_URI = mongod.getUri();
   process.env.JWT_SECRET = 'test_jwt_secret';
@@ -65,13 +68,29 @@ async function clearDb() {
 
 async function stopMemoryDb() {
   const mongoose = require('mongoose');
-  await mongoose.disconnect();
-  if (mongod) {
-    await mongod.stop();
-    mongod = null;
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
   }
   appInstance = null;
   jest.resetModules();
 }
 
-module.exports = { startMemoryDb, clearDb, stopMemoryDb };
+/** Tear down the shared in-memory MongoDB (call once from globalTeardown). */
+async function stopGlobalMongo() {
+  try {
+    const { stopBackgroundJobs } = require('../../jobs');
+    stopBackgroundJobs();
+  } catch (_) { /* jobs module may not be loaded */ }
+
+  const mongoose = require('mongoose');
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
+  if (global.__MONGOD__) {
+    await global.__MONGOD__.stop();
+    global.__MONGOD__ = null;
+  }
+  appInstance = null;
+}
+
+module.exports = { startMemoryDb, clearDb, stopMemoryDb, stopGlobalMongo };

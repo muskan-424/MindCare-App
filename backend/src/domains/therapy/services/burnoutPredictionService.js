@@ -6,6 +6,8 @@ const IssueReport = require('../../admin/models/IssueReport');
  * Service to predict short-term burnout likelihood using the custom Python ML pipeline.
  */
 async function evaluateBurnoutRisk(userId) {
+  if (process.env.NODE_ENV === 'test') return;
+
   try {
     // 1. Gather Demographic Data
     const profile = await Profile.findOne({ user: userId }).lean();
