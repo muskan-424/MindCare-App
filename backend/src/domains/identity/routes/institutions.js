@@ -6,6 +6,7 @@ const Profile = require('../models/Profile');
 const MoodEntry = require('../../wellness/models/MoodEntry');
 const IssueReport = require('../../admin/models/IssueReport');
 const { auth } = require('../../../../middleware/auth');
+const { shapeInstitution, shapeInstitutionReport } = require('../../../shared/responseShapers');
 
 // Helper for super-admin check
 const superAdminAuth = (req, res, next) => {
@@ -34,7 +35,7 @@ router.post('/', superAdminAuth, async (req, res) => {
     });
 
     await inst.save();
-    res.status(201).json(inst);
+    res.status(201).json(shapeInstitution(inst));
   } catch (err) {
     if (err.code === 11000) return res.status(400).json({ error: 'Access code already exists' });
     res.status(500).json({ error: 'Failed to create institution' });
@@ -107,14 +108,13 @@ router.get('/:id/report', auth, async (req, res) => {
       ])
     ]);
 
-    res.json({
-        institutionName: inst.name,
-        memberCount: inst.members.length,
-        moodTrends: moodStats.map(m => ({ date: m._id, value: m.avgRating })),
-        topConcerns: concernStats.map(c => ({ concern: c._id, count: c.count })),
-        riskDistribution: riskStats.map(r => ({ level: r._id, count: r.count })),
-        generatedAt: new Date()
-    });
+    res.json(shapeInstitutionReport({
+      institutionName: inst.name,
+      memberCount: inst.members.length,
+      moodTrends: moodStats,
+      topConcerns: concernStats,
+      riskDistribution: riskStats,
+    }));
   } catch (err) {
     console.error('Report error:', err.message);
     res.status(500).json({ error: 'Failed to generate report' });

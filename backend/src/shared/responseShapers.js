@@ -878,6 +878,196 @@ function shapeAssessmentReport({ session, featureVector, fusion }) {
   };
 }
 
+function shapeAdminDashboardStats(stats) {
+  return {
+    totalUsers: stats.totalUsers ?? 0,
+    totalAssessments: stats.totalAssessments ?? 0,
+    criticalToday: stats.criticalToday ?? 0,
+    highRiskWeek: stats.highRiskWeek ?? 0,
+    totalJournals: stats.totalJournals ?? 0,
+    avgMoodWeek: stats.avgMoodWeek ?? null,
+  };
+}
+
+function _pendingUserFields(plain) {
+  const user = plain.user && typeof plain.user === 'object' ? plain.user : null;
+  return {
+    userId: user ? String(user._id || user.id) : String(plain.user),
+    userName: user?.name || 'Unknown',
+    userEmail: user?.email || '',
+  };
+}
+
+function shapeAdminPendingAppointment(appt) {
+  const plain = shapeId(appt);
+  return {
+    id: plain.id || String(plain._id),
+    type: 'appointment_request',
+    ..._pendingUserFields(plain),
+    requestedSpeciality: plain.requestedSpeciality || '',
+    preferredDates: plain.preferredDates || [],
+    preferredTime: plain.preferredTime || '',
+    userNote: plain.userNote || '',
+    createdAt: plain.createdAt,
+  };
+}
+
+function shapeAdminPendingRiskReport(report) {
+  const plain = shapeId(report);
+  return {
+    id: plain.id || String(plain._id),
+    type: 'risk_report',
+    ..._pendingUserFields(plain),
+    riskLevel: plain.riskLevel,
+    category: plain.category,
+    severity: plain.severity,
+    description: plain.description || '',
+    emotionTags: plain.emotionTags || [],
+    safetyTriggered: Boolean(plain.safetyTriggered),
+    createdAt: plain.createdAt,
+    escalated: Boolean(plain.escalated),
+    escalatedAt: plain.escalatedAt || null,
+    slaBreachMinutes: plain.slaBreachMinutes || null,
+  };
+}
+
+function shapeAdminPendingWellnessPlan(plan) {
+  const plain = shapeId(plan);
+  return {
+    id: plain.id || String(plain._id),
+    type: 'wellness_plan',
+    ..._pendingUserFields(plain),
+    goals: plain.goals || [],
+    currentStruggles: plain.currentStruggles || '',
+    preferredPace: plain.preferredPace || 'Moderate',
+    createdAt: plain.createdAt,
+  };
+}
+
+function shapeAdminPendingContact(contact) {
+  const plain = shapeId(contact);
+  return {
+    id: plain.id || String(plain._id),
+    type: 'emergency_contact',
+    ..._pendingUserFields(plain),
+    contactName: plain.name,
+    relationship: plain.relationship,
+    phone: plain.phone,
+    reachVia: plain.reachVia,
+    userMessage: plain.userMessage || '',
+    createdAt: plain.createdAt,
+  };
+}
+
+function shapeAdminPendingDeletion(request) {
+  const plain = shapeId(request);
+  return {
+    id: plain.id || String(plain._id),
+    type: 'deletion_request',
+    ..._pendingUserFields(plain),
+    reason: plain.reason || '',
+    createdAt: plain.createdAt,
+  };
+}
+
+function shapeAdminPendingVerification({
+  pendingAppointments = [],
+  pendingIssues = [],
+  pendingContacts = [],
+  pendingWellnessPlans = [],
+  pendingDeletions = [],
+}) {
+  const escalatedCount = pendingIssues.filter(r => r.escalated).length;
+  const totalPending = pendingAppointments.length + pendingIssues.length
+    + pendingContacts.length + pendingWellnessPlans.length + pendingDeletions.length;
+  return {
+    appointmentRequests: pendingAppointments.map(shapeAdminPendingAppointment),
+    riskReports: pendingIssues.map(shapeAdminPendingRiskReport),
+    wellnessPlans: pendingWellnessPlans.map(shapeAdminPendingWellnessPlan),
+    pendingContacts: pendingContacts.map(shapeAdminPendingContact),
+    deletionRequests: pendingDeletions.map(shapeAdminPendingDeletion),
+    totalPending,
+    escalatedCount,
+  };
+}
+
+function shapeAdminEmergencyContactCrisisView(contact) {
+  if (!contact) return { exists: false };
+  const plain = shapeId(contact);
+  return {
+    exists: true,
+    id: plain.id || String(plain._id),
+    contactName: plain.name,
+    relationship: plain.relationship,
+    phone: plain.phone,
+    reachVia: plain.reachVia,
+    userMessage: plain.userMessage || '',
+    callLogCount: plain.callLog?.length || 0,
+    lastCalledAt: plain.callLog?.length ? plain.callLog[plain.callLog.length - 1].calledAt : null,
+  };
+}
+
+function shapeFitnessNameMap(items, nameField = 'name') {
+  const out = {};
+  (items || []).forEach((item) => {
+    const plain = stripInternal(toPlain(item));
+    const key = plain[nameField];
+    if (key) out[key] = { icon: plain.icon || '' };
+  });
+  return out;
+}
+
+function shapeFitnessContentMap(items) {
+  const out = {};
+  (items || []).forEach((item) => {
+    const plain = stripInternal(toPlain(item));
+    if (plain.title) out[plain.title] = plain.imageUrl || '';
+  });
+  return out;
+}
+
+function shapeFitnessPlan(plan) {
+  if (!plan) return { summary: '', weeklySchedule: [] };
+  return {
+    summary: plan.summary || '',
+    weeklySchedule: (plan.weeklySchedule || []).map((day) => ({
+      day: day.day,
+      focus: day.focus || '',
+      exercises: (day.exercises || []).map((ex) => ({
+        name: ex.name,
+        description: ex.description || '',
+        durationMinutes: ex.durationMinutes,
+        type: ex.type,
+        youtubeId: ex.youtubeId || null,
+      })),
+    })),
+  };
+}
+
+function shapeInstitution(inst) {
+  const plain = shapeId(inst);
+  return {
+    id: plain.id || String(plain._id),
+    name: plain.name,
+    accessCode: plain.accessCode,
+    admins: (plain.admins || []).map(a => String(a)),
+    members: (plain.members || []).map(m => String(m)),
+    createdAt: plain.createdAt,
+    updatedAt: plain.updatedAt,
+  };
+}
+
+function shapeInstitutionReport({ institutionName, memberCount, moodTrends, topConcerns, riskDistribution }) {
+  return {
+    institutionName,
+    memberCount,
+    moodTrends: (moodTrends || []).map(m => ({ date: m.date || m._id, value: m.value ?? m.avgRating })),
+    topConcerns: (topConcerns || []).map(c => ({ concern: c.concern || c._id, count: c.count })),
+    riskDistribution: (riskDistribution || []).map(r => ({ level: r.level || r._id, count: r.count })),
+    generatedAt: new Date(),
+  };
+}
+
 function shapeChatResponse(payload) {
   return {
     reply: payload.reply,
@@ -953,6 +1143,14 @@ module.exports = {
   shapeAssessmentSessionStart,
   shapeFusionResult,
   shapeAssessmentReport,
+  shapeAdminDashboardStats,
+  shapeAdminPendingVerification,
+  shapeAdminEmergencyContactCrisisView,
+  shapeFitnessNameMap,
+  shapeFitnessContentMap,
+  shapeFitnessPlan,
+  shapeInstitution,
+  shapeInstitutionReport,
   shapeConversationSummary,
   shapeConversationDetail,
   shapeChatResponse,

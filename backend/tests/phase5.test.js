@@ -307,6 +307,95 @@ describe('Admin DTO layer', () => {
     expect(shaped.id).toBe('507f1f77bcf86cd799439011');
     expect(shaped.__v).toBeUndefined();
   });
+
+  test('shapeAdminPendingVerification aggregates pending queues', () => {
+    const { shapeAdminPendingVerification } = require('../src/shared/responseShapers');
+    const shaped = shapeAdminPendingVerification({
+      pendingAppointments: [{
+        _id: '507f1f77bcf86cd799439011',
+        user: { _id: '507f1f77bcf86cd799439012', name: 'Pat', email: 'p@test.com' },
+        requestedSpeciality: 'Psychologist',
+        preferredDates: ['2026-06-10'],
+        preferredTime: 'morning',
+        createdAt: new Date('2026-06-01'),
+      }],
+      pendingIssues: [{
+        _id: '507f1f77bcf86cd799439013',
+        user: { _id: '507f1f77bcf86cd799439012', name: 'Pat', email: 'p@test.com' },
+        riskLevel: 'HIGH',
+        category: 'self_harm',
+        severity: 8,
+        description: 'test',
+        escalated: true,
+        createdAt: new Date('2026-06-01'),
+      }],
+      pendingContacts: [],
+      pendingWellnessPlans: [],
+      pendingDeletions: [],
+    });
+    expect(shaped.totalPending).toBe(2);
+    expect(shaped.escalatedCount).toBe(1);
+    expect(shaped.appointmentRequests[0].type).toBe('appointment_request');
+    expect(shaped.riskReports[0].escalated).toBe(true);
+    expect(shaped.appointmentRequests[0].__v).toBeUndefined();
+  });
+
+  test('shapeAdminDashboardStats normalizes counters', () => {
+    const { shapeAdminDashboardStats } = require('../src/shared/responseShapers');
+    const shaped = shapeAdminDashboardStats({ totalUsers: 10, avgMoodWeek: 3.5 });
+    expect(shaped.totalUsers).toBe(10);
+    expect(shaped.totalAssessments).toBe(0);
+    expect(shaped.avgMoodWeek).toBe(3.5);
+  });
+
+  test('shapeFitnessNameMap keys by category name', () => {
+    const { shapeFitnessNameMap } = require('../src/shared/responseShapers');
+    const shaped = shapeFitnessNameMap([
+      { _id: 'abc', name: 'Yoga', icon: 'http://icon', __v: 0 },
+    ]);
+    expect(shaped.Yoga).toEqual({ icon: 'http://icon' });
+    expect(shaped.Yoga._id).toBeUndefined();
+  });
+
+  test('shapeInstitution stringifies member ids', () => {
+    const { shapeInstitution } = require('../src/shared/responseShapers');
+    const shaped = shapeInstitution({
+      _id: '507f1f77bcf86cd799439011',
+      name: 'UPES',
+      accessCode: 'UPES01',
+      admins: ['507f1f77bcf86cd799439012'],
+      members: ['507f1f77bcf86cd799439013'],
+      __v: 0,
+    });
+    expect(shaped.id).toBe('507f1f77bcf86cd799439011');
+    expect(shaped.members[0]).toBe('507f1f77bcf86cd799439013');
+    expect(shaped.__v).toBeUndefined();
+  });
+});
+
+describe('Fitness API DTOs', () => {
+  test('GET /api/fitness/categories returns keyed map without mongoose fields', async () => {
+    const res = await request(app).get('/api/fitness/categories');
+    expect(res.status).toBe(200);
+    expect(res.body.Yoga).toBeDefined();
+    expect(res.body.Yoga.icon).toBeTruthy();
+    expect(res.body.Yoga._id).toBeUndefined();
+    expect(res.body.__v).toBeUndefined();
+  });
+
+  test('POST /api/fitness/plan returns shaped weekly schedule', async () => {
+    const res = await request(app).post('/api/fitness/plan').send({
+      goal: 'stress relief',
+      durationMinutes: 10,
+      daysPerWeek: 3,
+      preferredTypes: ['Yoga'],
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.summary).toBeTruthy();
+    expect(Array.isArray(res.body.weeklySchedule)).toBe(true);
+    expect(res.body.weeklySchedule.length).toBe(3);
+    expect(res.body.weeklySchedule[0].exercises[0].name).toBeTruthy();
+  });
 });
 
 describe('Therapist DTO layer', () => {

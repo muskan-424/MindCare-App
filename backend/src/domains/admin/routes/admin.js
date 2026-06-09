@@ -29,6 +29,10 @@ const {
   shapeBroadcastNotification,
   shapeAdminAnalytics,
   shapeTherapistProfile,
+  shapeAdminDashboardStats,
+  shapeAdminPendingVerification,
+  shapeAdminEmergencyContactCrisisView,
+  shapeUser,
 } = require('../../../shared/responseShapers');
 
 function adminAuth(req, res, next) {
@@ -232,7 +236,14 @@ router.get('/stats', adminAuth, async (req, res) => {
       ? (recentMoods.reduce((s, m) => s + m.rating, 0) / recentMoods.length).toFixed(1)
       : null;
 
-    res.json({ totalUsers, totalAssessments, criticalToday, highRiskWeek, totalJournals, avgMoodWeek: avgMoodWeek ? Number(avgMoodWeek) : null });
+    res.json(shapeAdminDashboardStats({
+      totalUsers,
+      totalAssessments,
+      criticalToday,
+      highRiskWeek,
+      totalJournals,
+      avgMoodWeek: avgMoodWeek ? Number(avgMoodWeek) : null,
+    }));
   } catch (err) {
     console.error('Admin stats error:', err.message);
     res.status(500).json({ error: 'Failed to load stats' });
@@ -494,75 +505,13 @@ router.get('/pending-verification', adminAuth, async (req, res) => {
         .populate('user', 'name email')
         .lean(),
     ]);
-    const escalatedCount = pendingIssues.filter(r => r.escalated).length;
-
-    res.json({
-      appointmentRequests: pendingAppointments.map(a => ({
-        id: String(a._id),
-        userId: String(a.user?._id),
-        type: 'appointment_request',
-        userName: a.user?.name || 'Unknown',
-        userEmail: a.user?.email || '',
-        requestedSpeciality: a.requestedSpeciality,
-        preferredDates: a.preferredDates,
-        preferredTime: a.preferredTime,
-        userNote: a.userNote,
-        createdAt: a.createdAt,
-      })),
-      riskReports: pendingIssues.map(r => ({
-        id: String(r._id),
-        userId: String(r.user?._id),
-        type: 'risk_report',
-        userName: r.user?.name || 'Unknown',
-        userEmail: r.user?.email || '',
-        riskLevel: r.riskLevel,
-        category: r.category,
-        severity: r.severity,
-        description: r.description,
-        emotionTags: r.emotionTags,
-        safetyTriggered: r.safetyTriggered,
-        createdAt: r.createdAt,
-        // SLA / Escalation info
-        escalated: r.escalated || false,
-        escalatedAt: r.escalatedAt || null,
-        slaBreachMinutes: r.slaBreachMinutes || null,
-      })),
-      wellnessPlans: pendingWellnessPlans.map(w => ({
-        id: String(w._id),
-        userId: String(w.user?._id),
-        type: 'wellness_plan',
-        userName: w.user?.name || 'Unknown',
-        userEmail: w.user?.email || '',
-        goals: w.goals,
-        currentStruggles: w.currentStruggles,
-        preferredPace: w.preferredPace,
-        createdAt: w.createdAt,
-      })),
-      pendingContacts: pendingContacts.map(c => ({
-        id: String(c._id),
-        userId: String(c.user?._id),
-        type: 'emergency_contact',
-        userName: c.user?.name || 'Unknown',
-        userEmail: c.user?.email || '',
-        contactName: c.name,
-        relationship: c.relationship,
-        phone: c.phone,
-        reachVia: c.reachVia,
-        userMessage: c.userMessage,
-        createdAt: c.createdAt,
-      })),
-      deletionRequests: pendingDeletions.map(d => ({
-        id: String(d._id),
-        userId: String(d.user?._id),
-        type: 'deletion_request',
-        userName: d.user?.name || 'Unknown',
-        userEmail: d.user?.email || '',
-        reason: d.reason,
-        createdAt: d.createdAt,
-      })),
-      totalPending: pendingAppointments.length + pendingIssues.length + pendingContacts.length + pendingWellnessPlans.length + pendingDeletions.length,
-      escalatedCount,
-    });
+    res.json(shapeAdminPendingVerification({
+      pendingAppointments,
+      pendingIssues,
+      pendingContacts,
+      pendingWellnessPlans,
+      pendingDeletions,
+    }));
   } catch (err) {
     console.error('Pending verification error:', err.message);
     res.status(500).json({ error: 'Failed to load pending items' });
@@ -677,18 +626,8 @@ router.get('/emergency-contacts/:userId', adminAuth, async (req, res) => {
     const ec = await EmergencyContact.findOne({ user: req.params.userId, status: 'verified' })
       .populate('user', 'name email')
       .lean();
-    if (!ec) return res.json({ exists: false });
-    res.json({
-      exists: true,
-      id: String(ec._id),
-      contactName: ec.name,
-      relationship: ec.relationship,
-      phone: ec.phone,
-      reachVia: ec.reachVia,
-      userMessage: ec.userMessage,
-      callLogCount: ec.callLog?.length || 0,
-      lastCalledAt: ec.callLog?.length ? ec.callLog[ec.callLog.length - 1].calledAt : null,
-    });
+    if (!ec) return res.json(shapeAdminEmergencyContactCrisisView(null));
+    res.json(shapeAdminEmergencyContactCrisisView(ec));
   } catch (err) {
     console.error('Get EC for user error:', err.message);
     res.status(500).json({ error: 'Failed to get contact' });
@@ -1267,7 +1206,7 @@ router.patch('/profile', adminAuth, async (req, res) => {
     );
 
     await logAdminAction('update_admin_profile', adminId, user?._id, { name, email });
-    res.json({ success: true, user });
+    res.json({ success: true, user: shapeUser(user) });
   } catch (err) {
     console.error('Update admin profile error:', err.message);
     res.status(500).json({ error: 'Failed to update admin profile' });
