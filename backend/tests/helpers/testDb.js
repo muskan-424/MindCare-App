@@ -13,11 +13,10 @@
  */
 
 const { MongoMemoryServer } = require('mongodb-memory-server');
-const mongoose = require('mongoose');
 
 let mongod = null;
 
-async function waitForConnection(timeoutMs = 30000) {
+async function waitForConnection(mongoose, timeoutMs = 30000) {
   const start = Date.now();
   while (mongoose.connection.readyState !== 1) {
     if (Date.now() - start > timeoutMs) throw new Error('Timed out waiting for MongoDB connection');
@@ -30,8 +29,12 @@ async function waitForConnection(timeoutMs = 30000) {
  * the app's own connectDB() has established a connection.
  * @returns {Promise<import('express').Express>}
  */
+let appInstance = null;
+
 async function startMemoryDb() {
-  mongod = await MongoMemoryServer.create();
+  if (!mongod) {
+    mongod = await MongoMemoryServer.create();
+  }
   process.env.NODE_ENV = 'test';
   process.env.MONGODB_URI = mongod.getUri();
   process.env.JWT_SECRET = 'test_jwt_secret';
@@ -42,20 +45,33 @@ async function startMemoryDb() {
   process.env.GEMINI_API_KEY = '';
   process.env.GOOGLE_API_KEY = '';
 
-  // Require AFTER env is set so config picks up the test values.
-  const app = require('../../server');
-  await waitForConnection();
-  return app;
+  // Fresh module graph so config/env reads the test MONGODB_URI (not a stale cache).
+  jest.resetModules();
+  const mongoose = require('mongoose');
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
+
+  appInstance = require('../../server');
+  await waitForConnection(mongoose);
+  return appInstance;
 }
 
 async function clearDb() {
+  const mongoose = require('mongoose');
   const { collections } = mongoose.connection;
   await Promise.all(Object.values(collections).map(c => c.deleteMany({})));
 }
 
 async function stopMemoryDb() {
+  const mongoose = require('mongoose');
   await mongoose.disconnect();
-  if (mongod) await mongod.stop();
+  if (mongod) {
+    await mongod.stop();
+    mongod = null;
+  }
+  appInstance = null;
+  jest.resetModules();
 }
 
 module.exports = { startMemoryDb, clearDb, stopMemoryDb };

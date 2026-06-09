@@ -1,16 +1,66 @@
+const http = require('http');
 const request = require('supertest');
-const mongoose = require('mongoose');
+const WebSocket = require('ws');
 const { startMemoryDb, clearDb, stopMemoryDb } = require('./helpers/testDb');
 
 let app;
+let httpServer;
+let wsPort;
+let attachChatWebSocket;
+let processAgenticChat;
+
+function connectChatWs(token) {
+  const q = token ? `?token=${encodeURIComponent(token)}` : '';
+  const url = `ws://127.0.0.1:${wsPort}/api/chat/ws${q}`;
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(url);
+    const inbox = [];
+
+    ws.on('message', (raw) => {
+      inbox.push(JSON.parse(String(raw)));
+    });
+    ws.on('open', () => resolve({ ws, inbox }));
+    ws.on('error', reject);
+  });
+}
+
+function waitForWsMessage(ws, inbox, type, timeoutMs = 10000) {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    const tick = () => {
+      const hit = inbox.find(m => m.type === type);
+      if (hit) {
+        const idx = inbox.indexOf(hit);
+        inbox.splice(idx, 1);
+        resolve(hit);
+        return;
+      }
+      if (Date.now() - start > timeoutMs) {
+        reject(new Error(`Timed out waiting for ${type}`));
+        return;
+      }
+      setTimeout(tick, 25);
+    };
+    tick();
+  });
+}
 
 beforeAll(async () => {
   app = await startMemoryDb();
+  ({ attachChatWebSocket } = require('../src/domains/community/ws/chatWs'));
+  ({ processAgenticChat } = require('../src/domains/community/services/chatAgentService'));
+  httpServer = http.createServer(app);
+  attachChatWebSocket(httpServer);
+  await new Promise((resolve) => httpServer.listen(0, '127.0.0.1', resolve));
+  wsPort = httpServer.address().port;
 });
 
 afterAll(async () => {
+  if (httpServer) {
+    await new Promise((resolve) => httpServer.close(resolve));
+  }
   await stopMemoryDb();
-});
+}, 15000);
 
 afterEach(async () => {
   await clearDb();
@@ -96,7 +146,7 @@ describe('Auth flow', () => {
     expect(res.status).toBe(200);
     expect(res.body.token).toBeTruthy();
 
-    const AuditLog = mongoose.model('AuditLog');
+    const AuditLog = require('mongoose').model('AuditLog');
     const logged = await AuditLog.findOne({ action: 'auth.login' });
     expect(logged).not.toBeNull();
   });
@@ -106,7 +156,7 @@ describe('Auth flow', () => {
     const res = await request(app).post('/api/auth').send({ email: body.email, password: 'wrongpass' });
     expect(res.status).toBe(400);
 
-    const AuditLog = mongoose.model('AuditLog');
+    const AuditLog = require('mongoose').model('AuditLog');
     const failed = await AuditLog.findOne({ action: 'auth.login_failed' });
     expect(failed).not.toBeNull();
   });
@@ -181,7 +231,7 @@ describe('Agentic chat (offline / rule-based)', () => {
     expect(res.status).toBe(200);
     expect(res.body.crisis).toBe(true);
 
-    const AuditLog = mongoose.model('AuditLog');
+    const AuditLog = require('mongoose').model('AuditLog');
     const crisis = await AuditLog.findOne({ action: 'chat.crisis' });
     expect(crisis).not.toBeNull();
   });
@@ -191,5 +241,47 @@ describe('Agentic chat (offline / rule-based)', () => {
     expect(res.status).toBe(200);
     expect(res.body.intent).toBe('lookup_mood');
     expect(res.body.reply).toMatch(/log/i);
+  });
+
+  test('processAgenticChat rejects an empty message', async () => {
+    await expect(processAgenticChat({ message: '   ' })).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe('WebSocket chat', () => {
+  test('sends ready on connect (anonymous)', async () => {
+    const { ws, inbox } = await connectChatWs();
+    const ready = await waitForWsMessage(ws, inbox, 'ready');
+    expect(ready.authenticated).toBe(false);
+    ws.close();
+  });
+
+  test('returns a reply for a chat message', async () => {
+    const { ws, inbox } = await connectChatWs();
+    await waitForWsMessage(ws, inbox, 'ready');
+    const replyPromise = waitForWsMessage(ws, inbox, 'reply');
+    ws.send(JSON.stringify({ type: 'chat', message: 'How are you?' }));
+    const reply = await replyPromise;
+    expect(typeof reply.reply).toBe('string');
+    expect(reply.reply.length).toBeGreaterThan(0);
+    ws.close();
+  });
+
+  test('returns error for invalid JSON', async () => {
+    const { ws, inbox } = await connectChatWs();
+    await waitForWsMessage(ws, inbox, 'ready');
+    const errPromise = waitForWsMessage(ws, inbox, 'error');
+    ws.send('not-json');
+    const err = await errPromise;
+    expect(err.message).toMatch(/invalid json/i);
+    ws.close();
+  });
+
+  test('authenticates when a valid token is supplied', async () => {
+    const { res: reg } = await registerUser();
+    const { ws, inbox } = await connectChatWs(reg.body.token);
+    const ready = await waitForWsMessage(ws, inbox, 'ready');
+    expect(ready.authenticated).toBe(true);
+    ws.close();
   });
 });

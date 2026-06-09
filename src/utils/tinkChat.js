@@ -7,6 +7,7 @@
  */
 
 import api from './apiClient';
+import { api_route } from './route';
 
 /**
  * Send a message to Tink.
@@ -31,23 +32,7 @@ export async function sendChatMessage({ message, history = [], conversationId, l
 
   const res = await api.post('/api/chat', payload);
   const data = res.data || {};
-  return {
-    reply: data.reply || "I'm here with you.",
-    suggestions: Array.isArray(data.suggestions) ? data.suggestions : [],
-    cards: Array.isArray(data.cards) ? data.cards : [],
-    crisis: Boolean(data.crisis),
-    mood: data.mood || 'neutral',
-    detectedLanguage: data.detectedLanguage || language,
-    intent: data.intent || 'support',
-    confidence: typeof data.confidence === 'number' ? data.confidence : null,
-    sources: Array.isArray(data.sources) ? data.sources : [],
-    draft: data.draft || null,
-    mode: data.mode || 'rule',
-    toolTraces: Array.isArray(data.toolTraces) ? data.toolTraces : [],
-    conversationId: data.conversationId || conversationId || null,
-    verificationNote: data.verificationNote || null,
-    modelTier: data.modelTier || null,
-  };
+  return normalizeChatPayload({ ...data, detectedLanguage: data.detectedLanguage || language, conversationId: data.conversationId || conversationId });
 }
 
 /** Rewrite a previous reply in a style: shorter | professional | simpler | steps. */
@@ -70,6 +55,68 @@ export async function getCapabilities() {
   } catch (_) {
     return { geminiLive: false, mode: 'rule', ragMode: 'local', voice: true, confidenceGate: 0.45 };
   }
+}
+
+function normalizeChatPayload(data) {
+  return {
+    reply: data.reply || "I'm here with you.",
+    suggestions: Array.isArray(data.suggestions) ? data.suggestions : [],
+    cards: Array.isArray(data.cards) ? data.cards : [],
+    crisis: Boolean(data.crisis),
+    mood: data.mood || 'neutral',
+    detectedLanguage: data.detectedLanguage || 'en',
+    intent: data.intent || 'support',
+    confidence: typeof data.confidence === 'number' ? data.confidence : null,
+    sources: Array.isArray(data.sources) ? data.sources : [],
+    draft: data.draft || null,
+    mode: data.mode || 'rule',
+    toolTraces: Array.isArray(data.toolTraces) ? data.toolTraces : [],
+    conversationId: data.conversationId || null,
+    verificationNote: data.verificationNote || null,
+    modelTier: data.modelTier || null,
+  };
+}
+
+/** Build the WebSocket URL for real-time Tink chat (falls back to REST when unavailable). */
+export function buildChatWsUrl(token) {
+  const wsBase = api_route.replace(/^https:/, 'wss:').replace(/^http:/, 'ws:');
+  const q = token ? `?token=${encodeURIComponent(token)}` : '';
+  return `${wsBase}/api/chat/ws${q}`;
+}
+
+/**
+ * Open a WebSocket to Tink. Returns null when WebSocket is not supported.
+ * Callbacks: onReady, onReply(normalizedChatResponse), onError(message)
+ */
+export function createChatSocket({ token, onReady, onReply, onError } = {}) {
+  if (typeof WebSocket === 'undefined') return null;
+  let ws;
+  try {
+    ws = new WebSocket(buildChatWsUrl(token));
+  } catch (_) {
+    return null;
+  }
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === 'ready') onReady?.(data);
+      else if (data.type === 'reply') onReply?.(normalizeChatPayload(data));
+      else if (data.type === 'error') onError?.(data.message || 'WebSocket error');
+    } catch (e) {
+      onError?.(e.message || 'Bad WebSocket payload');
+    }
+  };
+
+  ws.onerror = () => onError?.('WebSocket connection error');
+  return ws;
+}
+
+/** Send a chat turn over an open WebSocket. Returns false if not connected. */
+export function sendChatSocketMessage(ws, payload) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return false;
+  ws.send(JSON.stringify({ type: 'chat', ...payload }));
+  return true;
 }
 
 /**

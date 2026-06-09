@@ -16,6 +16,8 @@ export const FEATURE_FLAGS = {
   chatDebugBadges: true,
   // Allow draft actions (log mood / journal / goal / book session) from chat.
   chatActions: true,
+  // Prefer WebSocket transport for Tink when the server supports it (REST fallback).
+  chatWebSocket: true,
 };
 
 // Default conversational tone: 'friendly' | 'professional' | 'concise'

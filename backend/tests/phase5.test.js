@@ -66,6 +66,7 @@ describe('AI maturity (capabilities + confidence)', () => {
     expect(res.body.qualityModel).toBeDefined();
     expect(typeof res.body.confidenceGate).toBe('number');
     expect(res.body.ragMode).toBe('local');
+    expect(res.body.websocket).toBe(true);
   });
 
   test('shouldGateConfidence respects CHAT_CONFIDENCE_GATE', () => {

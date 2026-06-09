@@ -192,6 +192,7 @@ const options = {
         get: {
           tags: ['Tink AI'],
           summary: 'Report Tink live capabilities (Gemini vs rule, RAG mode, models)',
+          description: 'Includes `websocket: true` when real-time transport is enabled. Connect to `ws(s)://<host>/api/chat/ws?token=<JWT>` (token optional). Client sends `{ type: "chat", message, history?, conversationId?, language?, tone? }`; server replies with `{ type: "reply", ...ChatResponse }` or `{ type: "error", message }`. On connect the server sends `{ type: "ready", authenticated }`. WebSocket is only available on long-lived servers (not Vercel serverless); REST POST /chat is the fallback.',
           responses: { 200: { description: 'Capability snapshot' } },
         },
       },

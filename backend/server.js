@@ -85,14 +85,20 @@ app.use(errorHandler);
 // AND the SLA monitor background job. On Vercel, this block is skipped because
 // Vercel imports this file as a module and does not call it as a script.
 if (require.main === module) {
+  const http = require('http');
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = http.createServer(app);
+
+  // WebSocket chat — only on long-lived servers (not Vercel serverless).
+  const { attachChatWebSocket } = require('./src/domains/community/ws/chatWs');
+  attachChatWebSocket(server);
+
+  server.listen(PORT, '0.0.0.0', () => {
     console.log('\n===================================');
     console.log(`✅ MindCare API running on port ${PORT}`);
+    console.log(`✅ WebSocket chat at ws://localhost:${PORT}/api/chat/ws`);
     console.log('===================================\n');
 
-    // Background jobs (incl. the SLA monitor) only run in traditional server
-    // mode, not serverless — intervals don't fire reliably on Vercel.
     const { startBackgroundJobs } = require('./jobs');
     startBackgroundJobs();
   });

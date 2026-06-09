@@ -664,6 +664,7 @@ function getCapabilities() {
     mode: geminiLive ? 'gemini' : 'rule',
     ragMode: config.ai.usePineconeRag ? 'hybrid' : 'local',
     voice: true,
+    websocket: process.env.DISABLE_CHAT_WS !== 'true',
     translate: geminiLive,
     languages: Object.keys(LANGUAGE_NAMES),
     fastModel: config.ai.fastModel,

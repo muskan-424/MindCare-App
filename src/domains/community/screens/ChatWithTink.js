@@ -23,6 +23,8 @@ import {
   refineMessage,
   getCapabilities,
   commitDraft,
+  createChatSocket,
+  sendChatSocketMessage,
 } from '../../../utils/tinkChat';
 import { FEATURE_FLAGS, DEFAULT_CHAT_TONE, CHAT_TONES } from '../../../constants/featureFlags';
 import {
@@ -214,6 +216,8 @@ const ChatWithTink = props => {
   const streamFullRef = useRef('');
 
   const flatListRef = useRef();
+  const wsRef = useRef(null);
+  const authToken = useSelector(state => state.auth?.token);
 
   const scrollToEnd = useCallback(() => {
     requestAnimationFrame(() => flatListRef.current?.scrollToEnd({ animated: true }));
@@ -224,6 +228,49 @@ const ChatWithTink = props => {
     getCapabilities().then(c => { if (mounted) setCapabilities(c); });
     return () => { mounted = false; };
   }, []);
+
+  const applyBotResponse = useCallback((res) => {
+    if (res.conversationId) setConversationId(res.conversationId);
+    const botMessage = {
+      id: nextId(),
+      role: 'assistant',
+      text: res.reply,
+      suggestions: res.suggestions,
+      cards: res.cards,
+      crisis: res.crisis,
+      intent: res.intent,
+      confidence: res.confidence,
+      sources: res.sources,
+      draft: res.draft,
+      mode: res.mode,
+      verificationNote: res.verificationNote,
+      modelTier: res.modelTier,
+    };
+    setIsTyping(false);
+    setMessages(prev => [...prev, botMessage]);
+    if (botMessage.draft) setDraftStatus(prev => ({ ...prev, [botMessage.id]: 'pending' }));
+    streamFullRef.current = res.reply;
+    setStreamText('');
+    setStreamId(botMessage.id);
+    scrollToEnd();
+  }, [scrollToEnd]);
+
+  // WebSocket transport (optional — REST is the fallback).
+  useEffect(() => {
+    if (!FEATURE_FLAGS.chatWebSocket || !capabilities?.websocket) return undefined;
+    const ws = createChatSocket({
+      token: authToken,
+      onReply: applyBotResponse,
+      onError: () => { /* REST fallback on send */ },
+    });
+    wsRef.current = ws;
+    return () => {
+      if (wsRef.current) {
+        try { wsRef.current.close(); } catch (_) { /* ignore */ }
+        wsRef.current = null;
+      }
+    };
+  }, [capabilities?.websocket, authToken, applyBotResponse]);
 
   // If opened from history with a loaded transcript
   useEffect(() => {
@@ -293,6 +340,16 @@ const ChatWithTink = props => {
       setIsTyping(true);
       scrollToEnd();
 
+      const viaWs = FEATURE_FLAGS.chatWebSocket && sendChatSocketMessage(wsRef.current, {
+        message: trimmed,
+        history,
+        conversationId,
+        language,
+        tone: chatTone,
+      });
+
+      if (viaWs) return;
+
       try {
         const res = await sendChatMessage({
           message: trimmed,
@@ -301,29 +358,7 @@ const ChatWithTink = props => {
           language,
           tone: chatTone,
         });
-        if (res.conversationId) setConversationId(res.conversationId);
-
-        const botMessage = {
-          id: nextId(),
-          role: 'assistant',
-          text: res.reply,
-          suggestions: res.suggestions,
-          cards: res.cards,
-          crisis: res.crisis,
-          intent: res.intent,
-          confidence: res.confidence,
-          sources: res.sources,
-          draft: res.draft,
-          mode: res.mode,
-          verificationNote: res.verificationNote,
-          modelTier: res.modelTier,
-        };
-        setIsTyping(false);
-        setMessages(prev => [...prev, botMessage]);
-        if (botMessage.draft) setDraftStatus(prev => ({ ...prev, [botMessage.id]: 'pending' }));
-        streamFullRef.current = res.reply;
-        setStreamText('');
-        setStreamId(botMessage.id);
+        applyBotResponse(res);
       } catch (err) {
         setIsTyping(false);
         setMessages(prev => [
@@ -332,7 +367,7 @@ const ChatWithTink = props => {
         ]);
       }
     },
-    [messages, isTyping, conversationId, language, chatTone, t, scrollToEnd],
+    [messages, isTyping, conversationId, language, chatTone, t, applyBotResponse],
   );
 
   const handleSend = () => sendText(inputText);
