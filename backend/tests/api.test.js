@@ -287,6 +287,31 @@ describe('Admin API (token + DTO)', () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
+
+  test('GET /api/admin/stats returns dashboard counters', async () => {
+    const res = await request(app).get('/api/admin/stats').set(ADMIN_HEADERS);
+    expect(res.status).toBe(200);
+    expect(typeof res.body.totalUsers).toBe('number');
+    expect(res.body.__v).toBeUndefined();
+  });
+
+  test('GET /api/admin/pending-verification returns shaped queues', async () => {
+    const res = await request(app).get('/api/admin/pending-verification').set(ADMIN_HEADERS);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.appointmentRequests)).toBe(true);
+    expect(Array.isArray(res.body.riskReports)).toBe(true);
+    expect(typeof res.body.totalPending).toBe('number');
+  });
+
+  test('GET /api/admin/therapists returns directory without __v', async () => {
+    const res = await request(app).get('/api/admin/therapists').set(ADMIN_HEADERS);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+    if (res.body.length) {
+      expect(typeof res.body[0].id).toBe('string');
+      expect(res.body[0].__v).toBeUndefined();
+    }
+  });
 });
 
 describe('Public content (DTO)', () => {

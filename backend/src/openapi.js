@@ -21,6 +21,11 @@ const options = {
           scheme: 'bearer',
           bearerFormat: 'JWT',
         },
+        adminToken: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'x-admin-token',
+        },
       },
       schemas: {
         Error: {
@@ -67,6 +72,81 @@ const options = {
             status: { type: 'string' },
             uptime: { type: 'number' },
             version: { type: 'string' },
+          },
+        },
+        AdminDashboardStats: {
+          type: 'object',
+          properties: {
+            totalUsers: { type: 'integer' },
+            totalAssessments: { type: 'integer' },
+            criticalToday: { type: 'integer' },
+            highRiskWeek: { type: 'integer' },
+            totalJournals: { type: 'integer' },
+            avgMoodWeek: { type: 'number', nullable: true },
+          },
+        },
+        AdminPendingVerification: {
+          type: 'object',
+          properties: {
+            appointmentRequests: { type: 'array', items: { type: 'object' } },
+            riskReports: { type: 'array', items: { type: 'object' } },
+            wellnessPlans: { type: 'array', items: { type: 'object' } },
+            pendingContacts: { type: 'array', items: { type: 'object' } },
+            deletionRequests: { type: 'array', items: { type: 'object' } },
+            totalPending: { type: 'integer' },
+            escalatedCount: { type: 'integer' },
+          },
+        },
+        AdminTherapistDirectoryEntry: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            specialisation: { type: 'string' },
+            email: { type: 'string' },
+            active: { type: 'boolean' },
+            linkedUserEmail: { type: 'string', nullable: true },
+            linkedUserName: { type: 'string', nullable: true },
+            userId: {
+              type: 'object',
+              nullable: true,
+              properties: { id: { type: 'string' }, name: { type: 'string' }, email: { type: 'string' } },
+            },
+          },
+        },
+        FitnessCategoryMap: {
+          type: 'object',
+          additionalProperties: {
+            type: 'object',
+            properties: { icon: { type: 'string' } },
+          },
+          example: { Yoga: { icon: 'https://example.com/yoga.png' } },
+        },
+        FitnessPlan: {
+          type: 'object',
+          properties: {
+            summary: { type: 'string' },
+            weeklySchedule: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  day: { type: 'string' },
+                  focus: { type: 'string' },
+                  exercises: { type: 'array', items: { type: 'object' } },
+                },
+              },
+            },
+          },
+        },
+        Institution: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            accessCode: { type: 'string' },
+            admins: { type: 'array', items: { type: 'string' } },
+            members: { type: 'array', items: { type: 'string' } },
           },
         },
       },
@@ -221,6 +301,116 @@ const options = {
           summary: 'List chat conversations (auth required)',
           security: [{ bearerAuth: [] }],
           responses: { 200: { description: 'Conversation summaries' }, 401: { description: 'Unauthorized' } },
+        },
+      },
+      '/fitness/categories': {
+        get: {
+          tags: ['Wellness'],
+          summary: 'Fitness category icons (keyed by name)',
+          responses: {
+            200: {
+              description: 'Category map',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/FitnessCategoryMap' } } },
+            },
+          },
+        },
+      },
+      '/fitness/plan': {
+        post: {
+          tags: ['Wellness'],
+          summary: 'AI-generated weekly fitness plan (fallback when Gemini unavailable)',
+          requestBody: {
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    goal: { type: 'string' },
+                    concerns: { type: 'array', items: { type: 'string' } },
+                    durationMinutes: { type: 'integer' },
+                    daysPerWeek: { type: 'integer' },
+                    preferredTypes: { type: 'array', items: { type: 'string' } },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'Personalized plan',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/FitnessPlan' } } },
+            },
+          },
+        },
+      },
+      '/admin/stats': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Platform dashboard counters',
+          security: [{ adminToken: [] }],
+          responses: {
+            200: {
+              description: 'Dashboard stats',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/AdminDashboardStats' } } },
+            },
+            401: { description: 'Unauthorized' },
+          },
+        },
+      },
+      '/admin/pending-verification': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Pending admin verification queue',
+          security: [{ adminToken: [] }],
+          responses: {
+            200: {
+              description: 'Pending items',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/AdminPendingVerification' } } },
+            },
+            401: { description: 'Unauthorized' },
+          },
+        },
+      },
+      '/admin/therapists': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Therapist directory with linked user accounts',
+          security: [{ adminToken: [] }],
+          responses: {
+            200: {
+              description: 'Therapist list',
+              content: {
+                'application/json': {
+                  schema: { type: 'array', items: { $ref: '#/components/schemas/AdminTherapistDirectoryEntry' } },
+                },
+              },
+            },
+            401: { description: 'Unauthorized' },
+          },
+        },
+      },
+      '/institutions/join': {
+        post: {
+          tags: ['Identity'],
+          summary: 'Join an institution via access code',
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['accessCode'],
+                  properties: { accessCode: { type: 'string' } },
+                },
+              },
+            },
+          },
+          responses: {
+            200: { description: 'Joined successfully' },
+            404: { description: 'Invalid access code' },
+            401: { description: 'Unauthorized' },
+          },
         },
       },
     },

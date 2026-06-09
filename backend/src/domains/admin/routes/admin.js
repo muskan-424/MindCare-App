@@ -32,6 +32,9 @@ const {
   shapeAdminDashboardStats,
   shapeAdminPendingVerification,
   shapeAdminEmergencyContactCrisisView,
+  shapeAdminTherapistDirectory,
+  shapeAdminTherapistAvailability,
+  shapeAdminAppointmentAssigned,
   shapeUser,
 } = require('../../../shared/responseShapers');
 
@@ -356,14 +359,14 @@ router.get('/therapist-availability', adminAuth, async (req, res) => {
     const bookedSet = new Set(booked.map(a => a.timeSlot));
     const available = allSlots.filter(s => !bookedSet.has(s));
 
-    res.json({
+    res.json(shapeAdminTherapistAvailability({
       therapistId,
       therapistName: therapist.name,
       timing: therapist.timing,
       date,
       available,
       booked: [...bookedSet],
-    });
+    }));
   } catch (err) {
     console.error('Therapist availability error:', err.message);
     res.status(500).json({ error: 'Failed to get availability' });
@@ -416,15 +419,7 @@ router.post('/appointments/:id/assign', adminAuth, async (req, res) => {
       date,
       timeSlot,
     });
-    res.json({
-      success: true,
-      id: String(appt._id),
-      userName: appt.user?.name,
-      therapistName: therapist.name,
-      date: appt.date,
-      timeSlot: appt.timeSlot,
-      status: appt.status,
-    });
+    res.json(shapeAdminAppointmentAssigned(appt, therapist));
   } catch (err) {
     console.error('Assign appointment error:', err.message);
     res.status(500).json({ error: 'Failed to assign appointment' });
@@ -775,7 +770,7 @@ router.get('/therapists', adminAuth, async (req, res) => {
           ...t,
           id: String(t._id),
           linkedUserEmail: t.userId?.email || t.email || null,
-          linkedUserName: t.userId?.name || t.name || null
+          linkedUserName: t.userId?.name || t.name || null,
         });
       }
     });
@@ -802,7 +797,9 @@ router.get('/therapists', adminAuth, async (req, res) => {
       }
     });
 
-    res.json(results.sort((a, b) => (a.name || '').localeCompare(b.name || '')));
+    res.json(shapeAdminTherapistDirectory(
+      results.sort((a, b) => (a.name || '').localeCompare(b.name || '')),
+    ));
   } catch (err) {
     console.error('Admin get therapists error:', err.message);
     res.status(500).json({ error: 'Failed to query therapists' });

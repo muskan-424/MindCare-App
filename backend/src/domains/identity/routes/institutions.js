@@ -6,7 +6,11 @@ const Profile = require('../models/Profile');
 const MoodEntry = require('../../wellness/models/MoodEntry');
 const IssueReport = require('../../admin/models/IssueReport');
 const { auth } = require('../../../../middleware/auth');
-const { shapeInstitution, shapeInstitutionReport } = require('../../../shared/responseShapers');
+const {
+  shapeInstitution,
+  shapeInstitutionReport,
+  shapeInstitutionJoinResponse,
+} = require('../../../shared/responseShapers');
 
 // Helper for super-admin check
 const superAdminAuth = (req, res, next) => {
@@ -60,7 +64,7 @@ router.post('/join', auth, async (req, res) => {
       await inst.save();
     }
 
-    res.json({ success: true, institutionName: inst.name });
+    res.json(shapeInstitutionJoinResponse({ institutionName: inst.name }));
   } catch (err) {
     res.status(500).json({ error: 'Failed to join institution' });
   }

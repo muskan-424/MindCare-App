@@ -33,6 +33,9 @@ describe('OpenAPI docs', () => {
     expect(res.body.openapi).toMatch(/^3\./);
     expect(res.body.paths['/chat']).toBeDefined();
     expect(res.body.paths['/goals']).toBeDefined();
+    expect(res.body.paths['/fitness/categories']).toBeDefined();
+    expect(res.body.paths['/admin/stats']).toBeDefined();
+    expect(res.body.components.securitySchemes.adminToken).toBeDefined();
   });
 
   test('serves Swagger UI HTML', async () => {
@@ -370,6 +373,22 @@ describe('Admin DTO layer', () => {
     expect(shaped.id).toBe('507f1f77bcf86cd799439011');
     expect(shaped.members[0]).toBe('507f1f77bcf86cd799439013');
     expect(shaped.__v).toBeUndefined();
+  });
+
+  test('shapeAdminTherapistDirectoryEntry strips mongoose fields', () => {
+    const { shapeAdminTherapistDirectoryEntry } = require('../src/shared/responseShapers');
+    const shaped = shapeAdminTherapistDirectoryEntry({
+      _id: '507f1f77bcf86cd799439011',
+      name: 'Dr. Test',
+      specialisation: 'Psychologist',
+      email: 'dr@test.com',
+      userId: { _id: '507f1f77bcf86cd799439012', name: 'Dr Test', email: 'dr@test.com' },
+      __v: 0,
+    });
+    expect(shaped.id).toBe('507f1f77bcf86cd799439011');
+    expect(shaped.__v).toBeUndefined();
+    expect(shaped.userId.id).toBe('507f1f77bcf86cd799439012');
+    expect(shaped.linkedUserEmail).toBe('dr@test.com');
   });
 });
 

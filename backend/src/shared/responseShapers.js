@@ -1068,6 +1068,67 @@ function shapeInstitutionReport({ institutionName, memberCount, moodTrends, topC
   };
 }
 
+function shapeInstitutionJoinResponse({ institutionName }) {
+  return { success: true, institutionName };
+}
+
+function shapeAdminTherapistDirectoryEntry(entry) {
+  const plain = stripInternal(toPlain(entry));
+  const userIdObj = plain.userId && typeof plain.userId === 'object'
+    ? {
+      id: String(plain.userId._id || plain.userId.id),
+      name: plain.userId.name,
+      email: plain.userId.email,
+    }
+    : (plain.userId ? { id: String(plain.userId) } : null);
+
+  return {
+    id: plain.id || String(plain._id),
+    name: plain.name,
+    specialisation: plain.specialisation || 'Mental Health Professional',
+    img: plain.img || '',
+    bio: plain.bio || plain.about || '',
+    email: plain.email || '',
+    contact_no: plain.contact_no || '',
+    timing: plain.timing || '',
+    fee: plain.fee || '',
+    stars: plain.stars ?? 5,
+    active: plain.active !== false,
+    linkedUserEmail: plain.linkedUserEmail || userIdObj?.email || plain.email || null,
+    linkedUserName: plain.linkedUserName || userIdObj?.name || plain.name || null,
+    userId: userIdObj,
+  };
+}
+
+function shapeAdminTherapistDirectory(entries) {
+  return (entries || []).map(shapeAdminTherapistDirectoryEntry);
+}
+
+function shapeAdminTherapistAvailability({ therapistId, therapistName, timing, date, available, booked }) {
+  return {
+    therapistId: String(therapistId),
+    therapistName,
+    timing: timing || '',
+    date,
+    available: available || [],
+    booked: booked || [],
+  };
+}
+
+function shapeAdminAppointmentAssigned(appt, therapist) {
+  const plain = toPlain(appt);
+  const user = plain.user && typeof plain.user === 'object' ? plain.user : null;
+  return {
+    success: true,
+    id: String(plain._id),
+    userName: user?.name,
+    therapistName: therapist?.name,
+    date: plain.date,
+    timeSlot: plain.timeSlot,
+    status: plain.status,
+  };
+}
+
 function shapeChatResponse(payload) {
   return {
     reply: payload.reply,
@@ -1151,6 +1212,11 @@ module.exports = {
   shapeFitnessPlan,
   shapeInstitution,
   shapeInstitutionReport,
+  shapeInstitutionJoinResponse,
+  shapeAdminTherapistDirectory,
+  shapeAdminTherapistDirectoryEntry,
+  shapeAdminTherapistAvailability,
+  shapeAdminAppointmentAssigned,
   shapeConversationSummary,
   shapeConversationDetail,
   shapeChatResponse,
