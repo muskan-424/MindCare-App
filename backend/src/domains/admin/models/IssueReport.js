@@ -41,6 +41,5 @@ IssueReportSchema.index({ user: 1, createdAt: -1 });
 IssueReportSchema.index({ adminVerified: 1, escalated: 1, riskLevel: 1, createdAt: 1 });
 // Admin dashboard: view all unverified reports sorted by newest
 IssueReportSchema.index({ adminVerified: 1, createdAt: -1 });
-IssueReportSchema.index({ sourceFusionId: 1 }, { sparse: true });
 
 module.exports = mongoose.model('IssueReport', IssueReportSchema);
