@@ -329,7 +329,7 @@ export default function App() {
                       <tr key={f.id}>
                         <td style={S.td}>{new Date(f.createdAt).toLocaleString()}</td>
                         <td style={{ ...S.td, fontWeight: 700 }}>{f.riskLevel}</td>
-                        <td style={S.td}>{f.riskScore}</td>
+                        <td style={S.td}>{typeof f.riskScore === 'number' ? f.riskScore.toFixed(2) : f.riskScore}</td>
                         <td style={S.td}>{(f.primaryEmotions || []).join(', ') || '—'}</td>
                       </tr>
                     ))}
@@ -356,7 +356,7 @@ export default function App() {
                     {issues.map((r) => (
                       <tr key={r.id}>
                         <td style={S.td}>{new Date(r.createdAt).toLocaleString()}</td>
-                        <td style={S.td}>{r.category}</td>
+                        <td style={S.td}>{r.category === 'ai_intake_assessment' ? 'AI Intake' : r.category.replace(/_/g, ' ')}</td>
                         <td style={S.td}>{r.severity}</td>
                         <td style={S.td}>{r.moodTag || '—'}</td>
                         <td style={{ ...S.td, fontWeight: 700 }}>{r.riskLevel}</td>

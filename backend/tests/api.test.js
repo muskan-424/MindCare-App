@@ -320,6 +320,38 @@ describe('Admin API (token + DTO)', () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
+
+  test('GET /api/admin/issues syncs AI fusion results into risk reports', async () => {
+    const { res: reg } = await registerUser();
+    const userId = reg.body.user?.id || reg.body.user?._id;
+    const AssessmentSession = require('../src/domains/assessment/models/AssessmentSession');
+    const AssessmentFusionResult = require('../src/domains/assessment/models/AssessmentFusionResult');
+    const session = await AssessmentSession.create({
+      user: userId,
+      status: 'completed',
+      cameraConsent: true,
+      micConsent: true,
+      textConsent: true,
+      completedModalities: ['text', 'voice', 'vision'],
+    });
+    await AssessmentFusionResult.create({
+      session: session._id,
+      user: userId,
+      riskScore: 0.57,
+      riskLevel: 'MEDIUM',
+      confidence: 0.8,
+      primaryEmotions: ['anxiety'],
+      recommendations: ['Rest and journal.'],
+      modelVersion: 'fusion-test',
+    });
+
+    const res = await request(app).get('/api/admin/issues').query({ userId }).set(ADMIN_HEADERS);
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBeGreaterThanOrEqual(1);
+    const synced = res.body.find((r) => r.category === 'ai_intake_assessment');
+    expect(synced).toBeTruthy();
+    expect(synced.riskLevel).toBe('MEDIUM');
+  });
 });
 
 describe('Public content (DTO)', () => {

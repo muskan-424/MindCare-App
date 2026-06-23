@@ -175,11 +175,16 @@ router.post('/session/:sessionId/fusion/run', async (req, res) => {
         riskLevel: fusion.riskLevel,
         confidence: fusion.confidence,
         contradictionFlags: fusion.contradictionFlags,
+        aiMarkers: fusion.aiMarkers,
+        primaryEmotions: fusion.primaryEmotions,
         recommendations: fusion.recommendations,
         modelVersion: fusion.modelVersion,
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
+
+    const { ensureIssueReportForFusion } = require('../services/fusionIssueReportService');
+    await ensureIssueReportForFusion(result.toObject());
 
     session.status = 'completed';
     session.completedAt = new Date();

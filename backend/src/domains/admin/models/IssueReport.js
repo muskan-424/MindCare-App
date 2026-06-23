@@ -12,6 +12,13 @@ const IssueReportSchema = new mongoose.Schema(
     emotionTags: [{ type: String }],
     recommendations: [{ type: String }],
     safetyTriggered: { type: Boolean, default: false },
+    sourceFusionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'AssessmentFusionResult',
+      default: null,
+      index: true,
+      sparse: true,
+    },
     // Admin review fields
     adminVerified: { type: Boolean, default: false },
     adminNote: { type: String, default: '' },
@@ -34,5 +41,6 @@ IssueReportSchema.index({ user: 1, createdAt: -1 });
 IssueReportSchema.index({ adminVerified: 1, escalated: 1, riskLevel: 1, createdAt: 1 });
 // Admin dashboard: view all unverified reports sorted by newest
 IssueReportSchema.index({ adminVerified: 1, createdAt: -1 });
+IssueReportSchema.index({ sourceFusionId: 1 }, { sparse: true });
 
 module.exports = mongoose.model('IssueReport', IssueReportSchema);

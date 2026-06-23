@@ -168,6 +168,10 @@ router.get('/fusions', adminAuth, async (req, res) => {
 router.get('/issues', adminAuth, async (req, res) => {
   try {
     const { userId } = req.query;
+    if (userId) {
+      const { syncFusionReportsForUser } = require('../../assessment/services/fusionIssueReportService');
+      await syncFusionReportsForUser(userId);
+    }
     const query = userId ? { user: userId } : {};
     const reports = await IssueReport.find(query)
       .sort({ createdAt: -1 })
