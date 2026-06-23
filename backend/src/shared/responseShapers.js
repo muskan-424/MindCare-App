@@ -606,6 +606,10 @@ function shapeAdminIssueReport(report) {
     sentimentScore: plain.sentimentScore,
     emotionTags: plain.emotionTags || [],
     recommendations: plain.recommendations || [],
+    adminVerified: !!plain.adminVerified,
+    adminNote: plain.adminNote || '',
+    adminAction: plain.adminAction || 'none',
+    escalated: !!plain.escalated,
   };
 }
 
