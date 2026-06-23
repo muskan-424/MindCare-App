@@ -149,6 +149,33 @@ const options = {
             members: { type: 'array', items: { type: 'string' } },
           },
         },
+        AdminFusionResult: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            riskScore: { type: 'number' },
+            riskLevel: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] },
+            primaryEmotions: { type: 'array', items: { type: 'string' } },
+            aiMarkers: { type: 'array', items: { type: 'string' } },
+            createdAt: { type: 'string', format: 'date-time' },
+          },
+        },
+        AdminAnalytics: {
+          type: 'object',
+          properties: {
+            riskTrend: { type: 'array', items: { type: 'object' } },
+            moodHeatmap: { type: 'array', items: { type: 'object' } },
+            kpis: {
+              type: 'object',
+              properties: {
+                totalUsers: { type: 'integer' },
+                escalatedReports: { type: 'integer' },
+                activeTherapists: { type: 'integer' },
+                pendingAppointments: { type: 'integer' },
+              },
+            },
+          },
+        },
       },
     },
     paths: {
@@ -387,6 +414,177 @@ const options = {
             },
             401: { description: 'Unauthorized' },
           },
+        },
+      },
+      '/admin/fusions': {
+        get: {
+          tags: ['Admin'],
+          summary: 'AI intake fusion results (optionally by user)',
+          security: [{ adminToken: [] }],
+          parameters: [{ name: 'userId', in: 'query', schema: { type: 'string' } }],
+          responses: {
+            200: {
+              description: 'Fusion results (emotions backfilled from feature vectors when missing)',
+              content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/AdminFusionResult' } } } },
+            },
+            401: { description: 'Unauthorized' },
+          },
+        },
+      },
+      '/admin/issues': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Risk / issue reports (syncs fusion reports when userId provided)',
+          security: [{ adminToken: [] }],
+          parameters: [{ name: 'userId', in: 'query', schema: { type: 'string' } }],
+          responses: { 200: { description: 'Issue report list' }, 401: { description: 'Unauthorized' } },
+        },
+      },
+      '/admin/issues/{id}/verify': {
+        patch: {
+          tags: ['Admin'],
+          summary: 'Verify or action a risk report',
+          security: [{ adminToken: [] }],
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    adminAction: { type: 'string', enum: ['none', 'contacted', 'referred', 'resolved'] },
+                    adminNote: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+          responses: { 200: { description: 'Report updated' }, 404: { description: 'Not found' } },
+        },
+      },
+      '/admin/analytics': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Platform KPIs, risk trend, and mood heatmap',
+          security: [{ adminToken: [] }],
+          responses: {
+            200: {
+              description: 'Analytics snapshot',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/AdminAnalytics' } } },
+            },
+            401: { description: 'Unauthorized' },
+          },
+        },
+      },
+      '/admin/appointments': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Appointment requests',
+          security: [{ adminToken: [] }],
+          parameters: [{ name: 'status', in: 'query', schema: { type: 'string', example: 'awaiting_admin' } }],
+          responses: { 200: { description: 'Appointment list' }, 401: { description: 'Unauthorized' } },
+        },
+      },
+      '/admin/appointments/{id}/assign': {
+        post: {
+          tags: ['Admin'],
+          summary: 'Assign therapist, date, and slot to a request',
+          security: [{ adminToken: [] }],
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['therapistId', 'date', 'timeSlot'],
+                  properties: {
+                    therapistId: { type: 'string' },
+                    date: { type: 'string', example: '2026-06-25' },
+                    timeSlot: { type: 'string', example: '10:00 AM' },
+                    adminNote: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+          responses: { 200: { description: 'Assigned' }, 400: { description: 'Invalid slot' } },
+        },
+      },
+      '/admin/emergency-contacts/{id}/verify': {
+        patch: {
+          tags: ['Admin'],
+          summary: 'Approve an emergency contact',
+          security: [{ adminToken: [] }],
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            content: { 'application/json': { schema: { type: 'object', properties: { adminNote: { type: 'string' } } } } },
+          },
+          responses: { 200: { description: 'Verified' } },
+        },
+      },
+      '/admin/emergency-contacts/{id}/reject': {
+        patch: {
+          tags: ['Admin'],
+          summary: 'Reject an emergency contact',
+          security: [{ adminToken: [] }],
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            content: {
+              'application/json': {
+                schema: { type: 'object', properties: { rejectionReason: { type: 'string' } } },
+              },
+            },
+          },
+          responses: { 200: { description: 'Rejected' } },
+        },
+      },
+      '/admin/deletion-requests/{id}/review': {
+        patch: {
+          tags: ['Admin'],
+          summary: 'Approve or reject an account deletion request',
+          security: [{ adminToken: [] }],
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['action'],
+                  properties: {
+                    action: { type: 'string', enum: ['approve', 'reject'] },
+                    adminNote: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+          responses: { 200: { description: 'Processed' } },
+        },
+      },
+      '/admin/notifications/broadcast': {
+        post: {
+          tags: ['Admin'],
+          summary: 'Send a broadcast notification',
+          security: [{ adminToken: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['title', 'body', 'audience'],
+                  properties: {
+                    title: { type: 'string' },
+                    body: { type: 'string' },
+                    audience: { type: 'string', enum: ['all_users', 'therapists'] },
+                  },
+                },
+              },
+            },
+          },
+          responses: { 201: { description: 'Broadcast queued' } },
         },
       },
       '/institutions/join': {

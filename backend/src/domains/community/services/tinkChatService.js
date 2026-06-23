@@ -653,6 +653,13 @@ function shouldGateConfidence(confidence) {
   return typeof confidence === 'number' && confidence < config.ai.confidenceGate;
 }
 
+function isChatWebSocketEnabled() {
+  if (process.env.DISABLE_CHAT_WS === 'true') return false;
+  // WebSocket upgrade requires a long-lived Node server (not Vercel serverless).
+  if (process.env.VERCEL) return false;
+  return true;
+}
+
 /**
  * Report Tink's live capabilities (used by the UI to show a status badge).
  */
@@ -664,7 +671,7 @@ function getCapabilities() {
     mode: geminiLive ? 'gemini' : 'rule',
     ragMode: config.ai.usePineconeRag ? 'hybrid' : 'local',
     voice: true,
-    websocket: process.env.DISABLE_CHAT_WS !== 'true',
+    websocket: isChatWebSocketEnabled(),
     translate: geminiLive,
     languages: Object.keys(LANGUAGE_NAMES),
     fastModel: config.ai.fastModel,

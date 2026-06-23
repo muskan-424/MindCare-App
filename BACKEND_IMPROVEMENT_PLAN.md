@@ -165,9 +165,9 @@ A priority-ordered plan to close the gaps found when benchmarking the MindCare
 |----------|------|------------|
 | P1 | **Mobile release** | 🔧 `npm run android:release` / `npm run android:bundle:arm64`; Play Store keystore via `android/keystore.properties.example`; app label **MindCare** |
 | P1 | **Admin dashboard** | ✅ Live with analytics, appointments, pending actions — [admin-beta-umber-40.vercel.app](https://admin-beta-umber-40.vercel.app) |
-| P2 | **Long-lived API host** | `backend/docker-compose.yml` for local/full-stack; deploy to Fly/Railway/Render if you need WebSocket Tink (`/api/chat/ws`) or warm Mongo on `/api/health/ready` |
+| P2 | **Long-lived API host** | ✅ `render.yaml` + `backend/fly.toml` + Docker Compose; WebSocket auto-disabled on Vercel via `/api/chat/capabilities` |
 | P2 | **README** | ✅ MindCare setup guide (local API, admin, `verify:prod`, deploy) |
-| P3 | **OpenAPI coverage** | Document remaining undocumented routes in `backend/src/openapi.js` |
+| P3 | **OpenAPI coverage** | ✅ Admin fusions, analytics, appointments, EC verify, deletion review, broadcast documented |
 
 ---
 

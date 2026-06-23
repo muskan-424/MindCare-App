@@ -1,26 +1,29 @@
-# Render Blueprint — MindCare API
-# All env vars are configured here so Render knows what to inject.
-# IMPORTANT: Sensitive values must be set manually in the Render Dashboard
-# under Environment → Secret Files / Environment Variables.
-# Do NOT put real secret values in this file (it's committed to git).
+# Render Blueprint — MindCare API (long-lived WebSocket + background jobs)
+# Import in Render Dashboard → Blueprints, then set secret env vars in the UI.
+# Do NOT commit real secrets here.
 
 services:
   - type: web
     name: mindcare-api
     runtime: node
     rootDir: backend
+    plan: starter
     buildCommand: npm install --legacy-peer-deps
     startCommand: npm start
-    healthCheckPath: /
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
-        value: "20"
+        value: "22"
       - key: NODE_ENV
         value: production
       - key: PORT
         value: "5000"
       # ── Set these in the Render Dashboard (Environment tab) ──
       - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_TOKEN
         sync: false
       - key: GOOGLE_API_KEY
         sync: false
@@ -29,8 +32,6 @@ services:
       - key: PINECONE_INDEX
         sync: false
       - key: TAVILY_API_KEY
-        sync: false
-      - key: ADMIN_TOKEN
         sync: false
       - key: ADMIN_EMAIL_1
         sync: false

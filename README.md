@@ -111,9 +111,39 @@ Output: `android/app/build/outputs/bundle/release/app-release.aab`
 
 | Component | Host | Notes |
 |-----------|------|-------|
-| API | Vercel (`backend/`) | Set env vars in Vercel dashboard |
+| API | Vercel (`backend/`) | Set env vars in Vercel dashboard; REST-only (no WebSocket) |
+| API (WebSocket) | Render / Fly.io / Docker | Long-lived Node server for Tink WebSocket + background jobs |
 | Admin | [admin-beta-umber-40.vercel.app](https://admin-beta-umber-40.vercel.app) | `VITE_API_URL` set on Vercel; paste `ADMIN_TOKEN` to sign in |
-| Mobile | Play Store / App Store | Build release APK/IPA; keep `api_route` on prod |
+| Mobile | Play Store / App Store | Build release APK/AAB; keep `api_route` on prod |
+
+### Long-lived API (WebSocket Tink + `/api/health/ready`)
+
+Vercel is fine for REST, admin, and mobile CRUD. For **real-time Tink chat** (`/api/chat/ws`), SLA background jobs, and warm Mongo readiness, deploy the same `backend/` to a always-on host:
+
+**Option A — Render (blueprint included)**
+
+1. Render Dashboard → **New Blueprint** → connect this repo (`render.yaml` at root)
+2. Set secrets: `MONGODB_URI`, `JWT_SECRET`, `ADMIN_TOKEN`, `GOOGLE_API_KEY`, …
+3. After deploy, point the mobile app at the Render URL in `src/utils/route.js`
+4. Set admin `VITE_API_URL` to the same host if you move off Vercel entirely
+
+**Option B — Fly.io**
+
+```bash
+cd backend
+fly launch          # once — uses fly.toml + Dockerfile
+fly secrets set MONGODB_URI=... JWT_SECRET=... ADMIN_TOKEN=...
+fly deploy
+```
+
+**Option C — Local full stack**
+
+```bash
+cd backend
+docker compose up   # API + Mongo + Redis on :5000, WebSocket at ws://localhost:5000/api/chat/ws
+```
+
+`/api/chat/capabilities` returns `websocket: false` on Vercel and `true` on long-lived hosts — the mobile app uses REST automatically when WebSocket is unavailable.
 
 ### Deploy admin to Vercel
 

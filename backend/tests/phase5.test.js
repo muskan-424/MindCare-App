@@ -72,6 +72,18 @@ describe('AI maturity (capabilities + confidence)', () => {
     expect(res.body.websocket).toBe(true);
   });
 
+  test('capabilities reports websocket false when VERCEL=1', () => {
+    jest.isolateModules(() => {
+      const saved = process.env.VERCEL;
+      process.env.VERCEL = '1';
+      jest.resetModules();
+      const { getCapabilities } = require('../src/domains/community/services/tinkChatService');
+      expect(getCapabilities().websocket).toBe(false);
+      if (saved === undefined) delete process.env.VERCEL;
+      else process.env.VERCEL = saved;
+    });
+  });
+
   test('shouldGateConfidence respects CHAT_CONFIDENCE_GATE', () => {
     jest.isolateModules(() => {
       process.env.CHAT_CONFIDENCE_GATE = '0.99';
