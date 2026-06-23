@@ -16,7 +16,9 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 
 async function getSharedMongod() {
   if (!global.__MONGOD__) {
-    global.__MONGOD__ = await MongoMemoryServer.create();
+    global.__MONGOD__ = await MongoMemoryServer.create({
+      instance: { launchTimeout: 120000 },
+    });
   }
   return global.__MONGOD__;
 }

@@ -367,7 +367,7 @@ const ChatWithTink = props => {
         ]);
       }
     },
-    [messages, isTyping, conversationId, language, chatTone, t, applyBotResponse],
+    [messages, isTyping, conversationId, language, chatTone, t, applyBotResponse, scrollToEnd],
   );
 
   const handleSend = () => sendText(inputText);

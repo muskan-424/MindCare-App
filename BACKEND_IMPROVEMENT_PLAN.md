@@ -148,8 +148,8 @@ A priority-ordered plan to close the gaps found when benchmarking the MindCare
 |---|------|--------|--------|
 | 6.1 | **Frontend client tests** — `tinkChat.js` REST + WebSocket helpers. | S | ✅ 12 tests in `__tests__/tinkChat.test.js` |
 | 6.2 | **Screen smoke tests** — fitness categories/plan, institution dashboard; ChatWithTink `act` fix. | M | ✅ `__tests__/ScreenSmoke.test.js` (108 frontend tests total) |
-| 6.3 | **CI green on main** — frontend + backend jobs on every push. | S | ⏳ verify on GitHub Actions after push |
-| 6.4 | **Deploy verification** — prod `/api/health` + `/api/docs/openapi.json`. | S | 🔧 Fixed cold-start crash when env vars missing (`validateEnv` soft-fail on `VERCEL=1`); set `MONGODB_URI`, `JWT_SECRET`, `ADMIN_TOKEN` in Vercel dashboard (see `backend/.env.example`) |
+| 6.3 | **CI green on main** — frontend + backend jobs on every push. | S | ⏳ Lint + MongoMemoryServer CI fixes pushed; verify GitHub Actions after deploy |
+| 6.4 | **Deploy verification** — prod `/api/health` + `/api/docs/openapi.json`. | S | ⚠️ **Partial** (verified 2026-06-17): `/api/health` returns **200** with `status: "degraded"`, `configOk: false` — blocker: `JWT_SECRET must be set to a strong, non-default value` in [Vercel env](https://vercel.com/dashboard). `/api/docs/openapi.json` returns **200** (~9.7 KB OpenAPI 3.0.3). Cold-start crash fix (`validateEnv` soft-fail on `VERCEL=1`) is deployed. Also set `MONGODB_URI` and `ADMIN_TOKEN` if not already (see `backend/.env.example`). |
 
 **Exit criteria:** client and server tested together; production API matches documented shapes.
 

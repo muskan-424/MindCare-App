@@ -48,7 +48,7 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
     } else {
       scaleAnim.setValue(0);
     }
-  }, [earnedBadgeMeta]);
+  }, [earnedBadgeMeta, scaleAnim]);
 
   const fetchData = useCallback(async () => {
     setLoadingTrend(true);

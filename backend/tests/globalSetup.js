@@ -1,6 +1,11 @@
 /**
- * Set test env defaults before any suite loads config/server modules.
+ * Set test env defaults and pre-download the in-memory MongoDB binary.
+ * globalSetup runs in a separate process; env vars here do not carry into test
+ * workers (testDb.js sets them again). Warming the binary cache avoids CI
+ * timeouts on the first MongoMemoryServer.create() call.
  */
+const { MongoMemoryServer } = require('mongodb-memory-server');
+
 module.exports = async () => {
   process.env.NODE_ENV = 'test';
   process.env.JWT_SECRET = 'test_jwt_secret';
@@ -8,4 +13,9 @@ module.exports = async () => {
   process.env.USE_MOCK_CHATBOT = 'true';
   process.env.GEMINI_API_KEY = '';
   process.env.GOOGLE_API_KEY = '';
+
+  const mongod = await MongoMemoryServer.create({
+    instance: { launchTimeout: 120000 },
+  });
+  await mongod.stop();
 };
