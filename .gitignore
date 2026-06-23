@@ -81,3 +81,4 @@ backend/.env
 
 # Vite build output
 admin/dist/
+admin/.vercel/

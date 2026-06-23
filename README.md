@@ -74,7 +74,7 @@ Checks `/api/health` (`configOk: true`), OpenAPI, register, and JWT profile agai
 | Component | Host | Notes |
 |-----------|------|-------|
 | API | Vercel (`backend/`) | Set env vars in Vercel dashboard |
-| Admin | Vercel (`admin/`) | Set `VITE_API_URL` to your API URL; import `admin/` as root directory |
+| Admin | [admin-beta-umber-40.vercel.app](https://admin-beta-umber-40.vercel.app) | `VITE_API_URL` set on Vercel; paste `ADMIN_TOKEN` to sign in |
 | Mobile | Play Store / App Store | Build release APK/IPA; keep `api_route` on prod |
 
 ### Deploy admin to Vercel
