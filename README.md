@@ -69,6 +69,36 @@ npm run verify:prod
 
 Checks `/api/health` (`configOk: true`), OpenAPI, register, and JWT profile against `api_route`.
 
+## Mobile release (Android)
+
+Production API is configured in `src/utils/route.js` (`https://mind-care-app-five.vercel.app`).
+
+### Test release APK (debug-signed)
+
+```bash
+npm run android:release:arm64   # faster — most phones; single architecture
+# or
+npm run android:release         # all architectures (slower)
+```
+
+Output: `android/app/build/outputs/apk/release/app-release.apk`
+
+Install on a device: `adb install android/app/build/outputs/apk/release/app-release.apk`
+
+### Play Store signing
+
+1. Generate a release keystore (keep it safe — you cannot recover a lost keystore):
+
+```bash
+keytool -genkeypair -v -storetype PKCS12 -keystore android/app/release.keystore -alias mindcare -keyalg RSA -keysize 2048 -validity 10000
+```
+
+2. Copy `android/keystore.properties.example` → `android/keystore.properties` and fill in passwords.
+
+3. Run `npm run android:release` again — the APK will be signed with your release key.
+
+For Google Play, build an AAB: `cd android && gradlew.bat bundleRelease` → `android/app/build/outputs/bundle/release/app-release.aab`
+
 ## Deploy
 
 | Component | Host | Notes |

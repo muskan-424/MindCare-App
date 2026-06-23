@@ -163,7 +163,7 @@ A priority-ordered plan to close the gaps found when benchmarking the MindCare
 
 | Priority | Area | Suggestion |
 |----------|------|------------|
-| P1 | **Mobile release** | Build signed Android/iOS binaries; point `api_route` at prod for release builds |
+| P1 | **Mobile release** | 🔧 `npm run android:release` + Play Store keystore via `android/keystore.properties.example` |
 | P1 | **Admin dashboard** | ✅ Live at [admin-beta-umber-40.vercel.app](https://admin-beta-umber-40.vercel.app); sign in with backend `ADMIN_TOKEN` |
 | P2 | **Long-lived API host** | Move off Vercel serverless if you need WebSocket Tink (`/api/chat/ws`) or `/api/health/ready` with persistent Mongo |
 | P2 | **README** | ✅ MindCare setup guide (local API, admin, `verify:prod`, deploy) |
