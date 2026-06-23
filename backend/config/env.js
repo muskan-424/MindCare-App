@@ -105,8 +105,13 @@ function collectEnvProblems() {
  */
 function validateEnv(options = {}) {
   const problems = collectEnvProblems();
-  const onServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
-  const throwOnError = options.throwOnError ?? (isProd && !onServerless);
+  const onManagedHost = Boolean(
+    process.env.VERCEL
+    || process.env.AWS_LAMBDA_FUNCTION_NAME
+    || process.env.RENDER
+    || process.env.RENDER_EXTERNAL_URL
+  );
+  const throwOnError = options.throwOnError ?? (isProd && !onManagedHost);
 
   envStatus = { ok: problems.length === 0, problems };
 
@@ -116,7 +121,7 @@ function validateEnv(options = {}) {
       throw new Error(message);
     }
     // eslint-disable-next-line no-console
-    console.warn(`${message}\n[config] Continuing because NODE_ENV is "${environment}"${onServerless ? ' (serverless)' : ''}.`);
+    console.warn(`${message}\n[config] Continuing on managed host (${process.env.VERCEL ? 'vercel' : process.env.RENDER ? 'render' : 'serverless'}) — fix env vars and redeploy.`);
   }
 
   return { ...envStatus, config };

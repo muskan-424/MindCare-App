@@ -445,7 +445,7 @@ describe('Therapist DTO layer', () => {
   });
 });
 
-describe('Serverless / Vercel boot', () => {
+describe('Managed host boot (Vercel / Render)', () => {
   test('validateEnv does not throw when VERCEL=1 and secrets are missing', () => {
     const saved = { NODE_ENV: process.env.NODE_ENV, VERCEL: process.env.VERCEL, JWT_SECRET: process.env.JWT_SECRET, MONGODB_URI: process.env.MONGODB_URI, ADMIN_TOKEN: process.env.ADMIN_TOKEN };
     try {
@@ -459,6 +459,24 @@ describe('Serverless / Vercel boot', () => {
       expect(() => validateEnv()).not.toThrow();
       expect(getEnvStatus().ok).toBe(false);
       expect(getEnvStatus().problems.length).toBeGreaterThan(0);
+    } finally {
+      Object.assign(process.env, saved);
+      jest.resetModules();
+    }
+  });
+
+  test('validateEnv does not throw when RENDER=true and secrets are missing', () => {
+    const saved = { NODE_ENV: process.env.NODE_ENV, RENDER: process.env.RENDER, JWT_SECRET: process.env.JWT_SECRET, MONGODB_URI: process.env.MONGODB_URI, ADMIN_TOKEN: process.env.ADMIN_TOKEN };
+    try {
+      jest.resetModules();
+      process.env.NODE_ENV = 'production';
+      process.env.RENDER = 'true';
+      delete process.env.JWT_SECRET;
+      delete process.env.MONGODB_URI;
+      delete process.env.ADMIN_TOKEN;
+      const { validateEnv, getEnvStatus } = require('../config/env');
+      expect(() => validateEnv()).not.toThrow();
+      expect(getEnvStatus().ok).toBe(false);
     } finally {
       Object.assign(process.env, saved);
       jest.resetModules();

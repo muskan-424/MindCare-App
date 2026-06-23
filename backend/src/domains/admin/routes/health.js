@@ -21,7 +21,7 @@ router.get('/', (_req, res) => {
     env: config.env,
     version: '1.0.0',
     uptimeSeconds: Math.round(process.uptime()),
-    platform: process.env.VERCEL ? 'vercel' : 'node',
+    platform: process.env.VERCEL ? 'vercel' : process.env.RENDER ? 'render' : 'node',
   });
 });
 

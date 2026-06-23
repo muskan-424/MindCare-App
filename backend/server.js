@@ -97,22 +97,29 @@ app.use(notFound);
 app.use(errorHandler);
 
 // ─── Local Dev Server ─────────────────────────────────────────────────────────
-// When running locally (node server.js / npm run dev), start the HTTP server
-// AND the SLA monitor background job. On Vercel, this block is skipped because
-// Vercel imports this file as a module and does not call it as a script.
+// Long-lived hosts (Render, Fly, Docker, local): start HTTP + WebSocket + jobs.
+// Vercel imports this file as a module and skips this block.
 if (require.main === module) {
   const http = require('http');
-  const PORT = process.env.PORT || 5000;
+  const PORT = Number(process.env.PORT) || 5000;
   const server = http.createServer(app);
 
-  // WebSocket chat — only on long-lived servers (not Vercel serverless).
   const { attachChatWebSocket } = require('./src/domains/community/ws/chatWs');
   attachChatWebSocket(server);
 
+  server.on('error', (err) => {
+    console.error('Server failed to start:', err.message);
+    process.exit(1);
+  });
+
   server.listen(PORT, '0.0.0.0', () => {
+    const host = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
     console.log('\n===================================');
     console.log(`✅ MindCare API running on port ${PORT}`);
-    console.log(`✅ WebSocket chat at ws://localhost:${PORT}/api/chat/ws`);
+    console.log(`✅ Health: ${host.replace(/\/$/, '')}/api/health`);
+    if (!envCheck.ok) {
+      console.warn('⚠️  Config incomplete — set MONGODB_URI, JWT_SECRET, ADMIN_TOKEN in the dashboard');
+    }
     console.log('===================================\n');
 
     const { startBackgroundJobs } = require('./jobs');

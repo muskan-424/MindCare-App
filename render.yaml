@@ -1,14 +1,21 @@
 # Render Blueprint — MindCare API (long-lived WebSocket + background jobs)
-# Import in Render Dashboard → Blueprints, then set secret env vars in the UI.
-# Do NOT commit real secrets here.
+# Dashboard → New Blueprint → connect repo, OR create Web Service manually:
+#   Root Directory: backend
+#   Build: npm ci --legacy-peer-deps --omit=dev
+#   Start: npm start
+#   Health check path: /api/health
+#
+# REQUIRED secrets (Environment tab — same values as Vercel):
+#   MONGODB_URI, JWT_SECRET, ADMIN_TOKEN
+# Optional: GOOGLE_API_KEY, REDIS_URL, PINECONE_*, TAVILY_API_KEY
 
 services:
   - type: web
     name: mindcare-api
     runtime: node
     rootDir: backend
-    plan: starter
-    buildCommand: npm install --legacy-peer-deps
+    plan: free
+    buildCommand: npm ci --legacy-peer-deps --omit=dev
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
@@ -16,9 +23,7 @@ services:
         value: "22"
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: "5000"
-      # ── Set these in the Render Dashboard (Environment tab) ──
+      # Do NOT set PORT — Render injects it automatically.
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
@@ -35,6 +40,5 @@ services:
         sync: false
       - key: ADMIN_EMAIL_1
         sync: false
-      # Redis is optional — leave blank to skip Redis on Render
       - key: REDIS_URL
         sync: false

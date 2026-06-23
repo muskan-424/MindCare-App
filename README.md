@@ -145,6 +145,31 @@ docker compose up   # API + Mongo + Redis on :5000, WebSocket at ws://localhost:
 
 `/api/chat/capabilities` returns `websocket: false` on Vercel and `true` on long-lived hosts — the mobile app uses REST automatically when WebSocket is unavailable.
 
+### Render deploy troubleshooting
+
+If Render shows **Deploy failed** or the service keeps restarting:
+
+1. **Root Directory** must be `backend` (not repo root).
+2. **Required env vars** (same as Vercel — copy from your working API project):
+   - `MONGODB_URI` — MongoDB Atlas connection string
+   - `JWT_SECRET` — strong random string (`openssl rand -base64 32`)
+   - `ADMIN_TOKEN` — same value you use in the admin dashboard
+3. **Do not set `PORT`** — Render assigns it automatically.
+4. **Build command:** `npm ci --legacy-peer-deps --omit=dev`
+5. **Start command:** `npm start`
+6. **Health check path:** `/api/health` (returns 200 even while config is incomplete)
+7. **MongoDB Atlas** → Network Access → allow `0.0.0.0/0` (or Render's outbound IPs)
+
+After deploy, open `https://<your-service>.onrender.com/api/health`:
+- `configOk: true` → ready to use
+- `configOk: false` + `configProblems` → fix the listed env vars and redeploy
+
+Verify from your machine:
+
+```bash
+API_URL=https://your-service.onrender.com npm run verify:prod
+```
+
 ### Deploy admin to Vercel
 
 1. New Vercel project → import this repo
