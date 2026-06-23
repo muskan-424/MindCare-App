@@ -52,6 +52,7 @@ export default function App() {
   const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState(null);
   const [issues, setIssues] = useState([]);
+  const [fusions, setFusions] = useState([]);
   const [moods, setMoods] = useState([]);
   const [error, setError] = useState('');
 
@@ -88,11 +89,13 @@ export default function App() {
     if (!client) return;
     try {
       setError('');
-      const [iss, mood] = await Promise.all([
+      const [iss, fusionList, mood] = await Promise.all([
         client.getIssuesForUser(u.id),
+        client.getFusionsForUser(u.id),
         client.getMoodForUser(u.id),
       ]);
       setIssues(iss);
+      setFusions(fusionList);
       setMoods(mood);
     } catch (e) {
       setError(e.message || 'Failed to load user data');
@@ -307,10 +310,37 @@ export default function App() {
               <h2 style={S.h2}>{selected.name}</h2>
               <p style={S.muted}>{selected.email}</p>
 
-              {/* Assessments */}
-              <h3 style={S.h3}>AI Assessments</h3>
+              {/* AI intake assessments (multidimensional fusion) */}
+              <h3 style={S.h3}>AI Intake Assessments</h3>
+              {fusions.length === 0 ? (
+                <p style={S.empty}>No completed AI intake assessments yet.</p>
+              ) : (
+                <table style={S.table}>
+                  <thead>
+                    <tr>
+                      <th style={S.th}>Date</th>
+                      <th style={S.th}>Risk Level</th>
+                      <th style={S.th}>Score</th>
+                      <th style={S.th}>Emotions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fusions.map((f) => (
+                      <tr key={f.id}>
+                        <td style={S.td}>{new Date(f.createdAt).toLocaleString()}</td>
+                        <td style={{ ...S.td, fontWeight: 700 }}>{f.riskLevel}</td>
+                        <td style={S.td}>{f.riskScore}</td>
+                        <td style={S.td}>{(f.primaryEmotions || []).join(', ') || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {/* Risk / issue reports (separate from mood tracker) */}
+              <h3 style={S.h3}>Risk Reports</h3>
               {issues.length === 0 ? (
-                <p style={S.empty}>No assessments yet.</p>
+                <p style={S.empty}>No risk reports yet.</p>
               ) : (
                 <table style={S.table}>
                   <thead>

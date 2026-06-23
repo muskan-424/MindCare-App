@@ -857,6 +857,22 @@ function shapeFusionResult(result) {
   };
 }
 
+function shapeAdminFusionResult(result) {
+  const plain = shapeId(result);
+  return {
+    id: plain.id || String(plain._id),
+    riskScore: plain.riskScore,
+    riskLevel: plain.riskLevel,
+    confidence: plain.confidence,
+    primaryEmotions: plain.primaryEmotions || [],
+    aiMarkers: plain.aiMarkers || [],
+    contradictionFlags: plain.contradictionFlags || [],
+    recommendations: plain.recommendations || [],
+    modelVersion: plain.modelVersion,
+    createdAt: plain.createdAt,
+  };
+}
+
 function shapeAssessmentReport({ session, featureVector, fusion }) {
   const s = shapeId(session);
   return {
@@ -1203,6 +1219,7 @@ module.exports = {
   shapeAdminAnalytics,
   shapeAssessmentSessionStart,
   shapeFusionResult,
+  shapeAdminFusionResult,
   shapeAssessmentReport,
   shapeAdminDashboardStats,
   shapeAdminPendingVerification,

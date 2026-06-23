@@ -19,6 +19,7 @@ const {
   shapeAdminUserListing,
   shapeClinicalPatientProfile,
   shapeAdminIssueReport,
+  shapeAdminFusionResult,
   shapeAdminAppointment,
   shapeAdminEmergencyContact,
   shapeAdminResource,
@@ -148,7 +149,22 @@ router.patch('/users/:id/suspend', adminAuth, async (req, res) => {
   }
 });
 
-// GET /api/admin/issues?userId=... - all assessment reports, optionally filtered by user
+// GET /api/admin/fusions?userId=... - AI intake assessment results (quad-modal fusion)
+router.get('/fusions', adminAuth, async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const query = userId ? { user: userId } : {};
+    const fusions = await AssessmentFusionResult.find(query)
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(fusions.map(shapeAdminFusionResult));
+  } catch (err) {
+    console.error('Admin fusions error:', err.message);
+    res.status(500).json({ error: 'Failed to load assessment fusions' });
+  }
+});
+
+// GET /api/admin/issues?userId=... - risk / issue reports, optionally filtered by user
 router.get('/issues', adminAuth, async (req, res) => {
   try {
     const { userId } = req.query;

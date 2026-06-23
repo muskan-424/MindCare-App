@@ -312,6 +312,14 @@ describe('Admin API (token + DTO)', () => {
       expect(res.body[0].__v).toBeUndefined();
     }
   });
+
+  test('GET /api/admin/fusions returns shaped fusion results for user', async () => {
+    const { res: reg } = await registerUser();
+    const userId = reg.body.user?.id || reg.body.user?._id;
+    const res = await request(app).get('/api/admin/fusions').query({ userId }).set(ADMIN_HEADERS);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
 });
 
 describe('Public content (DTO)', () => {
