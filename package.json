@@ -8,6 +8,7 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
+    "verify:prod": "node scripts/verify-production.js",
     "postinstall": "patch-package"
   },
   "dependencies": {

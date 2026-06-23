@@ -141,17 +141,33 @@ A priority-ordered plan to close the gaps found when benchmarking the MindCare
 
 ---
 
-## Phase 6 — Frontend Alignment & Release Readiness (P3) 🔄 IN PROGRESS
+## Phase 6 — Frontend Alignment & Release Readiness (P3) ✅ DONE
 > Goal: keep the React Native client in sync with the shaped API and verify end-to-end in CI.
+>
+> **Status:** Completed (verified 2026-06-23). Frontend + backend CI green on `6164874`.
+> Production `/api/health` returns `configOk: true`; OpenAPI live; register + JWT profile
+> flow verified on Vercel. Run `npm run verify:prod` for a repeatable prod smoke check.
 
 | # | Task | Effort | Status |
 |---|------|--------|--------|
 | 6.1 | **Frontend client tests** — `tinkChat.js` REST + WebSocket helpers. | S | ✅ 12 tests in `__tests__/tinkChat.test.js` |
 | 6.2 | **Screen smoke tests** — fitness categories/plan, institution dashboard; ChatWithTink `act` fix. | M | ✅ `__tests__/ScreenSmoke.test.js` (108 frontend tests total) |
 | 6.3 | **CI green on main** — frontend + backend jobs on every push. | S | ✅ Green on `07fbe10` (Node 22 + Mongo binary cache for backend-ci) |
-| 6.4 | **Deploy verification** — prod `/api/health` + `/api/docs/openapi.json`. | S | ⚠️ **Partial** (verified 2026-06-17): `/api/health` returns **200** with `status: "degraded"`, `configOk: false` — blocker: `JWT_SECRET must be set to a strong, non-default value` in [Vercel env](https://vercel.com/dashboard). `/api/docs/openapi.json` returns **200** (~9.7 KB OpenAPI 3.0.3). Cold-start crash fix (`validateEnv` soft-fail on `VERCEL=1`) is deployed. Also set `MONGODB_URI` and `ADMIN_TOKEN` if not already (see `backend/.env.example`). |
+| 6.4 | **Deploy verification** — prod `/api/health` + `/api/docs/openapi.json` + auth. | S | ✅ `configOk: true` on Vercel; OpenAPI 200; register + `/api/profile/me` with JWT verified |
 
 **Exit criteria:** client and server tested together; production API matches documented shapes.
+
+---
+
+## Beyond the improvement plan (optional next steps)
+
+| Priority | Area | Suggestion |
+|----------|------|------------|
+| P1 | **Mobile release** | Build signed Android/iOS binaries; point `api_route` at prod for release builds |
+| P1 | **Admin dashboard** | Deploy `admin/` (Vite) and wire `ADMIN_TOKEN` for production ops |
+| P2 | **Long-lived API host** | Move off Vercel serverless if you need WebSocket Tink (`/api/chat/ws`) or `/api/health/ready` with persistent Mongo |
+| P2 | **README** | Replace default React Native boilerplate with MindCare setup (local API, env vars, `verify:prod`) |
+| P3 | **OpenAPI coverage** | Document remaining undocumented routes in `backend/src/openapi.js` |
 
 ---
 
