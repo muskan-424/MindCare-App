@@ -66,3 +66,27 @@ jobs:
 
       - name: Run Backend Tests
         run: npm test
+
+  admin-ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: admin/package-lock.json
+
+      - name: Install Admin Dependencies
+        run: npm ci
+
+      - name: Build Admin Dashboard
+        env:
+          VITE_API_URL: https://mind-care-app-five.vercel.app
+        run: npm run build

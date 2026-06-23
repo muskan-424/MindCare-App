@@ -1,97 +1,105 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# MindCare App
 
-# Getting Started
+React Native mental health platform with an Express/MongoDB API, AI assistant (Tink), therapist booking, mood tracking, and an optional admin dashboard.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Project structure
 
-## Step 1: Start Metro
+| Path | Description |
+|------|-------------|
+| `src/` | React Native mobile app |
+| `backend/` | Express API (deployed on Vercel) |
+| `admin/` | Vite admin dashboard (user issues & mood review) |
+| `scripts/verify-production.js` | Production smoke checks |
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Prerequisites
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- Node.js **22+**
+- React Native environment ([setup guide](https://reactnative.dev/docs/set-up-your-environment))
+- MongoDB Atlas URI (for backend)
+- Android Studio and/or Xcode for device builds
 
-```sh
-# Using npm
-npm start
+## Quick start — mobile app
 
-# OR using Yarn
-yarn start
+```bash
+npm ci --legacy-peer-deps
+npm start          # Metro bundler
+npm run android    # or: npm run ios
 ```
 
-## Step 2: Build and run your app
+The app points at the production API by default in `src/utils/route.js`:
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```js
+export const api_route = 'https://mind-care-app-five.vercel.app';
 ```
 
-### iOS
+For local backend development, uncomment the LAN IP line in that file and run the API (see below).
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+## Backend (local)
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+```bash
+cd backend
+cp .env.example .env   # set MONGODB_URI, JWT_SECRET, ADMIN_TOKEN
+npm install
+npm run dev            # http://localhost:5000
+npm test               # 76 tests
 ```
 
-Then, and every time you update your native dependencies, run:
+Required production env vars: `MONGODB_URI`, `JWT_SECRET`, `ADMIN_TOKEN` — see `backend/.env.example`.
 
-```sh
-bundle exec pod install
+API docs: `GET /api/docs` · OpenAPI: `GET /api/docs/openapi.json`
+
+## Admin dashboard (local)
+
+```bash
+cd admin
+cp .env.example .env   # optional; defaults to production API
+npm install
+npm run dev            # http://localhost:5173
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+Paste the same `ADMIN_TOKEN` value configured on the backend to load users.
 
-```sh
-# Using npm
-npm run ios
+## Production verification
 
-# OR using Yarn
-yarn ios
+From the repo root:
+
+```bash
+npm run verify:prod
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+Checks `/api/health` (`configOk: true`), OpenAPI, register, and JWT profile against `api_route`.
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+## Deploy
 
-## Step 3: Modify your app
+| Component | Host | Notes |
+|-----------|------|-------|
+| API | Vercel (`backend/`) | Set env vars in Vercel dashboard |
+| Admin | Vercel (`admin/`) | Set `VITE_API_URL` to your API URL; import `admin/` as root directory |
+| Mobile | Play Store / App Store | Build release APK/IPA; keep `api_route` on prod |
 
-Now that you have successfully run the app, let's make changes!
+### Deploy admin to Vercel
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+1. New Vercel project → import this repo
+2. **Root Directory:** `admin`
+3. **Environment variable:** `VITE_API_URL` = `https://mind-care-app-five.vercel.app`
+4. Deploy — framework preset should detect Vite
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+## Tests & CI
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+```bash
+npm test                    # frontend (108 tests)
+cd backend && npm test      # backend (76 tests)
+cd admin && npm run build   # admin production build
+```
 
-## Congratulations! :tada:
+GitHub Actions runs `frontend-ci`, `backend-ci`, and `admin-ci` on every push to `main`.
 
-You've successfully run and modified your React Native App. :partying_face:
+## Improvement plan
 
-### Now what?
+Phases 1–6 of the backend hardening plan are complete. See `BACKEND_IMPROVEMENT_PLAN.md` for history and optional next steps.
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+## Troubleshooting
 
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+- **App can't reach API** — confirm `api_route` in `src/utils/route.js`; run `npm run verify:prod`
+- **Admin 401** — `ADMIN_TOKEN` in the dashboard must match the backend env exactly
+- **Backend tests timeout** — first run downloads MongoMemoryServer binary; retry or use Node 22

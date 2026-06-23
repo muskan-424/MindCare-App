@@ -78,3 +78,6 @@ yarn-error.log
 .env
 backend/.env
 **/.env
+
+# Vite build output
+admin/dist/

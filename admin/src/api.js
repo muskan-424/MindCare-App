@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { api_route } from '../../src/utils/route';
+import { API_URL } from './config';
 
 export function createAdminClient(adminToken) {
   const client = axios.create({
-    baseURL: api_route,
+    baseURL: API_URL,
   });
 
   client.interceptors.request.use((config) => {

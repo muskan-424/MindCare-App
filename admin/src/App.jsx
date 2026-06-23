@@ -261,13 +261,13 @@ export default function App() {
 
       {/* Token bar */}
       <div style={S.tokenBar}>
-        <span style={S.tokenLabel}>Admin token:</span>
+        <span style={S.tokenLabel}>Admin token (ADMIN_TOKEN):</span>
         <input
           type="password"
           value={token}
           onChange={(e) => setToken(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSaveToken()}
-          placeholder="Paste your admin JWT token here…"
+          placeholder="Paste your ADMIN_TOKEN (same value as backend env)…"
           style={S.tokenInput}
         />
         <button onClick={handleSaveToken} style={S.saveBtn}>
