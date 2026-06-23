@@ -153,6 +153,10 @@ router.patch('/users/:id/suspend', adminAuth, async (req, res) => {
 router.get('/fusions', adminAuth, async (req, res) => {
   try {
     const { userId } = req.query;
+    if (userId) {
+      const { syncFusionEmotionsForUser } = require('../../assessment/services/fusionEmotionBackfillService');
+      await syncFusionEmotionsForUser(userId);
+    }
     const query = userId ? { user: userId } : {};
     const fusions = await AssessmentFusionResult.find(query)
       .sort({ createdAt: -1 })

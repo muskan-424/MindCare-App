@@ -12,7 +12,8 @@
     "migrate:indexes": "node scripts/syncIndexes.js",
     "seed": "node seed.js",
     "seed:test": "node scripts/seedTestUser.js",
-    "reset-admin": "node scripts/resetAdmin.js"
+    "reset-admin": "node scripts/resetAdmin.js",
+    "backfill:fusion-emotions": "node scripts/backfill-fusion-emotions.js"
   },
   "dependencies": {
     "@langchain/classic": "^1.0.22",

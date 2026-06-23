@@ -97,7 +97,15 @@ keytool -genkeypair -v -storetype PKCS12 -keystore android/app/release.keystore 
 
 3. Run `npm run android:release` again — the APK will be signed with your release key.
 
-For Google Play, build an AAB: `cd android && gradlew.bat bundleRelease` → `android/app/build/outputs/bundle/release/app-release.aab`
+For Google Play, build an AAB:
+
+```bash
+npm run android:bundle:arm64   # recommended — smaller upload
+# or
+npm run android:bundle         # all architectures
+```
+
+Output: `android/app/build/outputs/bundle/release/app-release.aab`
 
 ## Deploy
 

@@ -321,6 +321,49 @@ describe('Admin API (token + DTO)', () => {
     expect(Array.isArray(res.body)).toBe(true);
   });
 
+  test('GET /api/admin/fusions backfills emotions from feature vector when missing', async () => {
+    const { res: reg } = await registerUser();
+    const userId = reg.body.user?.id || reg.body.user?._id;
+    const AssessmentSession = require('../src/domains/assessment/models/AssessmentSession');
+    const AssessmentFeatureVector = require('../src/domains/assessment/models/AssessmentFeatureVector');
+    const AssessmentFusionResult = require('../src/domains/assessment/models/AssessmentFusionResult');
+
+    const session = await AssessmentSession.create({
+      user: userId,
+      status: 'completed',
+      cameraConsent: true,
+      micConsent: true,
+      textConsent: true,
+      completedModalities: ['text', 'voice', 'vision'],
+    });
+    await AssessmentFeatureVector.create({
+      session: session._id,
+      user: userId,
+      text: {
+        riskScore: 0.4,
+        confidence: 0.9,
+        features: { primaryEmotions: ['calm'], clinicalMarkers: ['stable'] },
+      },
+    });
+    await AssessmentFusionResult.create({
+      session: session._id,
+      user: userId,
+      riskScore: 0.4,
+      riskLevel: 'MEDIUM',
+      confidence: 0.9,
+      primaryEmotions: [],
+      aiMarkers: [],
+      modelVersion: 'fusion-test',
+    });
+
+    const res = await request(app).get('/api/admin/fusions').query({ userId }).set(ADMIN_HEADERS);
+    expect(res.status).toBe(200);
+    const row = res.body.find((f) => f.modelVersion === 'fusion-test');
+    expect(row).toBeTruthy();
+    expect(row.primaryEmotions).toContain('calm');
+    expect(row.aiMarkers).toContain('stable');
+  });
+
   test('GET /api/admin/issues syncs AI fusion results into risk reports', async () => {
     const { res: reg } = await registerUser();
     const userId = reg.body.user?.id || reg.body.user?._id;

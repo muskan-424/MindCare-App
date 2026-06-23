@@ -257,7 +257,7 @@ export default function App() {
                           <td style={S.td}>{new Date(f.createdAt).toLocaleString()}</td>
                           <td style={{ ...S.td, fontWeight: 700, color: RISK_COLORS[f.riskLevel] }}>{f.riskLevel}</td>
                           <td style={S.td}>{typeof f.riskScore === 'number' ? f.riskScore.toFixed(2) : f.riskScore}</td>
-                          <td style={S.td}>{(f.primaryEmotions || []).join(', ') || '—'}</td>
+                          <td style={S.td}>{(f.primaryEmotions || []).join(', ') || (f.aiMarkers || []).join(', ') || '—'}</td>
                         </tr>
                       ))}
                     </tbody>
