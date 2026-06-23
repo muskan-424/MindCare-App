@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { RISK_COLORS } from '../api';
 import VerifyModal from './VerifyModal';
+import NoteModal from './NoteModal';
+import AssignAppointmentModal from './AssignAppointmentModal';
 
 function QueueSection({ title, items, renderItem, empty, T }) {
   return (
@@ -17,6 +19,9 @@ function QueueSection({ title, items, renderItem, empty, T }) {
 
 export default function PendingPanel({ pending, client, onRefresh, onSelectUser, T }) {
   const [verifyTarget, setVerifyTarget] = useState(null);
+  const [ecAction, setEcAction] = useState(null);
+  const [deletionAction, setDeletionAction] = useState(null);
+  const [assignTarget, setAssignTarget] = useState(null);
 
   if (!pending) {
     return <p style={{ color: T.textMuted }}>Load admin token to see pending items.</p>;
@@ -79,8 +84,13 @@ export default function PendingPanel({ pending, client, onRefresh, onSelectUser,
         T={T}
         renderItem={(a) => (
           <div key={a.id} style={card()}>
-            <strong>{a.userName}</strong> requested {a.requestedSpeciality || 'therapy'}
-            <div style={{ color: T.textMuted, marginTop: 4 }}>{new Date(a.createdAt).toLocaleString()}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+              <div>
+                <strong>{a.userName}</strong> requested {a.requestedSpeciality || 'therapy'}
+                <div style={{ color: T.textMuted, marginTop: 4 }}>{new Date(a.createdAt).toLocaleString()}</div>
+              </div>
+              <button type="button" style={btnPrimarySmall(T)} onClick={() => setAssignTarget(a)}>Assign</button>
+            </div>
           </div>
         )}
       />
@@ -92,8 +102,16 @@ export default function PendingPanel({ pending, client, onRefresh, onSelectUser,
         T={T}
         renderItem={(c) => (
           <div key={c.id} style={card()}>
-            <strong>{c.userName}</strong> — {c.contactName} ({c.relationship})
-            <div style={{ color: T.textMuted, marginTop: 4 }}>{c.phone}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+              <div>
+                <strong>{c.userName}</strong> — {c.contactName} ({c.relationship})
+                <div style={{ color: T.textMuted, marginTop: 4 }}>{c.phone}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" style={btnPrimarySmall(T)} onClick={() => setEcAction({ type: 'verify', contact: c })}>Verify</button>
+                <button type="button" style={btnDangerSmall(T)} onClick={() => setEcAction({ type: 'reject', contact: c })}>Reject</button>
+              </div>
+            </div>
           </div>
         )}
       />
@@ -105,18 +123,81 @@ export default function PendingPanel({ pending, client, onRefresh, onSelectUser,
         T={T}
         renderItem={(d) => (
           <div key={d.id} style={card()}>
-            <strong>{d.userName}</strong> requested account deletion
-            <div style={{ color: T.textMuted, marginTop: 4 }}>{new Date(d.createdAt).toLocaleString()}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+              <div>
+                <strong>{d.userName}</strong> requested account deletion
+                <div style={{ color: T.textMuted, marginTop: 4 }}>{new Date(d.createdAt).toLocaleString()}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" style={btnDangerSmall(T)} onClick={() => setDeletionAction({ type: 'approve', request: d })}>Approve wipe</button>
+                <button type="button" style={btnSmall(T)} onClick={() => setDeletionAction({ type: 'reject', request: d })}>Reject</button>
+              </div>
+            </div>
           </div>
         )}
       />
 
       {verifyTarget && (
-        <VerifyModal
-          report={verifyTarget}
+        <VerifyModal report={verifyTarget} T={T} onClose={() => setVerifyTarget(null)} onConfirm={handleVerify} />
+      )}
+
+      {ecAction?.type === 'verify' && (
+        <NoteModal
+          title="Verify emergency contact"
+          description={`Confirm ${ecAction.contact.contactName} for ${ecAction.contact.userName}.`}
+          noteLabel="Admin note (optional)"
+          confirmLabel="Verify contact"
           T={T}
-          onClose={() => setVerifyTarget(null)}
-          onConfirm={handleVerify}
+          onClose={() => setEcAction(null)}
+          onConfirm={(note) => client.verifyEmergencyContact(ecAction.contact.id, { adminNote: note }).then(onRefresh)}
+        />
+      )}
+
+      {ecAction?.type === 'reject' && (
+        <NoteModal
+          title="Reject emergency contact"
+          description="User will be notified to update their contact."
+          noteLabel="Reason for rejection"
+          noteRequired
+          confirmLabel="Reject"
+          confirmDanger
+          T={T}
+          onClose={() => setEcAction(null)}
+          onConfirm={(note) => client.rejectEmergencyContact(ecAction.contact.id, { rejectionReason: note }).then(onRefresh)}
+        />
+      )}
+
+      {deletionAction?.type === 'approve' && (
+        <NoteModal
+          title="Approve account deletion"
+          description={`This permanently deletes ${deletionAction.request.userName}'s account and all associated data. This cannot be undone.`}
+          noteLabel="Audit note (optional)"
+          confirmLabel="Delete all data"
+          confirmDanger
+          T={T}
+          onClose={() => setDeletionAction(null)}
+          onConfirm={(note) => client.reviewDeletionRequest(deletionAction.request.id, { action: 'approve', adminNote: note }).then(onRefresh)}
+        />
+      )}
+
+      {deletionAction?.type === 'reject' && (
+        <NoteModal
+          title="Reject deletion request"
+          noteLabel="Reason (optional)"
+          confirmLabel="Reject request"
+          T={T}
+          onClose={() => setDeletionAction(null)}
+          onConfirm={(note) => client.reviewDeletionRequest(deletionAction.request.id, { action: 'reject', adminNote: note }).then(onRefresh)}
+        />
+      )}
+
+      {assignTarget && (
+        <AssignAppointmentModal
+          appointment={assignTarget}
+          client={client}
+          T={T}
+          onClose={() => setAssignTarget(null)}
+          onAssigned={onRefresh}
         />
       )}
     </>
@@ -134,5 +215,12 @@ function btnPrimarySmall(T) {
   return {
     padding: '6px 12px', fontSize: 12, borderRadius: 6, cursor: 'pointer',
     border: 'none', background: T.btn, color: T.btnText, fontWeight: 600,
+  };
+}
+
+function btnDangerSmall(T) {
+  return {
+    padding: '6px 12px', fontSize: 12, borderRadius: 6, cursor: 'pointer',
+    border: 'none', background: T.red, color: '#fff', fontWeight: 600,
   };
 }

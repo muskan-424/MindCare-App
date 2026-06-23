@@ -13,8 +13,16 @@ export function createAdminClient(adminToken) {
 
   return {
     getStats: () => client.get('/api/admin/stats').then((r) => r.data),
+    getAnalytics: () => client.get('/api/admin/analytics').then((r) => r.data),
     getPending: () => client.get('/api/admin/pending-verification').then((r) => r.data),
     getUsers: () => client.get('/api/admin/users').then((r) => r.data),
+    getTherapists: () => client.get('/api/admin/therapists').then((r) => r.data),
+    getAppointments: (status) =>
+      client.get('/api/admin/appointments', { params: status ? { status } : {} }).then((r) => r.data),
+    getTherapistAvailability: (therapistId, date, appointmentId) =>
+      client.get('/api/admin/therapist-availability', {
+        params: { therapistId, date, appointmentId },
+      }).then((r) => r.data),
     getIssuesForUser: (userId) =>
       client.get('/api/admin/issues', { params: { userId } }).then((r) => r.data),
     getFusionsForUser: (userId) =>
@@ -25,6 +33,18 @@ export function createAdminClient(adminToken) {
       client.get(`/api/admin/users/${userId}/full-profile`).then((r) => r.data),
     verifyIssue: (issueId, body) =>
       client.patch(`/api/admin/issues/${issueId}/verify`, body).then((r) => r.data),
+    verifyEmergencyContact: (id, body) =>
+      client.patch(`/api/admin/emergency-contacts/${id}/verify`, body).then((r) => r.data),
+    rejectEmergencyContact: (id, body) =>
+      client.patch(`/api/admin/emergency-contacts/${id}/reject`, body).then((r) => r.data),
+    reviewDeletionRequest: (id, body) =>
+      client.patch(`/api/admin/deletion-requests/${id}/review`, body).then((r) => r.data),
+    assignAppointment: (id, body) =>
+      client.post(`/api/admin/appointments/${id}/assign`, body).then((r) => r.data),
+    updateAppointmentStatus: (id, body) =>
+      client.patch(`/api/admin/appointments/${id}/status`, body).then((r) => r.data),
+    broadcastNotification: (body) =>
+      client.post('/api/admin/notifications/broadcast', body).then((r) => r.data),
   };
 }
 

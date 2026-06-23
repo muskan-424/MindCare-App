@@ -3,6 +3,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { createAdminClient, RISK_COLORS } from './api';
 import StatsBar from './components/StatsBar';
 import PendingPanel from './components/PendingPanel';
+import AnalyticsPanel from './components/AnalyticsPanel';
+import AppointmentsPanel from './components/AppointmentsPanel';
+import BroadcastPanel from './components/BroadcastPanel';
 import VerifyModal from './components/VerifyModal';
 import ClinicalProfileModal from './components/ClinicalProfileModal';
 
@@ -11,20 +14,24 @@ const THEMES = {
     bg: '#f5f7fa', surface: '#ffffff', sidebar: '#ffffff', header: '#3a7ca5',
     headerText: '#ffffff', border: '#e0e0e0', text: '#1a1a2e', textMuted: '#666',
     accent: '#e8f4f8', accentHover: '#d0eaf5', selectedBg: '#d0eaf5', tableHead: '#f0f8ff',
-    red: '#c0392b', btn: '#3a7ca5', btnText: '#fff', toggleBg: '#e0e0e0', toggleKnob: '#fff',
+    red: '#c0392b', green: '#27ae60', orange: '#e67e22',
+    btn: '#3a7ca5', btnText: '#fff', toggleBg: '#e0e0e0', toggleKnob: '#fff',
   },
   dark: {
     bg: '#0f0f1a', surface: '#1a1a2e', sidebar: '#16213e', header: '#1a1a2e',
     headerText: '#e0e0ff', border: '#2a2a4a', text: '#e0e0ff', textMuted: '#8888aa',
     accent: '#1e2a45', accentHover: '#243255', selectedBg: '#243255', tableHead: '#1e2a45',
-    red: '#ff6b6b', btn: '#3a7ca5', btnText: '#fff', toggleBg: '#3a7ca5', toggleKnob: '#fff',
+    red: '#ff6b6b', green: '#2ecc71', orange: '#f39c12',
+    btn: '#3a7ca5', btnText: '#fff', toggleBg: '#3a7ca5', toggleKnob: '#fff',
   },
 };
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
-  { id: 'users', label: 'Users' },
+  { id: 'analytics', label: 'Analytics' },
   { id: 'pending', label: 'Pending review' },
+  { id: 'appointments', label: 'Appointments' },
+  { id: 'users', label: 'Users' },
 ];
 
 export default function App() {
@@ -180,9 +187,27 @@ export default function App() {
       {tab === 'overview' && (
         <div style={S.mainPanel}>
           <StatsBar stats={stats} pendingTotal={pending?.totalPending} T={T} />
-          <p style={S.muted}>
-            Use <strong>Pending review</strong> to verify high-risk reports and <strong>Users</strong> for full history per person.
+          <p style={{ ...S.muted, marginBottom: 20 }}>
+            Use <strong>Pending review</strong> for risk verification, emergency contacts, and deletion requests.
+            Open <strong>Appointments</strong> to assign therapists.
           </p>
+          {client && <BroadcastPanel client={client} T={T} />}
+        </div>
+      )}
+
+      {tab === 'analytics' && (
+        <div style={S.mainPanel}>
+          {client ? <AnalyticsPanel client={client} T={T} /> : <p style={S.muted}>Save admin token to load analytics.</p>}
+        </div>
+      )}
+
+      {tab === 'appointments' && (
+        <div style={S.mainPanel}>
+          {client ? (
+            <AppointmentsPanel client={client} T={T} onRefresh={() => refreshDashboard(client)} />
+          ) : (
+            <p style={S.muted}>Save admin token to manage appointments.</p>
+          )}
         </div>
       )}
 
