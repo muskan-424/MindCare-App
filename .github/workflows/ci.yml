@@ -44,7 +44,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
@@ -52,6 +52,14 @@ jobs:
         # Using npm install instead of npm ci in case backend lacks a package-lock.json, 
         # but Render runs npm install directly anyway.
         run: npm install
+
+      - name: Cache MongoDB memory-server binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('backend/package-lock.json') }}
+          restore-keys: |
+            mongodb-binaries-${{ runner.os }}-
 
       - name: Run Backend Linter
         run: npm run lint

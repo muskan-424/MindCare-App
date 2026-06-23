@@ -4,7 +4,7 @@
  * workers (testDb.js sets them again). Warming the binary cache avoids CI
  * timeouts on the first MongoMemoryServer.create() call.
  */
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const { MongoBinary } = require('mongodb-memory-server');
 
 module.exports = async () => {
   process.env.NODE_ENV = 'test';
@@ -14,8 +14,5 @@ module.exports = async () => {
   process.env.GEMINI_API_KEY = '';
   process.env.GOOGLE_API_KEY = '';
 
-  const mongod = await MongoMemoryServer.create({
-    instance: { launchTimeout: 120000 },
-  });
-  await mongod.stop();
+  await MongoBinary.getPath();
 };
