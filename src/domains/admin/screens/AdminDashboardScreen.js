@@ -189,7 +189,7 @@ const PendingTab = () => {
       setTherapists(therapistsRes.data || []);
       setCmsResources((resourcesRes.data || []).filter(r => r.active !== false));
     } catch (e) {
-      Alert.alert('Error', 'Failed to load pending items.');
+      Alert.alert(t('admin.alert_error'), t('admin.load_pending_failed'));
     }
     setLoading(false);
   }, []);
@@ -197,10 +197,10 @@ const PendingTab = () => {
   const runSLACheck = async () => {
     try {
       await api.post('/api/admin/sla/run', {}, H);
-      Alert.alert('SLA Check Complete', 'Escalated reports have been flagged.');
+      Alert.alert(t('admin.alert_sla_complete'), t('admin.sla_escalated'));
       load();
     } catch (e) {
-      Alert.alert('Error', 'Failed to run SLA check.');
+      Alert.alert(t('admin.alert_error'), t('admin.sla_check_failed'));
     }
   };
 
@@ -222,14 +222,14 @@ const PendingTab = () => {
       });
       setAvailableSlots(res.data.available || []);
     } catch (e) {
-      Alert.alert('Error', 'Could not fetch availability.');
+      Alert.alert(t('admin.alert_error'), t('admin.availability_failed'));
     }
     setSlotsLoading(false);
   };
 
   const confirmAssign = async () => {
     if (!assignTherapist || !assignDate || !assignSlot) {
-      Alert.alert('Incomplete', 'Select therapist, date, and time slot.');
+      Alert.alert(t('admin.alert_incomplete'), t('admin.assign_incomplete'));
       return;
     }
     setAssignLoading(true);
@@ -240,11 +240,11 @@ const PendingTab = () => {
         timeSlot: assignSlot,
         adminNote: assignNote,
       }, H);
-      Alert.alert('Assigned', `${assignTarget.userName}'s session confirmed.`);
+      Alert.alert(t('admin.alert_assigned'), t('admin.session_confirmed', { name: assignTarget.userName }));
       setAssignModal(false);
       load();
     } catch (e) {
-      Alert.alert('Failed', e.response?.data?.error || 'Could not assign.');
+      Alert.alert(t('admin.alert_failed'), e.response?.data?.error || t('admin.assign_failed'));
     }
     setAssignLoading(false);
   };
@@ -257,11 +257,11 @@ const PendingTab = () => {
         adminAction: verifyAction,
         assignedResources: verifyResources
       }, H);
-      Alert.alert('Verified', `Report marked as "${verifyAction}".`);
+      Alert.alert(t('admin.alert_verified'), t('admin.report_marked', { action: verifyAction }));
       setVerifyModal(false);
       load();
     } catch (e) {
-      Alert.alert('Failed', 'Could not verify report.');
+      Alert.alert(t('admin.alert_failed'), t('admin.verify_report_failed'));
     }
     setVerifyLoading(false);
   };
@@ -274,11 +274,11 @@ const PendingTab = () => {
         : `/api/admin/emergency-contacts/${ecTarget.id}/reject`;
       const body = action === 'verify' ? { adminNote: ecNote } : { rejectionReason: ecNote };
       await api.patch(endpoint, body, H);
-      Alert.alert(action === 'verify' ? 'Verified' : 'Rejected', `Emergency contact has been ${action === 'verify' ? 'verified' : 'rejected'}.`);
+      Alert.alert(action === 'verify' ? t('admin.alert_verified') : t('admin.alert_rejected'), action === 'verify' ? t('admin.ec_verified') : t('admin.ec_rejected'));
       setEcModal(false);
       load();
     } catch (e) {
-      Alert.alert('Failed', 'Could not process EC verification.');
+      Alert.alert(t('admin.alert_failed'), t('admin.ec_verify_failed'));
     }
     setEcLoading(false);
   };
@@ -292,10 +292,10 @@ const PendingTab = () => {
         setCallNote('');
         setCallModal(true);
       } else {
-        Alert.alert('No Contact', 'This user has no verified emergency contact on file.');
+        Alert.alert(t('admin.alert_no_contact'), t('admin.no_ec_on_file'));
       }
     } catch (e) {
-      Alert.alert('Error', 'Could not load emergency contact.');
+      Alert.alert(t('admin.alert_error'), t('admin.load_ec_failed'));
     }
   };
 
@@ -305,16 +305,16 @@ const PendingTab = () => {
       await api.post(`/api/admin/emergency-contacts/${callTarget.userId}/log-call`, {
         outcome: callOutcome, adminNote: callNote, triggeredBy: verifyTarget?.id || '',
       }, H);
-      Alert.alert('Logged', 'Call outcome saved to audit trail.');
+      Alert.alert(t('admin.alert_logged'), t('admin.call_logged'));
       setCallModal(false);
     } catch (e) {
-      Alert.alert('Error', 'Could not log call outcome.');
+      Alert.alert(t('admin.alert_error'), t('admin.log_call_failed'));
     }
     setCallLoading(false);
   };
 
   const assignPlan = async () => {
-    if (!planFocus) return Alert.alert('Error', 'Please provide a Plan Focus.');
+    if (!planFocus) return Alert.alert(t('admin.alert_error'), t('admin.plan_focus_required'));
     setPlanLoading(true);
     try {
       const grouped = {};
@@ -331,11 +331,11 @@ const PendingTab = () => {
         adminNote: planNote,
         dailyPlans
       }, H);
-      Alert.alert('Plan Assigned', `Wellness plan sent to ${planTarget.userName}`);
+      Alert.alert(t('admin.alert_plan_assigned'), t('admin.plan_sent', { name: planTarget.userName }));
       setPlanModal(false);
       load();
     } catch (e) {
-      Alert.alert('Error', 'Failed to assign plan.');
+      Alert.alert(t('admin.alert_error'), t('admin.assign_plan_failed'));
     }
     setPlanLoading(false);
   };
@@ -353,11 +353,11 @@ const PendingTab = () => {
         action,
         adminNote: delNote
       }, H);
-      Alert.alert(action === 'approve' ? 'Approved' : 'Rejected', `Deletion request has been ${action}d.`);
+      Alert.alert(action === 'approve' ? t('admin.alert_approved') : t('admin.alert_rejected'), t('admin.deletion_reviewed', { action: action === 'approve' ? 'approved' : 'rejected' }));
       setDelModal(false);
       load();
     } catch (e) {
-      Alert.alert('Error', 'Failed to process deletion request.');
+      Alert.alert(t('admin.alert_error'), t('admin.deletion_failed'));
     }
     setDelLoading(false);
   };
@@ -423,13 +423,13 @@ const PendingTab = () => {
           <View style={ss.slaBannerLeft}>
             <MaterialIcons name="warning" size={20} color="#fff" />
             <View style={{ marginLeft: 10, flex: 1 }}>
-              <Text style={ss.slaBannerTitle}>SLA BREACH — {data.escalatedCount} REPORT{data.escalatedCount !== 1 ? 'S' : ''} OVERDUE</Text>
-              <Text style={ss.slaBannerSub}>Immediate action required on HIGH/CRITICAL reports.</Text>
+              <Text style={ss.slaBannerTitle}>{t('admin.sla_breach_title', { count: data.escalatedCount, suffix: data.escalatedCount !== 1 ? 'S' : '' })}</Text>
+              <Text style={ss.slaBannerSub}>{t('admin.sla_breach_sub')}</Text>
             </View>
           </View>
           <TouchableOpacity style={ss.slaBtn} onPress={runSLACheck}>
             <MaterialIcons name="refresh" size={14} color={D.danger} />
-            <Text style={ss.slaBtnText}>Re-run SLA</Text>
+            <Text style={ss.slaBtnText}>{t('admin.rerun_sla')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -476,9 +476,9 @@ const PendingTab = () => {
       {(!activeFilter || activeFilter === 'consultations') && (
       <View>
       {/* Appointment Requests */}
-      <SectionHeader icon="event-note" title="Consultation Requests" count={data.appointmentRequests.length} />
+      <SectionHeader icon="event-note" title={t('admin.section_consultations')} count={data.appointmentRequests.length} />
       {data.appointmentRequests.length === 0
-        ? <EmptyState icon="check-circle" message="All consultation requests have been handled" />
+        ? <EmptyState icon="check-circle" message={t('admin.empty_consultations')} />
         : data.appointmentRequests.map(req => (
           <View key={req.id} style={[ss.card, { borderLeftColor: D.accent }]}>
             <View style={ss.cardRow}>
@@ -489,12 +489,12 @@ const PendingTab = () => {
                 <Text style={ss.cardName}>{req.userName}</Text>
                 <Text style={ss.cardMeta}>{new Date(req.createdAt).toLocaleDateString()}</Text>
               </View>
-              <PillBadge label={req.requestedSpeciality || 'Any'} color={D.accent} />
+              <PillBadge label={req.requestedSpeciality || t('admin.speciality_any')} color={D.accent} />
             </View>
             <View style={ss.cardDivider} />
             <View style={ss.metaRow}>
               <MaterialIcons name="schedule" size={13} color={D.textMuted} style={{ marginRight: 4 }} />
-              <Text style={ss.metaText}>{req.preferredTime || 'No time preference'}</Text>
+              <Text style={ss.metaText}>{req.preferredTime || t('admin.no_time_pref')}</Text>
             </View>
             {req.preferredDates?.length > 0 && (
               <View style={ss.metaRow}>
@@ -509,7 +509,7 @@ const PendingTab = () => {
               </View>
             ) : null}
             <ActionButton
-              label="Assign Therapist & Confirm"
+              label={t('admin.assign_therapist')}
               icon="person-add"
               color={D.accent}
               style={{ marginTop: 14 }}
@@ -518,7 +518,7 @@ const PendingTab = () => {
                 setAssignModal(true);
                 setAssignTherapist(null);
                 const prefilledDate = req.preferredDates?.length > 0 ? req.preferredDates[0] : '';
-                const prefilledTime = req.preferredTime && req.preferredTime !== 'No time preference' ? req.preferredTime : '';
+                const prefilledTime = req.preferredTime && req.preferredTime !== t('admin.no_time_pref') ? req.preferredTime : '';
                 setAssignDate(prefilledDate);
                 setAvailableSlots(prefilledTime ? [prefilledTime] : []);
                 setAssignSlot(prefilledTime);
@@ -533,15 +533,15 @@ const PendingTab = () => {
       {(!activeFilter || activeFilter === 'risk_reports') && (
       <View>
       {/* Risk Reports */}
-      <SectionHeader icon="warning" title="Unverified Risk Reports" count={data.riskReports.length} />
+      <SectionHeader icon="warning" title={t('admin.section_risk_reports')} count={data.riskReports.length} />
       {data.riskReports.length === 0
-        ? <EmptyState icon="verified-user" message="No unverified HIGH or CRITICAL reports" />
+        ? <EmptyState icon="verified-user" message={t('admin.empty_risk_reports')} />
         : data.riskReports.map(rep => (
           <View key={rep.id} style={[ss.card, { borderLeftColor: RISK_COLORS[rep.riskLevel], borderLeftWidth: rep.escalated ? 5 : 3 }]}>
             {rep.escalated && (
               <View style={ss.escalatedBadge}>
                 <MaterialIcons name="access-time" size={12} color={D.danger} />
-                <Text style={ss.escalatedBadgeText}>SLA BREACHED — {rep.slaBreachMinutes}min overdue</Text>
+                <Text style={ss.escalatedBadgeText}>{t('admin.sla_breached_min', { minutes: rep.slaBreachMinutes })}</Text>
               </View>
             )}
             <View style={ss.cardRow}>
@@ -557,9 +557,9 @@ const PendingTab = () => {
             </View>
             <View style={ss.cardDivider} />
             <View style={ss.metaRow}>
-              <Text style={ss.metaLabel}>Category</Text>
+              <Text style={ss.metaLabel}>{t('admin.category_label')}</Text>
               <Text style={ss.metaValue}>{rep.category?.replace(/_/g, ' ')}</Text>
-              <Text style={[ss.metaLabel, { marginLeft: 16 }]}>Severity</Text>
+              <Text style={[ss.metaLabel, { marginLeft: 16 }]}>{t('admin.severity_label')}</Text>
               <Text style={ss.metaValue}>{rep.severity}/5</Text>
             </View>
             {rep.emotionTags?.length > 0 && (
@@ -574,7 +574,7 @@ const PendingTab = () => {
             {rep.safetyTriggered && (
               <View style={ss.safetyAlert}>
                 <MaterialIcons name="crisis-alert" size={13} color={D.danger} />
-                <Text style={ss.safetyAlertText}>Safety response triggered</Text>
+                <Text style={ss.safetyAlertText}>{t('admin.safety_triggered')}</Text>
               </View>
             )}
             {rep.description ? (
@@ -589,7 +589,7 @@ const PendingTab = () => {
                 activeOpacity={0.8}
               >
                 <MaterialIcons name="rate-review" size={14} color={rep.escalated ? '#fff' : D.textPrimary} style={{ marginRight: 5 }} />
-                <Text style={[ss.actionButtonText, { color: rep.escalated ? '#fff' : D.textPrimary }]}>{rep.escalated ? 'URGENT Review' : 'Review & Action'}</Text>
+                <Text style={[ss.actionButtonText, { color: rep.escalated ? '#fff' : D.textPrimary }]}>{rep.escalated ? t('admin.urgent_review') : t('admin.review_action')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[ss.actionButton, { flex: 1, backgroundColor: D.dangerDeep }]}
@@ -597,7 +597,7 @@ const PendingTab = () => {
                 activeOpacity={0.8}
               >
                 <MaterialIcons name="phone" size={14} color="#fff" style={{ marginRight: 5 }} />
-                <Text style={ss.actionButtonText}>Emergency Call</Text>
+                <Text style={ss.actionButtonText}>{t('admin.emergency_call')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -608,9 +608,9 @@ const PendingTab = () => {
       {(!activeFilter || activeFilter === 'emergency_contacts') && (
       <View>
       {/* Emergency Contacts */}
-      <SectionHeader icon="contact-emergency" title="Emergency Contacts" count={(data.pendingContacts || []).length} />
+      <SectionHeader icon="contact-emergency" title={t('admin.section_emergency_contacts')} count={(data.pendingContacts || []).length} />
       {(data.pendingContacts || []).length === 0
-        ? <EmptyState icon="check-circle" message="No emergency contacts pending verification" />
+        ? <EmptyState icon="check-circle" message={t('admin.empty_emergency_contacts')} />
         : (data.pendingContacts || []).map(ec => (
           <View key={ec.id} style={[ss.card, { borderLeftColor: D.danger }]}>
             <View style={ss.cardRow}>
@@ -638,7 +638,7 @@ const PendingTab = () => {
               </View>
             ) : null}
             <ActionButton
-              label="Verify or Reject Contact"
+              label={t('admin.verify_reject_contact')}
               icon="verified"
               color={D.success}
               style={{ marginTop: 14 }}
@@ -652,9 +652,9 @@ const PendingTab = () => {
       {(!activeFilter || activeFilter === 'wellness_plans') && (
       <View>
       {/* Wellness Plans */}
-      <SectionHeader icon="self-improvement" title="Wellness Plan Requests" count={(data.wellnessPlans || []).length} />
+      <SectionHeader icon="self-improvement" title={t('admin.section_wellness_plans')} count={(data.wellnessPlans || []).length} />
       {(data.wellnessPlans || []).length === 0
-        ? <EmptyState icon="spa" message="No wellness plan requests pending" />
+        ? <EmptyState icon="spa" message={t('admin.empty_wellness_plans')} />
         : (data.wellnessPlans || []).map(wp => (
           <View key={wp.id} style={[ss.card, { borderLeftColor: D.success }]}>
             <View style={ss.cardRow}>
@@ -682,7 +682,7 @@ const PendingTab = () => {
               </View>
             ) : null}
             <ActionButton
-              label="Build & Assign Plan"
+              label={t('admin.build_assign_plan')}
               icon="build"
               color={D.success}
               style={{ marginTop: 14 }}
@@ -702,9 +702,9 @@ const PendingTab = () => {
       {(!activeFilter || activeFilter === 'deletion_requests') && (
       <View>
       {/* Deletion Requests */}
-      <SectionHeader icon="delete-forever" title="Account Deletion Requests" count={(data.deletionRequests || []).length} />
+      <SectionHeader icon="delete-forever" title={t('admin.section_deletion')} count={(data.deletionRequests || []).length} />
       {(data.deletionRequests || []).length === 0
-        ? <EmptyState icon="check-circle" message="No deletion requests pending" />
+        ? <EmptyState icon="check-circle" message={t('admin.empty_deletion')} />
         : (data.deletionRequests || []).map(del => (
           <View key={del.id} style={[ss.card, { borderLeftColor: D.danger }]}>
             <View style={ss.cardRow}>
@@ -723,7 +723,7 @@ const PendingTab = () => {
               <Text style={ss.metaValue}>{del.reason}</Text>
             </View>
             <ActionButton
-              label="Review Request"
+              label={t('admin.review_deletion')}
               icon="gavel"
               color={D.danger}
               style={{ marginTop: 14 }}
@@ -3040,19 +3040,19 @@ const AdminDashboardScreen = () => {
 
   const saveProfile = async () => {
     if (profilePassword && profilePassword !== profileConfirm) {
-      return Alert.alert('Mismatch', 'Passwords do not match.');
+      return Alert.alert(t('admin.alert_mismatch'), t('admin.password_mismatch'));
     }
     setProfileSaving(true);
     try {
       const body = { name: profileName.trim(), email: profileEmail.trim(), profilePic: profilePic.trim() };
       if (profilePassword) body.password = profilePassword;
       await api.patch('/api/admin/profile', body, H);
-      Alert.alert('Saved', 'Profile updated successfully.');
+      Alert.alert(t('admin.alert_saved'), t('admin.profile_saved'));
       setProfileModal(false);
       setProfilePassword('');
       setProfileConfirm('');
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Could not update profile.');
+      Alert.alert(t('admin.alert_error'), e.response?.data?.error || t('admin.profile_update_failed'));
     }
     setProfileSaving(false);
   };
@@ -3070,7 +3070,7 @@ const AdminDashboardScreen = () => {
         const res = await api.get('/api/admin/activity_feed', H);
         setFeed(res.data || []);
       } catch (e) {
-        setError(e.response?.data?.error || e.message || 'Failed to load feed');
+        setError(e.response?.data?.error || e.message || t('admin.feed_load_failed'));
       }
       setLoadingFeed(false);
     };

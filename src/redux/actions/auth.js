@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import api from '../../utils/apiClient';
 import { ToastAndroid, Platform } from 'react-native';
+import { mapAuthApiError } from '../../utils/authErrors';
 
 export const clearWelcome = () => ({ type: CLEAR_WELCOME });
 
@@ -19,7 +20,7 @@ export const register = ({
   phone_no,
   role,
   specialisation,
-}) => async dispatch => {
+}) => async (dispatch, getState) => {
   const config = {
     headers: {
       'Content-Type': 'application/json',
@@ -31,13 +32,15 @@ export const register = ({
     const res = await api.post('/api/user', body, config);
     dispatch({ type: REGISTER_SUCCESS, payload: res.data, meta: { from: 'signup' } });
   } catch (err) {
-    const message = err.response?.data?.errors?.[0]?.msg || err.message || 'Registration failed. Server may be unreachable.';
+    const lang = getState().auth.language || 'en';
+    const raw = err.response?.data?.errors?.[0]?.msg || err.message || 'Registration failed. Server may be unreachable.';
+    const message = mapAuthApiError(raw, lang);
     showToast(message);
     throw new Error(message);
   }
 };
 
-export const login = ({ email, password }) => async dispatch => {
+export const login = ({ email, password }) => async (dispatch, getState) => {
   const config = {
     headers: {
       'Content-Type': 'application/json',
@@ -50,7 +53,9 @@ export const login = ({ email, password }) => async dispatch => {
 
     //dispatch(fetchQuoteOfTheDay());
   } catch (err) {
-    const message = err.response?.data?.errors?.[0]?.msg || err.message || 'Login failed. Server may be unreachable.';
+    const lang = getState().auth.language || 'en';
+    const raw = err.response?.data?.errors?.[0]?.msg || err.message || 'Login failed. Server may be unreachable.';
+    const message = mapAuthApiError(raw, lang);
     showToast(message);
     throw new Error(message);
   }

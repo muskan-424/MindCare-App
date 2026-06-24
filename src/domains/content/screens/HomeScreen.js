@@ -157,7 +157,7 @@ const HomeScreen = props => {
         if (res.data?.contentCategories?.length) {
             const serverCats = res.data.contentCategories;
             const hasRec = serverCats.find(c => c.id === 'recommended');
-            setContentCategories(hasRec ? serverCats : [{ id: 'recommended', label: '⭐ Recommended' }, ...serverCats]);
+            setContentCategories(hasRec ? serverCats : [{ id: 'recommended', label: t('home.content_recommended') }, ...serverCats]);
         }
         const alertRes = await api.get('/api/issues/burnout-alert').catch(() => ({}));
         if (alertRes.data?.active) setBurnoutAlert(alertRes.data.alert);
@@ -203,7 +203,7 @@ const HomeScreen = props => {
         setContentFeed(result.data);
       } catch (err) {
         console.warn('Mindful Content API Error:', err.message);
-        setContentError('Unable to load mindful content from server.');
+        setContentError(t('home.content_load_error'));
         setContentFeed(fallbackContentByCategory[selectedCategory] || []);
       }
       setLoadingContent(false);
@@ -366,7 +366,7 @@ const HomeScreen = props => {
           <View style={styles.burnoutBanner}>
             <MaterialCommunityIcons name="alert" size={24} color={colors.white} />
             <View style={styles.burnoutTextCont}>
-              <Text style={styles.burnoutTitle}>Burnout Risk Detected</Text>
+              <Text style={styles.burnoutTitle}>{t('home.burnout_title')}</Text>
               <Text style={styles.burnoutText}>{burnoutAlert.description}</Text>
             </View>
           </View>
@@ -388,7 +388,7 @@ const HomeScreen = props => {
                 marginBottom: 10,
                 color: colors.secondary,
               }}>
-              I'M TINK
+              {t('home.tink_banner')}
             </Text>
             <TouchableOpacity
               onPress={() => {
@@ -415,8 +415,8 @@ const HomeScreen = props => {
 
         <TouchableOpacity onPress={() => props.navigation.navigate('WellnessPlan')} style={styles.wellnessPlanCard}>
           <View style={styles.wellnessPlanContent}>
-            <Text style={styles.wellnessPlanTitle}>My Wellness Plan</Text>
-            <Text style={styles.wellnessPlanSubtitle}>Get a custom 30-day routine curated by a professional.</Text>
+            <Text style={styles.wellnessPlanTitle}>{t('home.wellness_plan_title')}</Text>
+            <Text style={styles.wellnessPlanSubtitle}>{t('home.wellness_plan_sub')}</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={28} color={colors.white} />
         </TouchableOpacity>
@@ -427,8 +427,8 @@ const HomeScreen = props => {
           activeOpacity={0.9}
         >
           <View style={styles.wellnessPlanContent}>
-            <Text style={styles.wellnessPlanTitle}>Emotional Fingerprint</Text>
-            <Text style={styles.wellnessPlanSubtitle}>Explore your unique emotional trends and inner patterns.</Text>
+            <Text style={styles.wellnessPlanTitle}>{t('home.emotional_fingerprint_title')}</Text>
+            <Text style={styles.wellnessPlanSubtitle}>{t('home.emotional_fingerprint_sub')}</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={28} color={colors.white} />
         </TouchableOpacity>
@@ -439,7 +439,7 @@ const HomeScreen = props => {
               props.navigation.navigate('CreateMeme');
             }}>
             <View style={styles.createMemeContainer}>
-              <Text style={styles.createMemeText}>Create a Meme</Text>
+              <Text style={styles.createMemeText}>{t('home.create_meme')}</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -464,10 +464,10 @@ const HomeScreen = props => {
         </View>
 
         <View style={styles.quoteContainer}>
-          <Text style={[styles.quoteText, { color: isDarkMode ? '#EAEDF4' : '#111' }]}>Quote of the day</Text>
+          <Text style={[styles.quoteText, { color: isDarkMode ? '#EAEDF4' : '#111' }]}>{t('home.quote_of_day')}</Text>
           <View style={[styles.quote, { backgroundColor: isDarkMode ? '#D4A017' : '#face4b' }]}>
             <Text style={{ fontSize: 17, color: '#111' }}>
-              {props.quote?.quote?.trim() || 'Be yourself no matter what they say!'}
+              {props.quote?.quote?.trim() || t('home.default_quote')}
             </Text>
           </View>
         </View>
@@ -494,7 +494,7 @@ const HomeScreen = props => {
           ) : contentFeed.length === 0 ? (
             <View style={{ marginTop: 20 }}>
               <Text style={{ color: colors.gray1 }}>
-                {contentError || 'No content available right now.'}
+                {contentError || t('home.no_content')}
               </Text>
             </View>
           ) : (

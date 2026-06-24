@@ -2,12 +2,17 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48) / 2; // 2-column grid layout
 
 const BadgeCard = ({ label, icon, color, desc, earnedAt, locked }) => {
+  const { t, language } = useTranslation();
   const badgeColor = color || colors.primary;
+  const earnedDate = earnedAt
+    ? new Date(earnedAt).toLocaleDateString(language, { month: 'short', day: 'numeric' })
+    : '';
 
   return (
     <View style={[styles.card, locked && styles.lockedCard]}>
@@ -37,11 +42,11 @@ const BadgeCard = ({ label, icon, color, desc, earnedAt, locked }) => {
       {/* Status or Earned Date */}
       {locked ? (
         <View style={styles.lockedBadge}>
-          <Text style={styles.lockedBadgeText}>Locked</Text>
+          <Text style={styles.lockedBadgeText}>{t('badges.locked')}</Text>
         </View>
       ) : (
         <Text style={styles.earnedDate}>
-          Earned {earnedAt ? new Date(earnedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''}
+          {t('badges.earned_on', { date: earnedDate })}
         </Text>
       )}
     </View>
