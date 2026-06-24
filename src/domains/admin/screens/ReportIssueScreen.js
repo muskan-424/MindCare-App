@@ -13,11 +13,12 @@ import {
 import { connect } from 'react-redux';
 import api from '../../../utils/apiClient';
 import { colors, sizes } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
-const SEVERITY_LABELS = { 1: 'A bit', 2: 'Somewhat', 3: 'Moderate', 4: 'Quite a bit', 5: 'Very much' };
 const MOOD_TAGS = ['calm', 'anxious', 'sad', 'angry', 'tired', 'hopeful', 'overwhelmed', 'okay', ''];
 
 const ReportIssueScreen = ({ navigation, auth }) => {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [category, setCategory] = useState('');
   const [severity, setSeverity] = useState(3);
@@ -59,12 +60,22 @@ const ReportIssueScreen = ({ navigation, auth }) => {
         navigation.replace('Safety', { helplines: res.data.safety.helplines });
       }
     } catch (e) {
-      setError(e.response?.data?.error || e.message || 'Something went wrong.');
+      setError(e.response?.data?.error || e.message || t('common.error'));
     }
     setLoading(false);
   };
 
-  const label = (id) => (id || '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const categoryLabel = (id) => {
+    const key = `home.category_${id}`;
+    const translated = t(key);
+    return translated !== key ? translated : (id || '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
+  const moodLabel = (m) => {
+    const key = `home.mood_${m}`;
+    const translated = t(key);
+    return translated !== key ? translated : m;
+  };
 
   return (
     <KeyboardAvoidingView
@@ -73,17 +84,17 @@ const ReportIssueScreen = ({ navigation, auth }) => {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-        <Text style={styles.backText}>← Back</Text>
+        <Text style={styles.backText}>← {t('common.back')}</Text>
       </TouchableOpacity>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>How are you feeling?</Text>
-        <Text style={styles.subtitle}>Share what's on your mind. We'll suggest support and check in if needed.</Text>
+        <Text style={styles.title}>{t('safety.report_title')}</Text>
+        <Text style={styles.subtitle}>{t('safety.report_subtitle')}</Text>
 
         {loadingCat ? (
           <ActivityIndicator size="small" color={colors.primary} style={styles.loadingIndicator} />
         ) : (
           <>
-            <Text style={styles.label}>Category</Text>
+            <Text style={styles.label}>{t('safety.report_category')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
               {categories.map((c) => (
                 <TouchableOpacity
@@ -91,12 +102,12 @@ const ReportIssueScreen = ({ navigation, auth }) => {
                   style={[styles.chip, category === c && styles.chipActive]}
                   onPress={() => setCategory(c)}
                 >
-                  <Text style={[styles.chipText, category === c && styles.chipTextActive]}>{label(c)}</Text>
+                  <Text style={[styles.chipText, category === c && styles.chipTextActive]}>{categoryLabel(c)}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
 
-            <Text style={styles.label}>How much is it affecting you? (1–5)</Text>
+            <Text style={styles.label}>{t('safety.report_severity_label')}</Text>
             <View style={styles.severityRow}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <TouchableOpacity
@@ -108,12 +119,12 @@ const ReportIssueScreen = ({ navigation, auth }) => {
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={styles.sevLabel}>{SEVERITY_LABELS[severity]}</Text>
+            <Text style={styles.sevLabel}>{t(`home.severity_${severity}`)}</Text>
 
-            <Text style={styles.label}>Describe (optional)</Text>
+            <Text style={styles.label}>{t('safety.report_describe')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="What's going on?"
+              placeholder={t('safety.report_describe_placeholder')}
               placeholderTextColor={colors.gray}
               value={description}
               onChangeText={setDescription}
@@ -121,7 +132,7 @@ const ReportIssueScreen = ({ navigation, auth }) => {
               numberOfLines={3}
             />
 
-            <Text style={styles.label}>Mood right now (optional)</Text>
+            <Text style={styles.label}>{t('safety.report_mood_label')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
               {MOOD_TAGS.filter(Boolean).map((m) => (
                 <TouchableOpacity
@@ -129,7 +140,7 @@ const ReportIssueScreen = ({ navigation, auth }) => {
                   style={[styles.chip, moodTag === m && styles.chipActive]}
                   onPress={() => setMoodTag(moodTag === m ? '' : m)}
                 >
-                  <Text style={[styles.chipText, moodTag === m && styles.chipTextActive]}>{label(m)}</Text>
+                  <Text style={[styles.chipText, moodTag === m && styles.chipTextActive]}>{moodLabel(m)}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -139,21 +150,21 @@ const ReportIssueScreen = ({ navigation, auth }) => {
               {loading ? (
                 <ActivityIndicator color={colors.white} size="small" />
               ) : (
-                <Text style={styles.submitBtnText}>Submit</Text>
+                <Text style={styles.submitBtnText}>{t('common.submit')}</Text>
               )}
             </TouchableOpacity>
 
             {result ? (
               <View style={styles.resultCard}>
-                <Text style={styles.resultTitle}>Tink suggests</Text>
-                <Text style={styles.riskText}>Risk: {result.riskLevel}</Text>
+                <Text style={styles.resultTitle}>{t('safety.report_tink_suggests')}</Text>
+                <Text style={styles.riskText}>{t('safety.report_risk', { level: result.riskLevel })}</Text>
                 {result.recommendations && result.recommendations.length > 0 ? (
                   result.recommendations.map((rec, i) => (
                     <Text key={i} style={styles.recText}>• {rec}</Text>
                   ))
                 ) : null}
                 <TouchableOpacity style={styles.secondaryBtn} onPress={() => navigation.navigate('Chat', { name: 'Tink' })}>
-                  <Text style={styles.secondaryBtnText}>Talk to Tink</Text>
+                  <Text style={styles.secondaryBtnText}>{t('safety.report_talk_tink')}</Text>
                 </TouchableOpacity>
               </View>
             ) : null}

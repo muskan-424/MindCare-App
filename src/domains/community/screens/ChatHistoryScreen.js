@@ -13,10 +13,11 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors } from '../../../constants/theme';
 import useTranslation from '../../../utils/i18n';
+import { formatDate, getBcp47Locale } from '../../../utils/locale';
 import { getConversations, getConversation, deleteConversation } from '../../../utils/tinkChat';
 
 const ChatHistoryScreen = ({ navigation }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -72,14 +73,18 @@ const ChatHistoryScreen = ({ navigation }) => {
     );
   }, [t]);
 
-  const formatDate = (d) => {
+  const formatDateLocal = (d) => {
     try {
       const date = new Date(d);
       const today = new Date();
       const isToday = date.toDateString() === today.toDateString();
-      return isToday
-        ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        : date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+      if (isToday) {
+        return date.toLocaleTimeString(getBcp47Locale(language), {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      }
+      return formatDate(date, language, { day: 'numeric', month: 'short' });
     } catch (_) {
       return '';
     }
@@ -93,7 +98,7 @@ const ChatHistoryScreen = ({ navigation }) => {
       <View style={styles.cardBody}>
         <Text style={styles.cardTitle} numberOfLines={1}>{item.title || t('chat.history_untitled', 'Conversation')}</Text>
         {!!item.preview && <Text style={styles.cardPreview} numberOfLines={1}>{item.preview}</Text>}
-        <Text style={styles.cardMeta}>{formatDate(item.lastMessageAt)} · {item.messageCount} {t('chat.history_messages', 'messages')}</Text>
+        <Text style={styles.cardMeta}>{formatDateLocal(item.lastMessageAt)} · {item.messageCount} {t('chat.history_messages', 'messages')}</Text>
       </View>
       <TouchableOpacity onPress={() => confirmDelete(item.id)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={styles.deleteBtn}>
         <Icon name="trash-outline" size={18} color={colors.gray} />

@@ -11,9 +11,11 @@ import api from '../../../utils/apiClient';
 import AnimatedLoader from 'react-native-animated-loader';
 import FitnessCategoryCard from '../components/FitnessCategoryCard';
 import { useNavigation } from '@react-navigation/native';
+import useTranslation from '../../../utils/i18n';
 
 const FitnessScreen = () => {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,15 +59,15 @@ const FitnessScreen = () => {
             onPress={() => navigation.navigate('FitnessCoach')}
             activeOpacity={0.85}
           >
-            <Text style={styles.coachTitle}>Fitness Coach</Text>
+            <Text style={styles.coachTitle}>{t('wellness.fitness_coach_title')}</Text>
             <Text style={styles.coachSubtitle}>
-              Get a personalized schedule, custom routines, and exercises based on your goals and preferences.
+              {t('wellness.fitness_coach_subtitle')}
             </Text>
             <View style={styles.coachCta}>
-              <Text style={styles.coachCtaText}>Get my routine →</Text>
+              <Text style={styles.coachCtaText}>{t('wellness.fitness_coach_cta')}</Text>
             </View>
           </TouchableOpacity>
-          <Text style={styles.browseLabel}>Or browse by category</Text>
+          <Text style={styles.browseLabel}>{t('wellness.fitness_browse_label')}</Text>
           {categoryData.map((data) => (
             <View key={data} style={styles.categoryItem}>
               <FitnessCategoryCard

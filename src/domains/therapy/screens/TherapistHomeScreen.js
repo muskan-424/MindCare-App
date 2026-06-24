@@ -19,6 +19,7 @@ import api from '../../../utils/apiClient';
 import TrackedTouchable from '../../../components/TrackedTouchable';
 import localData from '../../../constants/doctors';
 import { colors } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import LottieView from 'lottie-react-native';
 import { LineChart } from 'react-native-chart-kit';
@@ -34,6 +35,7 @@ const FALLBACK_CATEGORIES = [
 ];
 
 const TherapistHomeScreen = (props) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [therapists, setTherapists] = useState(localData);
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
@@ -132,7 +134,16 @@ const TherapistHomeScreen = (props) => {
 
   if (isTherapist) {
     const hour = new Date().getHours();
-    const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    const greeting = hour < 12 ? t('home.greeting_morning') : hour < 18 ? t('home.greeting_afternoon') : t('home.greeting_evening');
+    const chartLabels = [
+      t('therapy.home_chart_mon'),
+      t('therapy.home_chart_tue'),
+      t('therapy.home_chart_wed'),
+      t('therapy.home_chart_thu'),
+      t('therapy.home_chart_fri'),
+      t('therapy.home_chart_sat'),
+      t('therapy.home_chart_sun'),
+    ];
 
     return (
       <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : colors.cream }]}>
@@ -140,11 +151,11 @@ const TherapistHomeScreen = (props) => {
         <View style={[styles.profHeader, { backgroundColor: isDarkMode ? '#1C2030' : colors.primary }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flex: 1 }}>
-                    <Text style={styles.heroGreeting}>{greeting}, Dr. {(props.auth.user?.name || '').split(' ')[0]}</Text>
+                    <Text style={styles.heroGreeting}>{t('therapy.home_greeting', { greeting, name: (props.auth.user?.name || '').split(' ')[0] })}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
                       <View style={[styles.livePulse, { backgroundColor: '#4ADE80' }]} />
                       <Text style={styles.heroSub}>
-                        {props.auth.user?.specialisation ? `${props.auth.user.specialisation} • ` : ''}Active Session
+                        {props.auth.user?.specialisation ? `${props.auth.user.specialisation} • ` : ''}{t('therapy.home_active_session')}
                       </Text>
                     </View>
                 </View>
@@ -164,17 +175,17 @@ const TherapistHomeScreen = (props) => {
                 <View style={styles.metricCard}>
                     <MaterialCommunityIcons name="calendar-clock" size={24} color={colors.white} />
                     <Text style={styles.metricValue}>{myPatients.filter(p => p.status === 'confirmed').length}</Text>
-                    <Text style={styles.metricLabel}>Confirmed Sessions</Text>
+                    <Text style={styles.metricLabel}>{t('therapy.home_confirmed_sessions')}</Text>
                 </View>
                 <View style={styles.metricCard}>
                     <MaterialCommunityIcons name="clipboard-text-outline" size={24} color={colors.white} />
                     <Text style={styles.metricValue}>{pendingNotesCount}</Text>
-                    <Text style={styles.metricLabel}>Pending Notes</Text>
+                    <Text style={styles.metricLabel}>{t('therapy.home_pending_notes')}</Text>
                 </View>
                 <View style={styles.metricCard}>
                     <MaterialCommunityIcons name="account-group-outline" size={24} color={colors.white} />
                     <Text style={styles.metricValue}>{myPatients.length}</Text>
-                    <Text style={styles.metricLabel}>Active Patients</Text>
+                    <Text style={styles.metricLabel}>{t('therapy.home_active_patients')}</Text>
                 </View>
             </View>
         </View>
@@ -182,38 +193,38 @@ const TherapistHomeScreen = (props) => {
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             {/* QUICK ACTIONS GRID */}
             <View style={styles.opsContainer}>
-                <Text style={styles.sectionTitle}>Operations Hub</Text>
+                <Text style={styles.sectionTitle}>{t('therapy.home_ops_hub')}</Text>
                 <View style={styles.opsGrid}>
                     <TouchableScale style={[styles.opCard, { backgroundColor: '#EBF5FF' }]} activeScale={0.96} onPress={() => props.navigation.navigate('TherapistProfile')}>
                         <View style={[styles.opIconWrap, { backgroundColor: '#1E88E5' }]}>
                             <MaterialCommunityIcons name="calendar-edit" size={22} color="#fff" />
                         </View>
-                        <Text style={styles.opTitle}>Availability</Text>
-                        <Text style={styles.opSub}>Manage slots</Text>
+                        <Text style={styles.opTitle}>{t('therapy.home_availability')}</Text>
+                        <Text style={styles.opSub}>{t('therapy.home_manage_slots')}</Text>
                     </TouchableScale>
                     
                     <TouchableScale style={[styles.opCard, { backgroundColor: '#F9F0FF' }]} activeScale={0.96} onPress={() => props.navigation.navigate('TherapistProfile')}>
                         <View style={[styles.opIconWrap, { backgroundColor: '#8E24AA' }]}>
                             <MaterialCommunityIcons name="account-details" size={22} color="#fff" />
                         </View>
-                        <Text style={styles.opTitle}>My Profile</Text>
-                        <Text style={styles.opSub}>Edit bio</Text>
+                        <Text style={styles.opTitle}>{t('therapy.home_my_profile')}</Text>
+                        <Text style={styles.opSub}>{t('therapy.home_edit_bio')}</Text>
                     </TouchableScale>
                     
                     <TouchableScale style={[styles.opCard, { backgroundColor: '#EDFFF1' }]} activeScale={0.96}>
                         <View style={[styles.opIconWrap, { backgroundColor: '#43A047' }]}>
                             <MaterialCommunityIcons name="cash-multiple" size={22} color="#fff" />
                         </View>
-                        <Text style={styles.opTitle}>Earnings</Text>
-                        <Text style={styles.opSub}>View payouts</Text>
+                        <Text style={styles.opTitle}>{t('therapy.home_earnings')}</Text>
+                        <Text style={styles.opSub}>{t('therapy.home_view_payouts')}</Text>
                     </TouchableScale>
                     
                     <TouchableScale style={[styles.opCard, { backgroundColor: '#FFF7ED' }]} activeScale={0.96}>
                         <View style={[styles.opIconWrap, { backgroundColor: '#FB8C00' }]}>
                             <MaterialCommunityIcons name="school" size={22} color="#fff" />
                         </View>
-                        <Text style={styles.opTitle}>Training</Text>
-                        <Text style={styles.opSub}>New courses</Text>
+                        <Text style={styles.opTitle}>{t('therapy.home_training')}</Text>
+                        <Text style={styles.opSub}>{t('therapy.home_new_courses')}</Text>
                     </TouchableScale>
                 </View>
             </View>
@@ -221,15 +232,15 @@ const TherapistHomeScreen = (props) => {
             {/* CLINICAL INSIGHTS CHART */}
             <View style={styles.chartContainer}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, paddingHorizontal: 20 }}>
-                    <Text style={[styles.sectionTitle, { marginHorizontal: 0, marginTop: 0 }]}>Practice Vitality</Text>
+                    <Text style={[styles.sectionTitle, { marginHorizontal: 0, marginTop: 0 }]}>{t('therapy.home_practice_vitality')}</Text>
                     <View style={styles.chartLegend}>
                         <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
-                        <Text style={styles.legendText}>Sessions</Text>
+                        <Text style={styles.legendText}>{t('therapy.home_sessions')}</Text>
                     </View>
                 </View>
                 <LineChart
                     data={{
-                        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+                        labels: chartLabels,
                         datasets: [{
                           data: (() => {
                             // Count confirmed sessions per weekday from live myPatients data
@@ -266,7 +277,7 @@ const TherapistHomeScreen = (props) => {
             {openRequests.length > 0 && (
                 <>
                     <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 20}}>
-                        <Text style={[styles.sectionTitle, {marginHorizontal: 0, marginTop: 10}]}>Available Consultations</Text>
+                        <Text style={[styles.sectionTitle, {marginHorizontal: 0, marginTop: 10}]}>{t('therapy.home_available_consultations')}</Text>
                     </View>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 10 }}>
                         {openRequests.map(req => (
@@ -274,19 +285,19 @@ const TherapistHomeScreen = (props) => {
                                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                     <View>
                                         <Text style={styles.openReqName}>{req.user?.name}</Text>
-                                        <Text style={styles.openReqSpec}>{req.requestedSpeciality || 'General Session'}</Text>
+                                        <Text style={styles.openReqSpec}>{req.requestedSpeciality || t('therapy.home_general_session')}</Text>
                                     </View>
                                     <View style={styles.openReqBadge}>
-                                        <Text style={styles.openReqBadgeText}>OPEN</Text>
+                                        <Text style={styles.openReqBadgeText}>{t('therapy.home_open')}</Text>
                                     </View>
                                 </View>
                                 <View style={styles.openReqDetails}>
-                                    <Text style={styles.openReqDate}>{req.preferredDates?.[0] || 'Any Date'}</Text>
-                                    <Text style={styles.openReqTime}>{req.preferredTime || 'Any Time'}</Text>
+                                    <Text style={styles.openReqDate}>{req.preferredDates?.[0] || t('therapy.home_any_date')}</Text>
+                                    <Text style={styles.openReqTime}>{req.preferredTime || t('therapy.home_any_time')}</Text>
                                 </View>
                                 <TouchableOpacity style={styles.claimBtn} onPress={() => claimRequest(req._id)}>
                                     <MaterialCommunityIcons name="hand-back-right" size={16} color="#fff" />
-                                    <Text style={styles.claimBtnText}>Claim Session</Text>
+                                    <Text style={styles.claimBtnText}>{t('therapy.home_claim_session')}</Text>
                                 </TouchableOpacity>
                             </View>
                         ))}
@@ -295,8 +306,8 @@ const TherapistHomeScreen = (props) => {
             )}
 
             <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginHorizontal: 20}}>
-                <Text style={[styles.sectionTitle, {marginHorizontal: 0, marginTop: 10}]}>Active Schedule</Text>
-                <TouchableOpacity><Text style={{color: colors.primary, fontSize: 13, fontWeight: 'bold', marginTop: 10}}>View All</Text></TouchableOpacity>
+                <Text style={[styles.sectionTitle, {marginHorizontal: 0, marginTop: 10}]}>{t('therapy.home_active_schedule')}</Text>
+                <TouchableOpacity><Text style={{color: colors.primary, fontSize: 13, fontWeight: 'bold', marginTop: 10}}>{t('therapy.home_view_all')}</Text></TouchableOpacity>
             </View>
 
             {loading ? (
@@ -311,9 +322,9 @@ const TherapistHomeScreen = (props) => {
                         loop 
                         style={{ width: 180, height: 180 }}
                     />
-                    <Text style={styles.emptyCardTitle}>Your schedule is clear!</Text>
+                    <Text style={styles.emptyCardTitle}>{t('therapy.home_schedule_clear')}</Text>
                     <Text style={styles.emptyCardText}>
-                        Enjoy the downtime, doctor. When new consultations are assigned to you, they will appear here.
+                        {t('therapy.home_schedule_clear_text')}
                     </Text>
                 </View>
                 </>
@@ -326,7 +337,7 @@ const TherapistHomeScreen = (props) => {
                             </View>
                             <View style={{ marginLeft: 15, flex: 1 }}>
                                 <Text style={styles.patientName}>{apt.user?.name}</Text>
-                                <Text style={styles.patientSub}>{apt.requestedSpeciality || 'General Session'}</Text>
+                                <Text style={styles.patientSub}>{apt.requestedSpeciality || t('therapy.home_general_session')}</Text>
                             </View>
                             <View style={styles.statusBadge}>
                                 <Text style={styles.statusText}>{apt.status}</Text>
@@ -342,7 +353,7 @@ const TherapistHomeScreen = (props) => {
                                 })}
                             >
                                 <MaterialCommunityIcons name="history" size={18} color={colors.primary} />
-                                <Text style={styles.actionBtnText}>Clinical History</Text>
+                                <Text style={styles.actionBtnText}>{t('therapy.home_clinical_history')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity 
                                 style={[styles.actionBtn, styles.primaryBtn]}
@@ -352,7 +363,7 @@ const TherapistHomeScreen = (props) => {
                                 })}
                             >
                                 <MaterialCommunityIcons name="plus" size={18} color="#fff" />
-                                <Text style={[styles.actionBtnText, { color: '#fff' }]}>Add Note</Text>
+                                <Text style={[styles.actionBtnText, { color: '#fff' }]}>{t('therapy.home_add_note')}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -368,8 +379,8 @@ const TherapistHomeScreen = (props) => {
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#1C2030' : colors.primary }]}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View>
-                <Text style={styles.headerTitle}>Consultation</Text>
-                <Text style={styles.headerSubtitle}>Talk to a professional</Text>
+                <Text style={styles.headerTitle}>{t('therapy.home_consultation')}</Text>
+                <Text style={styles.headerSubtitle}>{t('therapy.home_talk_professional')}</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={{ marginRight: 12 }}>
@@ -383,7 +394,7 @@ const TherapistHomeScreen = (props) => {
         <View style={styles.searchWrap}>
           <Searchbar
             style={styles.search}
-            placeholder="Search by name or specialty..."
+            placeholder={t('therapy.home_search_placeholder')}
             onChangeText={setQuery}
             value={query}
             placeholderTextColor={colors.gray}
@@ -392,7 +403,7 @@ const TherapistHomeScreen = (props) => {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionTitle}>Browse by type</Text>
+        <Text style={styles.sectionTitle}>{t('therapy.home_browse_type')}</Text>
         <FlatList
           data={categories}
           renderItem={renderCategory}
@@ -402,7 +413,7 @@ const TherapistHomeScreen = (props) => {
           contentContainerStyle={styles.catList}
         />
 
-        <Text style={styles.sectionTitle}>Top professionals</Text>
+        <Text style={styles.sectionTitle}>{t('therapy.home_top_professionals')}</Text>
         <View style={styles.cardList}>
           {therapists.map((doc) => (
             <View key={doc.id} style={styles.cardWrap}>

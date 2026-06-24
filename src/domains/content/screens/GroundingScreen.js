@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { colors, sizes } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
 const STEPS = [
-  { n: 5, sense: 'things you can see', example: 'a window, your phone, a plant' },
-  { n: 4, sense: 'things you can touch', example: 'the floor, your clothes, a cushion' },
-  { n: 3, sense: 'things you can hear', example: 'traffic, birds, your breath' },
-  { n: 2, sense: 'things you can smell', example: 'soap, air, food' },
-  { n: 1, sense: 'one thing you can taste', example: 'your lips, gum, or a sip of water' },
+  { n: 5, senseKey: 'grounding.step_see', exampleKey: 'grounding.example_see' },
+  { n: 4, senseKey: 'grounding.step_touch', exampleKey: 'grounding.example_touch' },
+  { n: 3, senseKey: 'grounding.step_hear', exampleKey: 'grounding.example_hear' },
+  { n: 2, senseKey: 'grounding.step_smell', exampleKey: 'grounding.example_smell' },
+  { n: 1, senseKey: 'grounding.step_taste', exampleKey: 'grounding.example_taste' },
 ];
 
 const GroundingScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [stepIndex, setStepIndex] = useState(0);
   const step = STEPS[stepIndex];
   const done = stepIndex >= STEPS.length;
@@ -18,26 +20,26 @@ const GroundingScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-        <Text style={styles.backText}>← Back</Text>
+        <Text style={styles.backText}>← {t('common.back')}</Text>
       </TouchableOpacity>
-      <Text style={styles.title}>5-4-3-2-1 Grounding</Text>
-      <Text style={styles.subtitle}>Brings you back to the present when you feel overwhelmed.</Text>
+      <Text style={styles.title}>{t('grounding.title')}</Text>
+      <Text style={styles.subtitle}>{t('grounding.subtitle')}</Text>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {done ? (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>You’re here.</Text>
-            <Text style={styles.cardText}>Take a breath. You can repeat this anytime.</Text>
+            <Text style={styles.cardTitle}>{t('grounding.done_title')}</Text>
+            <Text style={styles.cardText}>{t('grounding.done_text')}</Text>
             <TouchableOpacity style={styles.againBtn} onPress={() => setStepIndex(0)}>
-              <Text style={styles.againBtnText}>Start again</Text>
+              <Text style={styles.againBtnText}>{t('grounding.start_again')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.card}>
             <Text style={styles.bigNum}>{step.n}</Text>
-            <Text style={styles.senseLabel}>{step.sense}</Text>
-            <Text style={styles.example}>{step.example}</Text>
+            <Text style={styles.senseLabel}>{t(step.senseKey)}</Text>
+            <Text style={styles.example}>{t(step.exampleKey)}</Text>
             <TouchableOpacity style={styles.nextBtn} onPress={() => setStepIndex((i) => i + 1)}>
-              <Text style={styles.nextBtnText}>Next</Text>
+              <Text style={styles.nextBtnText}>{t('grounding.next')}</Text>
             </TouchableOpacity>
           </View>
         )}

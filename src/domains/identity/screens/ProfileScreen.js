@@ -19,7 +19,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import {colors, sizes, fonts} from '../../../constants/theme';
-import {concerns} from '../../../constants/concerns';
+import {concerns, getConcernLabel} from '../../../constants/concerns';
 import pastData from '../../../constants/pastData';
 import futureData from '../../../constants/futureData';
 import Appointments from '../../therapy/components/Appointments';
@@ -27,25 +27,7 @@ import {connect} from 'react-redux';
 import { getAvatarForGender } from '../../../utils/avatar';
 import { logout, setLanguage } from '../../../redux/actions/auth';
 import useTranslation from '../../../utils/i18n';
-
-const LANGUAGES = [
-  { code: 'en', label: 'English',    native: 'English',    flag: '🇬🇧' },
-  { code: 'hi', label: 'Hindi',      native: 'हिन्दी',       flag: '🇮🇳' },
-  { code: 'pa', label: 'Punjabi',    native: 'ਪੰਜਾਬੀ',      flag: '🇮🇳' },
-  { code: 'mr', label: 'Marathi',   native: 'मराठी',       flag: '🇮🇳' },
-  { code: 'bn', label: 'Bengali',   native: 'বাংলা',        flag: '🇮🇳' },
-  { code: 'te', label: 'Telugu',    native: 'తెలుగు',       flag: '🇮🇳' },
-  { code: 'ta', label: 'Tamil',     native: 'தமிழ்',        flag: '🇮🇳' },
-  { code: 'gu', label: 'Gujarati',  native: 'ગુજરાતી',     flag: '🇮🇳' },
-  { code: 'kn', label: 'Kannada',   native: 'ಕನ್ನಡ',        flag: '🇮🇳' },
-  { code: 'ml', label: 'Malayalam', native: 'മലയാളം',      flag: '🇮🇳' },
-  { code: 'es', label: 'Spanish',   native: 'Español',     flag: '🇪🇸' },
-  { code: 'fr', label: 'French',    native: 'Français',    flag: '🇫🇷' },
-  { code: 'de', label: 'German',    native: 'Deutsch',     flag: '🇩🇪' },
-  { code: 'pt', label: 'Portuguese',native: 'Português',   flag: '🇵🇹' },
-  { code: 'ar', label: 'Arabic',    native: 'العربية',     flag: '🇸🇦' },
-  { code: 'zh', label: 'Chinese',   native: '中文',         flag: '🇨🇳' },
-];
+import LANGUAGES, { getLanguageByCode } from '../../../constants/languages';
 
 const ProfileScreen = props => {
   const { t } = useTranslation();
@@ -60,45 +42,49 @@ const ProfileScreen = props => {
   const [langModalVisible, setLangModalVisible] = useState(false);
 
   const handleJoinInstitution = async () => {
-    if (!accessCode.trim()) return Alert.alert('Required', 'Please enter an access code.');
+    if (!accessCode.trim()) {
+      return Alert.alert(t('profile.required_title'), t('profile.access_code_required'));
+    }
     setInstLoading(true);
     try {
       const res = await api.post('/api/institutions/join', { accessCode: accessCode.trim() });
-      Alert.alert('Success', `You have joined ${res.data.institutionName}!`);
+      Alert.alert(
+        t('profile.success_title'),
+        t('profile.join_success', { name: res.data.institutionName || '' }),
+      );
       setInstModalVisible(false);
-      // Ideally refresh profile here
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.error || 'Failed to join institution.');
+      Alert.alert(t('common.error'), err.response?.data?.error || t('profile.join_failed'));
     }
     setInstLoading(false);
   };
 
   const requestDeletion = async () => {
     if (!deleteReason.trim()) {
-      return Alert.alert('Required', 'Please let us know why you are leaving.');
+      return Alert.alert(t('profile.required_title'), t('profile.delete_reason_required'));
     }
     setDeleteLoading(true);
     try {
       await api.post('/api/profile/delete-request', {
         uid: props.auth.user._id,
-        reason: deleteReason.trim()
+        reason: deleteReason.trim(),
       });
-      Alert.alert('Request Submitted', 'Your account deletion request is now pending admin review for data purge.');
+      Alert.alert(t('profile.request_submitted_title'), t('profile.delete_submitted'));
       setDeleteModalVisible(false);
     } catch (err) {
-      Alert.alert('Error', 'Failed to submit request.');
+      Alert.alert(t('common.error'), t('profile.delete_failed'));
     }
     setDeleteLoading(false);
   };
 
   const handleLogout = () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to log out?',
+      t('profile.logout'),
+      t('profile.logout_confirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', onPress: () => props.logout(), style: 'destructive' }
-      ]
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('profile.logout'), onPress: () => props.logout(), style: 'destructive' },
+      ],
     );
   };
 
@@ -112,7 +98,7 @@ const ProfileScreen = props => {
             color={colors.white}
             onPress={() => props.navigation.navigate('Home')}
           />
-          <Text style={styles.profileText}>Profile</Text>
+          <Text style={styles.profileText}>{t('profile.title')}</Text>
           <FontAwesome5
             name="edit"
             size={24}
@@ -145,7 +131,7 @@ const ProfileScreen = props => {
             color={colors.tertiary}
           />
           <Text style={styles.otherInfo}>
-            {props.auth.profile.age} yrs. old
+            {props.auth.profile.age} {t('profile.years_old')}
           </Text>
         </View>
         <View style={styles.infoBox}>
@@ -167,8 +153,8 @@ const ProfileScreen = props => {
         activeOpacity={0.8}>
         <MaterialCommunityIcons name="chart-line" size={24} color={colors.primary} />
         <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.historyText}>Mood & check-in history</Text>
-          <Text style={styles.historySubtext}>View your entries for burnout insights</Text>
+          <Text style={styles.historyText}>{t('profile.mood_history')}</Text>
+          <Text style={styles.historySubtext}>{t('profile.mood_subtitle')}</Text>
         </View>
       </TouchableOpacity>
       <TouchableOpacity
@@ -250,7 +236,7 @@ const ProfileScreen = props => {
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={{ fontSize: 12, color: colors.gray, marginRight: 4 }}>
-            {LANGUAGES.find(l => l.code === (props.auth.language || 'en'))?.native || 'English'}
+            {getLanguageByCode(props.auth.language || 'en').native}
           </Text>
           <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
         </View>
@@ -287,7 +273,7 @@ const ProfileScreen = props => {
       )}
 
       <View style={styles.concernContainer}>
-        <Text style={styles.concernTitle}>My Concerns:</Text>
+        <Text style={styles.concernTitle}>{t('profile.my_concerns_title')}</Text>
         <View style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap'}}>
           {concerns
             .filter(chip => (props.auth.profile.concerns || []).includes(chip.id))
@@ -297,13 +283,13 @@ const ProfileScreen = props => {
                   key={chip.id}
                   icon="check-circle-outline"
                   style={styles.chip}>
-                  {chip.name}
+                  {getConcernLabel(chip, t)}
                 </Chip>
               );
             })}
           {(!props.auth.profile.concerns || props.auth.profile.concerns.length === 0) && (
             <Text style={{ textAlign: 'center', width: '100%', color: colors.gray, marginTop: 10 }}>
-              No concerns added yet.
+              {t('profile.no_concerns')}
             </Text>
           )}
         </View>
@@ -314,13 +300,13 @@ const ProfileScreen = props => {
         <TouchableOpacity
           style={[styles.deleteBtn, { borderColor: colors.primary, marginBottom: 15 }]}
           onPress={handleLogout}>
-          <Text style={[styles.deleteBtnText, { color: colors.primary }]}>Logout</Text>
+          <Text style={[styles.deleteBtnText, { color: colors.primary }]}>{t('profile.logout')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.deleteBtn}
           onPress={() => setDeleteModalVisible(true)}>
-          <Text style={styles.deleteBtnText}>Delete Account</Text>
+          <Text style={styles.deleteBtnText}>{t('profile.delete_account')}</Text>
         </TouchableOpacity>
 
       </View>
@@ -374,13 +360,11 @@ const ProfileScreen = props => {
       <Modal visible={deleteModalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Request Account Deletion</Text>
-            <Text style={styles.modalText}>
-              Your request will be reviewed. Once approved, all your personal data including risk reports, mood entries, and wellness plans will be permanently purged from our servers.
-            </Text>
+            <Text style={styles.modalTitle}>{t('profile.delete_account_title')}</Text>
+            <Text style={styles.modalText}>{t('profile.delete_account_desc')}</Text>
             <TextInput
               style={styles.modalInput}
-              placeholder="Why are you leaving? (Required)"
+              placeholder={t('profile.delete_reason_placeholder')}
               placeholderTextColor={colors.gray}
               value={deleteReason}
               onChangeText={setDeleteReason}
@@ -391,7 +375,7 @@ const ProfileScreen = props => {
                 style={[styles.modalBtn, { backgroundColor: colors.gray3 }]}
                 onPress={() => setDeleteModalVisible(false)}
                 disabled={deleteLoading}>
-                <Text style={styles.modalBtnText}>Cancel</Text>
+                <Text style={styles.modalBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalBtn, { backgroundColor: '#E57373' }]}
@@ -400,7 +384,7 @@ const ProfileScreen = props => {
                 {deleteLoading ? (
                   <ActivityIndicator color={colors.white} />
                 ) : (
-                  <Text style={styles.modalBtnText}>Submit</Text>
+                  <Text style={styles.modalBtnText}>{t('common.submit')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -412,13 +396,11 @@ const ProfileScreen = props => {
       <Modal visible={instModalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Join Organization</Text>
-            <Text style={styles.modalText}>
-              Enter the access code provided by your school or workplace to join their private wellness community.
-            </Text>
+            <Text style={styles.modalTitle}>{t('profile.join_org_title')}</Text>
+            <Text style={styles.modalText}>{t('profile.join_org_desc')}</Text>
             <TextInput
               style={styles.modalInput}
-              placeholder="e.g. COLLEGE2026"
+              placeholder={t('profile.access_code_placeholder')}
               placeholderTextColor={colors.gray}
               value={accessCode}
               onChangeText={setAccessCode}
@@ -429,7 +411,7 @@ const ProfileScreen = props => {
                 style={[styles.modalBtn, { backgroundColor: colors.gray3 }]}
                 onPress={() => setInstModalVisible(false)}
                 disabled={instLoading}>
-                <Text style={styles.modalBtnText}>Cancel</Text>
+                <Text style={styles.modalBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalBtn, { backgroundColor: colors.primary }]}
@@ -438,7 +420,7 @@ const ProfileScreen = props => {
                 {instLoading ? (
                   <ActivityIndicator color={colors.white} />
                 ) : (
-                  <Text style={styles.modalBtnText}>Join</Text>
+                  <Text style={styles.modalBtnText}>{t('profile.join_button')}</Text>
                 )}
               </TouchableOpacity>
             </View>

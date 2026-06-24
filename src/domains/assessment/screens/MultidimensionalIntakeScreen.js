@@ -13,10 +13,12 @@ import { Camera, useCameraDevice, useCameraPermission } from 'react-native-visio
 import FaceDetection from '@react-native-ml-kit/face-detection';
 import useSpeechToText from '../hooks/useSpeechToText';
 import { extractVoiceFeatures } from '../../../utils/audioHelpers';
+import useTranslation from '../../../utils/i18n';
 
 const MOOD_TAGS = ['calm', 'anxious', 'sad', 'angry', 'tired', 'hopeful', 'overwhelmed', 'okay'];
 
 const MultidimensionalIntakeScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [sessionId, setSessionId] = useState(null);
   
@@ -99,7 +101,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
       } catch (e) {
         if ((e.response?.status === 502 || e.response?.status === 503 || !e.response) && attempts < maxRetries) {
           attempts++;
-          setError(`Waking up secure servers... Please wait (${attempts}/${maxRetries})`);
+          setError(t('assessment.intake_waking_servers', { attempt: attempts, max: maxRetries }));
           await delay(3000 * attempts);
           continue;
         }
@@ -136,7 +138,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
         });
       }
     } else if (sttHookError) {
-      setError('Speech-to-Text failed: ' + sttHookError);
+      setError(t('assessment.intake_stt_failed', { error: sttHookError }));
     }
     sttReset();
     setActiveSTTIndex(null);
@@ -155,8 +157,8 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
 
   const submitText = async () => {
     const hasAnyAnswer = answers.some(a => a.trim().length > 0);
-    if (!hasAnyAnswer) return setError('Please answer at least one of the prompts to continue.');
-    if (!moodTag) return setError('Please select a mood tag from the options.');
+    if (!hasAnyAnswer) return setError(t('assessment.intake_error_answer'));
+    if (!moodTag) return setError(t('assessment.intake_error_mood'));
 
     try {
       setError('');
@@ -172,7 +174,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
       });
       setStep(2); 
     } catch (e) {
-      setError('Failed to process text response.');
+      setError(t('assessment.intake_error_text'));
     }
   };
 
@@ -184,16 +186,16 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
           const granted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
             {
-              title: 'Microphone Permission',
-              message: 'App needs access to your microphone to analyze your voice.',
-              buttonNeutral: 'Ask Me Later',
-              buttonNegative: 'Cancel',
-              buttonPositive: 'OK',
+              title: t('assessment.intake_mic_permission_title'),
+              message: t('assessment.intake_mic_permission_message'),
+              buttonNeutral: t('assessment.intake_ask_later'),
+              buttonNegative: t('common.cancel'),
+              buttonPositive: t('common.ok'),
             },
           );
           if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-            setError('Microphone permission denied. Cannot proceed.');
-            Alert.alert('Permission Denied', 'Microphone permission is required for vocal analysis.');
+            setError(t('assessment.intake_mic_denied'));
+            Alert.alert(t('assessment.intake_permission_denied'), t('assessment.intake_mic_required'));
             return;
           }
         }
@@ -222,8 +224,8 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
       });
     } catch (e) {
       setIsRecording(false);
-      setError('Failed to start recording: ' + e.message);
-      Alert.alert('Microphone Error', 'Failed to start recording: ' + e.message);
+      setError(t('assessment.intake_record_failed', { error: e.message }));
+      Alert.alert(t('assessment.intake_mic_error'), t('assessment.intake_record_failed', { error: e.message }));
     }
   };
 
@@ -249,8 +251,8 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
       setStep(3); 
     } catch (e) {
       setIsRecording(false);
-      setError('Voice analysis failed: ' + e.message);
-      Alert.alert('Microphone Error', 'Failed to stop recording / analyze: ' + e.message);
+      setError(t('assessment.intake_stop_failed', { error: e.message }));
+      Alert.alert(t('assessment.intake_mic_error'), t('assessment.intake_stop_failed', { error: e.message }));
     }
   };
 
@@ -331,7 +333,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
         
       } catch (e) {
         setIsScanning(false);
-        setError('Lens capture failed: ' + (e.message || 'Unknown error'));
+        setError(t('assessment.intake_lens_failed', { error: e.message || 'Unknown error' }));
       }
     } else {
       setIsScanning(true);
@@ -347,7 +349,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
         setAutoSubmitTimeout(timer);
       } catch (err) {
         setIsScanning(false);
-        setError('Lens capture failed: ' + (err.message || 'Unknown error'));
+        setError(t('assessment.intake_lens_failed', { error: err.message || 'Unknown error' }));
       }
     }
   };
@@ -376,7 +378,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
       runFusion();
     } catch (e) {
       setIsScanning(false);
-      setError('Vision analysis failed to upload.');
+      setError(t('assessment.intake_vision_failed'));
     }
   };
 
@@ -389,7 +391,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
       const todayStr = new Date().toISOString().slice(0, 10);
       await AsyncStorage.setItem('MindCare_dismissedCheckInDate', todayStr);
     } catch (e) {
-      setError('Advanced fusion engine failed to process inputs.');
+      setError(t('assessment.intake_fusion_failed'));
     }
     setIsFusing(false);
   };
@@ -419,23 +421,22 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
           <View style={[styles.progressFill, { width: `${(step / 4) * 100}%` }]} />
         </View>}
 
-        <Text style={styles.headerTitle}>Advanced Health Sync</Text>
+        <Text style={styles.headerTitle}>{t('assessment.intake_header')}</Text>
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         {step === 0 && (
           <View style={styles.card}>
             <MaterialCommunityIcons name="shield-check" size={60} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 16 }} />
-            <Text style={styles.cardTitle}>Daily Multidimensional Check-in</Text>
+            <Text style={styles.cardTitle}>{t('assessment.intake_daily_title')}</Text>
             <Text style={styles.cardText}>
-              To provide the most accurate support and recommendations, MindCare uses a fusion of three AI models.
-              We will conduct a quick analysis of your text, voice intonation, and facial micro-expressions.
+              {t('assessment.intake_intro_1')}
             </Text>
             <Text style={styles.cardText}>
-              All data is processed securely and is never stored as raw media files on our servers.
+              {t('assessment.intake_intro_2')}
             </Text>
             <TouchableOpacity style={styles.actionBtn} onPress={startSession} disabled={isInitializing}>
-              <Text style={styles.actionBtnText}>{isInitializing ? "Connecting to Server..." : "I Agree, Start Scan"}</Text>
+              <Text style={styles.actionBtnText}>{isInitializing ? t('assessment.intake_connecting') : t('assessment.intake_start_scan')}</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={{marginTop:16, alignItems:'center'}} 
@@ -444,32 +445,32 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
                 await AsyncStorage.setItem('MindCare_dismissedCheckInDate', todayStr);
                 navigation.navigate('Home');
               }}>
-              <Text style={{color: colors.gray}}>Skip for now</Text>
+              <Text style={{color: colors.gray}}>{t('assessment.intake_skip')}</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {step === 1 && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>1. Written Assessment</Text>
-            <Text style={styles.cardLabel}>How are you feeling right now?</Text>
+            <Text style={styles.cardTitle}>{t('assessment.intake_step1_title')}</Text>
+            <Text style={styles.cardLabel}>{t('assessment.intake_feeling_label')}</Text>
             <View style={styles.tagRow}>
               {MOOD_TAGS.map(m => (
                 <TouchableOpacity key={m} style={[styles.tagBtn, moodTag === m && styles.tagBtnActive]} onPress={() => setMoodTag(m)}>
-                  <Text style={[styles.tagText, moodTag === m && styles.tagTextActive]}>{m}</Text>
+                  <Text style={[styles.tagText, moodTag === m && styles.tagTextActive]}>{t(`home.mood_${m}`)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
             
-            <Text style={[styles.cardTitle, {marginTop: 20, fontSize: 18}]}>Daily Reflexion</Text>
+            <Text style={[styles.cardTitle, {marginTop: 20, fontSize: 18}]}>{t('assessment.intake_reflection_title')}</Text>
             {prompts.map((promptText, index) => (
               <View key={index} style={{marginTop: 10, marginBottom: 10}}>
-                <Text style={styles.cardLabel}>Question {index + 1}: {promptText}</Text>
+                <Text style={styles.cardLabel}>{t('assessment.intake_question', { num: index + 1, prompt: promptText })}</Text>
                 <TextInput
                   style={styles.input}
                   multiline
                   numberOfLines={3}
-                  placeholder="Type your answer here..."
+                  placeholder={t('assessment.intake_answer_placeholder')}
                   value={answers[index]}
                   onChangeText={(val) => updateAnswer(val, index)}
                   placeholderTextColor={colors.gray}
@@ -491,13 +492,13 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
                   onPress={() => openSTT(index)}
                 >
                   <MaterialCommunityIcons name="microphone" size={16} color={colors.primary} style={{ marginRight: 4 }} />
-                  <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '700' }}>Speech to Text</Text>
+                  <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '700' }}>{t('assessment.intake_stt')}</Text>
                 </TouchableOpacity>
               </View>
             ))}
 
             <TouchableOpacity style={[styles.actionBtn, {marginTop: 20}]} onPress={submitText}>
-              <Text style={styles.actionBtnText}>Submit & Continue →</Text>
+              <Text style={styles.actionBtnText}>{t('assessment.intake_submit_continue')}</Text>
             </TouchableOpacity>
 
             {/* Speech to Text Modal */}
@@ -509,7 +510,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
             >
               <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
                 <View style={{ backgroundColor: colors.white, borderRadius: 20, padding: 28, width: '100%', maxWidth: 360, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.secondary, marginBottom: 16 }}>Speech to Text</Text>
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: colors.secondary, marginBottom: 16 }}>{t('assessment.intake_stt')}</Text>
 
                   {/* STATE 1: Recording — mic is active */}
                   {sttListening && (
@@ -524,16 +525,16 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
                         <MaterialCommunityIcons name="microphone" size={36} color="white" />
                       </View>
                       <Text style={{ fontSize: 15, fontWeight: '700', color: colors.secondary, marginBottom: 4 }}>
-                        Listening...
+                        {t('assessment.intake_listening')}
                       </Text>
                       <Text style={{ fontSize: 13, color: colors.gray, marginBottom: 20, textAlign: 'center' }}>
-                        Speak your answer clearly, then tap Stop.
+                        {t('assessment.intake_speak_clearly')}
                       </Text>
                       <TouchableOpacity
                         style={{ backgroundColor: '#E57373', paddingVertical: 12, paddingHorizontal: 32, borderRadius: 24 }}
                         onPress={stopSTT}
                       >
-                        <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>⏹  Stop & Transcribe</Text>
+                        <Text style={{ color: 'white', fontWeight: '700', fontSize: 15 }}>{t('assessment.intake_stop_transcribe')}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={{ marginTop: 14, paddingVertical: 8, paddingHorizontal: 20 }}
@@ -545,7 +546,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
                           activeSTTIndexRef.current = null;
                         }}
                       >
-                        <Text style={{ fontSize: 13, color: colors.gray }}>Cancel</Text>
+                        <Text style={{ fontSize: 13, color: colors.gray }}>{t('common.cancel')}</Text>
                       </TouchableOpacity>
                     </View>
                   )}
@@ -555,7 +556,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
                     <View style={{ alignItems: 'center', paddingVertical: 20 }}>
                       <ActivityIndicator size="large" color={colors.primary} />
                       <Text style={{ fontSize: 14, color: colors.gray, marginTop: 14, textAlign: 'center' }}>
-                        Transcribing your speech...{'\n'}This may take a few seconds.
+                        {t('assessment.intake_transcribing')}
                       </Text>
                     </View>
                   )}
@@ -567,12 +568,12 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
 
         {step === 2 && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>2. Vocal Analysis</Text>
+            <Text style={styles.cardTitle}>{t('assessment.intake_step2_title')}</Text>
             <Text style={styles.cardText}>
-              Please read the following sentence out loud. We will analyze your speech speed and intonation.
+              {t('assessment.intake_vocal_instruction')}
             </Text>
             <View style={styles.promptBox}>
-              <Text style={styles.promptText}>"Today is a new day. I am taking a moment to focus on myself and my well-being."</Text>
+              <Text style={styles.promptText}>{t('assessment.intake_read_sentence')}</Text>
             </View>
             <TouchableOpacity 
               style={[styles.recordBtn, isRecording && styles.recordingActive]} 
@@ -580,13 +581,13 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
             >
               <MaterialCommunityIcons name={isRecording ? "stop" : "microphone"} size={32} color={colors.white} />
               <Text style={styles.recordBtnText}>
-                {isRecording ? `Recording (${recordSecs}s)... Tap to Stop` : "Tap to Start Recording"}
+                {isRecording ? t('assessment.intake_recording', { secs: recordSecs }) : t('assessment.intake_start_recording')}
               </Text>
             </TouchableOpacity>
             {isRecording && (
               <View style={{ marginTop: 16 }}>
                 <Text style={{ fontSize: 13, color: colors.gray, marginBottom: 6, textAlign: 'center' }}>
-                  Microphone Activity
+                  {t('assessment.intake_mic_activity')}
                 </Text>
                 <View style={{ height: 8, backgroundColor: colors.gray3, borderRadius: 4, width: '100%', overflow: 'hidden' }}>
                   <View style={{ height: '100%', backgroundColor: colors.primary, width: `${meterLevel}%` }} />
@@ -611,12 +612,12 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
                     setIsRecording(false);
                     setStep(3);
                   } catch (e) {
-                    setError('Failed to skip/simulate vocal analysis.');
+                    setError(t('assessment.intake_skip_failed'));
                   }
                 }}
               >
                 <Text style={[styles.actionBtnText, { color: colors.secondary }]}>
-                  Skip / Simulate Vocal Analysis
+                  {t('assessment.intake_skip_vocal')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -625,14 +626,14 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
 
         {step === 3 && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>3. Micro-expression Scan</Text>
+            <Text style={styles.cardTitle}>{t('assessment.intake_step3_title')}</Text>
             <Text style={styles.cardText}>
-              Look directly at the camera for a few seconds. Position your face in the center. Ensure good lighting.
+              {t('assessment.intake_camera_instruction')}
             </Text>
             
             <View style={[styles.cameraBox, { overflow: 'hidden' }]}>
               {!hasPermission ? (
-                <Text style={{textAlign: 'center', padding: 20, color: colors.gray}}>Camera permission denied.</Text>
+                <Text style={{textAlign: 'center', padding: 20, color: colors.gray}}>{t('assessment.intake_camera_denied')}</Text>
               ) : !device ? (
                 <ActivityIndicator size="large" color={colors.primary} />
               ) : photoUri ? (
@@ -656,23 +657,23 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
                <View style={{ flexDirection: 'column' }}>
                  {faceEmotion.faceDetectedRatio > 0 ? (
                    <Text style={{ textAlign: 'center', marginBottom: 8, color: colors.primary, fontSize: 13, fontWeight: '700' }}>
-                     ✓ Face detected — Expression: {faceEmotion.emotion} ({Math.round(faceEmotion.confidence * 100)}% confidence)
+                     {t('assessment.intake_face_detected', { emotion: faceEmotion.emotion, confidence: Math.round(faceEmotion.confidence * 100) })}
                    </Text>
                  ) : (
                    <Text style={{ textAlign: 'center', marginBottom: 8, color: '#E57373', fontSize: 12 }}>
-                     ⚠ No face detected clearly — retake for best results
+                     {t('assessment.intake_no_face')}
                    </Text>
                  )}
                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
                    <TouchableOpacity style={[styles.actionBtn, { flex: 1, backgroundColor: colors.gray3 }]} onPress={retakePhoto}>
-                     <Text style={[styles.actionBtnText, {color: colors.secondary}]}>Retake</Text>
+                     <Text style={[styles.actionBtnText, {color: colors.secondary}]}>{t('assessment.intake_retake')}</Text>
                    </TouchableOpacity>
                    <TouchableOpacity style={[styles.actionBtn, { flex: 1, backgroundColor: colors.primary }]} onPress={() => submitPhoto()}>
-                     <Text style={styles.actionBtnText}>Analyze Now</Text>
+                     <Text style={styles.actionBtnText}>{t('assessment.intake_analyze_now')}</Text>
                    </TouchableOpacity>
                  </View>
                  <Text style={{textAlign:'center', marginTop:12, color:colors.gray, fontSize: 13, fontWeight: '600'}}>
-                   Auto-submitting in 4 seconds...
+                   {t('assessment.intake_auto_submit')}
                  </Text>
                </View>
             ) : (
@@ -682,7 +683,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
                  disabled={isScanning || !hasPermission || !device}
                >
                  <Text style={styles.actionBtnText}>
-                   {isScanning ? "Capturing..." : (!hasPermission ? "Need Permission" : "Capture Expression")}
+                   {isScanning ? t('assessment.intake_capturing') : (!hasPermission ? t('assessment.intake_need_permission') : t('assessment.intake_capture_expression'))}
                  </Text>
                </TouchableOpacity>
             )}
@@ -694,23 +695,23 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
             {isFusing ? (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
                 <ActivityIndicator size="large" color={colors.secondary} />
-                <Text style={[styles.cardTitle, {marginTop: 20}]}>Fusing Modalities...</Text>
-                <Text style={[styles.cardText, {textAlign: 'center'}]}>Running deep learning models across your text, voice, and facial data.</Text>
+                <Text style={[styles.cardTitle, {marginTop: 20}]}>{t('assessment.intake_fusing')}</Text>
+                <Text style={[styles.cardText, {textAlign: 'center'}]}>{t('assessment.intake_fusing_desc')}</Text>
               </View>
             ) : result ? (
               <View>
                 <MaterialCommunityIcons name="heart-pulse" size={60} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 16 }} />
-                <Text style={[styles.cardTitle, {textAlign: 'center'}]}>Health Report Ready</Text>
+                <Text style={[styles.cardTitle, {textAlign: 'center'}]}>{t('assessment.intake_report_ready')}</Text>
                 
                 <View style={styles.resultBox}>
-                  <Text style={styles.resultRow}>Dynamic Risk Classification: <Text style={{fontWeight:'800', color: colors.secondary}}>{result.riskLevel}</Text></Text>
-                  <Text style={styles.resultRow}>AI Confidence: <Text style={{fontWeight:'800'}}>{Math.round(result.confidence * 100)}%</Text></Text>
+                  <Text style={styles.resultRow}>{t('assessment.intake_risk_classification')} <Text style={{fontWeight:'800', color: colors.secondary}}>{result.riskLevel}</Text></Text>
+                  <Text style={styles.resultRow}>{t('assessment.intake_confidence')} <Text style={{fontWeight:'800'}}>{Math.round(result.confidence * 100)}%</Text></Text>
                   
                 </View>
 
                 {result.recommendations && result.recommendations.length > 0 && (
                   <View>
-                    <Text style={styles.cardLabel}>Custom Recommendations:</Text>
+                    <Text style={styles.cardLabel}>{t('assessment.intake_recommendations')}</Text>
                     {result.recommendations.map((r, i) => (
                       <Text key={i} style={styles.recText}>• {r}</Text>
                     ))}
@@ -718,7 +719,7 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
                 )}
 
                 <TouchableOpacity style={[styles.actionBtn, {marginTop: 30}]} onPress={finishIntake}>
-                  <Text style={styles.actionBtnText}>Continue to Home Screen</Text>
+                  <Text style={styles.actionBtnText}>{t('assessment.intake_continue_home')}</Text>
                 </TouchableOpacity>
               </View>
             ) : null}

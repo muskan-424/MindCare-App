@@ -5,12 +5,14 @@ import {
 } from 'react-native';
 import api from '../../../utils/apiClient';
 import { colors } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const { width } = Dimensions.get('window');
 
 const InstitutionDashboardScreen = ({ route, navigation }) => {
+  const { t } = useTranslation();
   const { institutionId } = route.params || {};
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,13 +26,13 @@ const InstitutionDashboardScreen = ({ route, navigation }) => {
       setData(res.data);
     } catch (e) {
       console.error(e);
-      Alert.alert('Privacy Protection', e.response?.data?.error || 'Failed to load report.');
+      Alert.alert(t('institution.privacy_alert_title'), e.response?.data?.error || t('institution.load_failed'));
       navigation.goBack();
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [institutionId, navigation]);
+  }, [institutionId, navigation, t]);
 
   useEffect(() => { loadReport(); }, [loadReport]);
 
@@ -51,14 +53,13 @@ const InstitutionDashboardScreen = ({ route, navigation }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F8F9FA' }]}>
-      {/* Header */}
       <View style={[styles.header, { backgroundColor: isDarkMode ? '#1C2030' : '#1E1E2C' }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <AntDesign name="arrowleft" size={26} color={colors.white} />
         </TouchableOpacity>
         <View style={{ marginLeft: 15, flex: 1 }}>
           <Text style={styles.headerTitle}>{data.institutionName}</Text>
-          <Text style={styles.headerSub}>Institution Oversight Dashboard</Text>
+          <Text style={styles.headerSub}>{t('institution.dashboard_sub')}</Text>
         </View>
         <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)}>
           <MaterialCommunityIcons name={isDarkMode ? 'weather-sunny' : 'weather-night'} size={24} color={colors.white} />
@@ -70,29 +71,27 @@ const InstitutionDashboardScreen = ({ route, navigation }) => {
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        {/* Stats Row */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <Text style={styles.statVal}>{data.memberCount}</Text>
-            <Text style={styles.statLbl}>Members</Text>
+            <Text style={styles.statLbl}>{t('institution.members')}</Text>
           </View>
           <View style={[styles.statCard, { borderLeftWidth: 1, borderLeftColor: '#eee' }]}>
             <Text style={[styles.statVal, { color: '#4CAF50' }]}>
               {data.moodTrends.length > 0 ? (data.moodTrends.reduce((a, b) => a + b.value, 0) / data.moodTrends.length).toFixed(1) : 'N/A'}
             </Text>
-            <Text style={styles.statLbl}>Avg Mood</Text>
+            <Text style={styles.statLbl}>{t('institution.avg_mood')}</Text>
           </View>
         </View>
 
-        {/* Top Concerns (Anonymized) */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Anonymized Concerns</Text>
-          <Text style={styles.sectionDesc}>Frequency of concerns across your entire member set.</Text>
-          {data.topConcerns.map((c, i) => (
+          <Text style={styles.sectionTitle}>{t('institution.anonymized_concerns')}</Text>
+          <Text style={styles.sectionDesc}>{t('institution.concerns_desc')}</Text>
+          {data.topConcerns.map((c) => (
             <View key={c.concern} style={styles.concernRow}>
               <View style={styles.concernInfo}>
                 <Text style={styles.concernName}>{c.concern}</Text>
-                <Text style={styles.concernCount}>{c.count} members</Text>
+                <Text style={styles.concernCount}>{t('institution.members_count', { count: c.count })}</Text>
               </View>
               <View style={styles.barContainer}>
                 <View style={[styles.barFill, { width: `${(c.count / data.memberCount) * 100}%` }]} />
@@ -101,9 +100,8 @@ const InstitutionDashboardScreen = ({ route, navigation }) => {
           ))}
         </View>
 
-        {/* Risk Distribution */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Risk Exposure (Last 30 Days)</Text>
+          <Text style={styles.sectionTitle}>{t('institution.risk_exposure')}</Text>
           <View style={styles.riskGrid}>
             {data.riskDistribution.map(r => (
               <View key={r.level} style={styles.riskItem}>
@@ -113,15 +111,14 @@ const InstitutionDashboardScreen = ({ route, navigation }) => {
                 <Text style={styles.riskCount}>{r.count}</Text>
               </View>
             ))}
-            {data.riskDistribution.length === 0 && <Text style={styles.empty}>No recent risk reports.</Text>}
+            {data.riskDistribution.length === 0 && <Text style={styles.empty}>{t('institution.no_risk_reports')}</Text>}
           </View>
         </View>
 
-        {/* Privacy Shield Info */}
         <View style={styles.privacyMsg}>
           <MaterialCommunityIcons name="shield-check" size={20} color="#666" />
           <Text style={styles.privacyText}>
-            This data is anonymized and aggregated. Individual user names, profile pictures, and journal contents are protected and never shared with institution administrators.
+            {t('institution.privacy_text')}
           </Text>
         </View>
       </ScrollView>

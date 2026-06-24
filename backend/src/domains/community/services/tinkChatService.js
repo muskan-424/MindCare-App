@@ -69,33 +69,116 @@ function detectCrisis(text) {
   return CRISIS_PATTERNS.some(re => re.test(text));
 }
 
+// ── Localized fallback strings (rule/mock mode; en + hi + pa + mr) ───────────
+const FALLBACK_STRINGS = {
+  en: {
+    mock_reply: "I'm here with you. (My AI connection isn't configured right now, but I'm still listening — how are you feeling?)",
+    error_reply: "I'm so sorry — I'm having trouble thinking clearly right now. I'm still here though. Could you tell me a little more about what's going on?",
+    verification_note: "I'm not fully sure I understood — here's what I can tell you from what I found. Feel free to rephrase if this misses the mark.",
+    rule_draft: "Sure — I've prepared this for you: {summary}. Review the card below and tap confirm when you're ready.",
+    rule_more_info: "I'm here to help. Could you tell me a little more about what you're looking for?",
+    login_required: "I'd love to help with that, but I can't access your personal info until you're logged in. Please log in and ask me again.",
+    mock_suggestions: ["I feel anxious", "I feel low", "I just need to talk"],
+    error_suggestions: ['Try again', 'I feel overwhelmed', 'Just venting'],
+    card_crisis_title: 'You are not alone',
+    card_crisis_subtitle: 'Free, confidential help is available 24/7 in India',
+    card_crisis_resources: 'View crisis resources',
+    card_crisis_emergency: 'Emergency contact',
+  },
+  hi: {
+    mock_reply: 'मैं आपके साथ हूँ। (अभी AI कनेक्शन कॉन्फ़िगर नहीं है, लेकिन मैं सुन रहा हूँ — आप कैसा महसूस कर रहे हैं?)',
+    error_reply: 'माफ़ कीजिए — अभी मुझे साफ़ सोचने में परेशानी हो रही है। फिर भी मैं यहाँ हूँ। क्या आप थोड़ा और बता सकते हैं?',
+    verification_note: 'मुझे पूरी तरह समझ नहीं आया — यह मिला। अगर गलत लगे तो दोबारा लिखें।',
+    rule_draft: 'ठीक है — मैंने यह तैयार किया: {summary}। नीचे कार्ड देखें और तैयार होने पर पुष्टि करें।',
+    rule_more_info: 'मैं मदद के लिए यहाँ हूँ। क्या आप थोड़ा और बता सकते हैं कि आप क्या ढूँढ रहे हैं?',
+    login_required: 'मैं मदद करना चाहूँगा, लेकिन लॉग इन किए बिना आपकी जानकारी नहीं देख सकता। कृपया लॉग इन करके फिर पूछें।',
+    mock_suggestions: ['मुझे घबराहट है', 'मेरा मन उदास है', 'मुझे बस बात करनी है'],
+    error_suggestions: ['फिर प्रयास करें', 'मैं परेशान हूँ', 'बस दिल की बात'],
+    card_crisis_title: 'आप अकेले नहीं हैं',
+    card_crisis_subtitle: 'भारत में 24/7 मुफ़्त, गोपनीय सहायता उपलब्ध है',
+    card_crisis_resources: 'संकट संसाधन देखें',
+    card_crisis_emergency: 'आपातकालीन संपर्क',
+  },
+  pa: {
+    mock_reply: 'ਮੈਂ ਤੁਹਾਡੇ ਨਾਲ ਹਾਂ। (AI ਕਨੈਕਸ਼ਨ ਹੁਣ ਕੌਨਫਿਗਰ ਨਹੀਂ, ਪਰ ਮੈਂ ਸੁਣ ਰਿਹਾ ਹਾਂ — ਤੁਸੀਂ ਕਿਵੇਂ ਮਹਿਸੂਸ ਕਰ ਰਹੇ ਹੋ?)',
+    error_reply: 'ਮਾਫ਼ ਕਰਨਾ — ਹੁਣ ਸਾਫ਼ ਸੋਚਣ ਵਿੱਚ ਮੁਸ਼ਕਲ ਆ ਰਹੀ ਹੈ। ਫਿਰ ਵੀ ਮੈਂ ਇੱਥੇ ਹਾਂ। ਕੀ ਤੁਸੀਂ ਹੋਰ ਦੱਸ ਸਕਦੇ ਹੋ?',
+    verification_note: 'ਮੈਨੂੰ ਪੂਰੀ ਤਰ੍ਹਾਂ ਸਮਝ ਨਹੀਂ ਆਈ — ਇਹ ਮਿਲਿਆ। ਗਲਤ ਲੱਗੇ ਤਾਂ ਦੁਬਾਰਾ ਲਿਖੋ।',
+    rule_draft: 'ਠੀਕ ਹੈ — ਮੈਂ ਇਹ ਤਿਆਰ ਕੀਤਾ: {summary}। ਹੇਠਾਂ ਕਾਰਡ ਦੇਖੋ ਅਤੇ ਤਿਆਰ ਹੋਣ ਤੇ ਪੁਸ਼ਟੀ ਕਰੋ।',
+    rule_more_info: 'ਮੈਂ ਮਦਦ ਲਈ ਇੱਥੇ ਹਾਂ। ਕੀ ਤੁਸੀਂ ਹੋਰ ਦੱਸ ਸਕਦੇ ਹੋ?',
+    login_required: 'ਮੈਂ ਮਦਦ ਕਰਨਾ ਚਾਹੁੰਦਾ ਹਾਂ, ਪਰ ਲੌਗ ਇਨ ਕੀਤੇ ਬਿਨਾਂ ਜਾਣਕਾਰੀ ਨਹੀਂ ਵੇਖ ਸਕਦਾ। ਕਿਰਪਾ ਕਰਕੇ ਲੌਗ ਇਨ ਕਰੋ।',
+    mock_suggestions: ['ਮੈਨੂੰ ਘਬਰਾਹਟ ਹੈ', 'ਮੇਰਾ ਮਨ ਉਦਾਸ ਹੈ', 'ਮੈਨੂੰ ਬਸ ਗੱਲ ਕਰਨੀ ਹੈ'],
+    error_suggestions: ['ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼', 'ਮੈਂ ਪਰੇਸ਼ਾਨ ਹਾਂ', 'ਬਸ ਦਿਲ ਦੀ ਗੱਲ'],
+    card_crisis_title: 'ਤੁਸੀਂ ਇਕੱਲੇ ਨਹੀਂ ਹੋ',
+    card_crisis_subtitle: 'ਭਾਰਤ ਵਿੱਚ 24/7 ਮੁਫ਼ਤ, ਗੁਪਤ ਮਦਦ ਉਪਲਬਧ ਹੈ',
+    card_crisis_resources: 'ਸੰਕਟ ਸਰੋਤ ਵੇਖੋ',
+    card_crisis_emergency: 'ਐਮਰਜੈਂਸੀ ਸੰਪਰਕ',
+  },
+  mr: {
+    mock_reply: 'मी तुमच्यासोबत आहे. (AI कनेक्शन आत्ता कॉन्फिगर नाही, पण मी ऐकत आहे — तुम्हाला कसे वाटते?)',
+    error_reply: 'माफ करा — आत्ता स्पष्ट विचार करण्यात अडचण येत आहे. तरीही मी इथे आहे. थोडे अधिक सांगू शकाल का?',
+    verification_note: 'मला पूर्णपणे समजले नाही — हे सापडले. चुकीचे वाटल्यास पुन्हा लिहा.',
+    rule_draft: 'ठीक आहे — मी हे तयार केले: {summary}. खालील कार्ड पहा आणि तयार असाल तेव्हा पुष्टी करा.',
+    rule_more_info: 'मी मदतीसाठी इथे आहे. तुम्ही काय शोधत आहात थोडे अधिक सांगू शकाल का?',
+    login_required: 'मला मदत करायची आहे, पण लॉग इन न करता माहिती पाहू शकत नाही. कृपया लॉग इन करा.',
+    mock_suggestions: ['मला घाबराट वाटते', 'मी उदास आहे', 'मला फक्त बोलायचे आहे'],
+    error_suggestions: ['पुन्हा प्रयत्न', 'मी अधिक भारावलेला आहे', 'फक्त मनातले शब्द'],
+    card_crisis_title: 'तुम्ही एकटे नाही',
+    card_crisis_subtitle: 'भारतात 24/7 विनामूल्य, गोपनीय मदत उपलब्ध',
+    card_crisis_resources: 'संकट संसाधने पहा',
+    card_crisis_emergency: 'आणीबाणी संपर्क',
+  },
+};
+
+function fallbackString(language, key, vars = {}) {
+  const pack = FALLBACK_STRINGS[language] || FALLBACK_STRINGS.en;
+  let text = pack[key] || FALLBACK_STRINGS.en[key] || '';
+  Object.entries(vars).forEach(([k, v]) => {
+    text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+  });
+  return text;
+}
+
+function fallbackList(language, key) {
+  const pack = FALLBACK_STRINGS[language] || FALLBACK_STRINGS.en;
+  const list = pack[key] || FALLBACK_STRINGS.en[key];
+  return Array.isArray(list) ? list : [];
+}
+
+function getVerificationNote(language = 'en') {
+  return fallbackString(language, 'verification_note');
+}
+
 // ── Intent → actionable card mapping (rendered as rich cards in the app) ─────
-// `route` matches a screen name in the React Navigation HomeStack.
 const INTENT_CARDS = {
-  breathing: { type: 'action', icon: 'leaf', title: 'Try a breathing exercise', subtitle: '60-second calm-down', route: 'Breathing' },
-  grounding: { type: 'action', icon: 'hand-left', title: '5-4-3-2-1 grounding', subtitle: 'Reconnect with the present', route: 'Grounding' },
-  journaling: { type: 'action', icon: 'book', title: 'Write it down', subtitle: 'Open your journal', route: 'Story' },
-  mood_check: { type: 'action', icon: 'happy', title: 'Log your mood', subtitle: 'Track how you feel', route: 'MoodTracker' },
-  gratitude: { type: 'action', icon: 'heart', title: 'Gratitude moment', subtitle: 'Note one good thing', route: 'Gratitude' },
-  professional_help: { type: 'action', icon: 'medkit', title: 'Talk to a therapist', subtitle: 'Book a session', route: 'Appointments' },
+  breathing: { type: 'action', intent: 'breathing', icon: 'leaf', titleKey: 'card_breathing_title', subtitleKey: 'card_breathing_subtitle', title: 'Try a breathing exercise', subtitle: '60-second calm-down', route: 'Breathing' },
+  grounding: { type: 'action', intent: 'grounding', icon: 'hand-left', titleKey: 'card_grounding_title', subtitleKey: 'card_grounding_subtitle', title: '5-4-3-2-1 grounding', subtitle: 'Reconnect with the present', route: 'Grounding' },
+  journaling: { type: 'action', intent: 'journaling', icon: 'book', titleKey: 'card_journaling_title', subtitleKey: 'card_journaling_subtitle', title: 'Write it down', subtitle: 'Open your journal', route: 'Story' },
+  mood_check: { type: 'action', intent: 'mood_check', icon: 'happy', titleKey: 'card_mood_check_title', subtitleKey: 'card_mood_check_subtitle', title: 'Log your mood', subtitle: 'Track how you feel', route: 'MoodTracker' },
+  gratitude: { type: 'action', intent: 'gratitude', icon: 'heart', titleKey: 'card_gratitude_title', subtitleKey: 'card_gratitude_subtitle', title: 'Gratitude moment', subtitle: 'Note one good thing', route: 'Gratitude' },
+  professional_help: { type: 'action', intent: 'professional_help', icon: 'medkit', titleKey: 'card_professional_help_title', subtitleKey: 'card_professional_help_subtitle', title: 'Talk to a therapist', subtitle: 'Book a session', route: 'Appointments' },
 };
 
-// Crisis support card (always surfaced when crisis is detected)
-const CRISIS_CARD = {
-  type: 'crisis',
-  icon: 'alert-circle',
-  title: 'You are not alone',
-  subtitle: 'Free, confidential help is available 24/7',
-  actions: [
-    { label: 'Call a helpline', phone: '988' },
-    { label: 'View crisis resources', route: 'CrisisResources' },
-    { label: 'Emergency contact', route: 'EmergencyContact' },
-  ],
-};
+function buildCrisisCard(language = 'en') {
+  return {
+    type: 'crisis',
+    icon: 'alert-circle',
+    titleKey: 'card_crisis_title',
+    title: fallbackString(language, 'card_crisis_title'),
+    subtitleKey: 'card_crisis_subtitle',
+    subtitle: fallbackString(language, 'card_crisis_subtitle'),
+    actions: [
+      { labelKey: 'card_crisis_call_vandrevala', label: 'Vandrevala Foundation', phone: '18602662345' },
+      { labelKey: 'card_crisis_call_icall', label: 'iCall (TISS)', phone: '9152987821' },
+      { labelKey: 'card_crisis_call_kiran', label: 'Kiran Helpline', phone: '18005990019' },
+      { labelKey: 'card_crisis_resources', label: fallbackString(language, 'card_crisis_resources'), route: 'CrisisResources' },
+      { labelKey: 'card_crisis_emergency', label: fallbackString(language, 'card_crisis_emergency'), route: 'EmergencyContact' },
+    ],
+  };
+}
 
-function buildCardsForResponse(intent, crisis) {
+function buildCardsForResponse(intent, crisis, language = 'en') {
   const cards = [];
-  if (crisis) cards.push(CRISIS_CARD);
+  if (crisis) cards.push(buildCrisisCard(language));
   if (intent && INTENT_CARDS[intent]) cards.push(INTENT_CARDS[intent]);
   return cards;
 }
@@ -233,15 +316,15 @@ async function generateTinkResponse({ message, history = [], language = 'en', su
   const keywordCrisis = detectCrisis(message);
 
   if (!apiKey || process.env.USE_MOCK_CHATBOT === 'true') {
-    const reply = "I'm here with you. (My AI connection isn't configured right now, but I'm still listening — how are you feeling?)";
+    const reply = fallbackString(language, 'mock_reply');
     return {
       reply,
-      suggestions: ["I feel anxious", "I feel low", "I just need to talk"],
+      suggestions: fallbackList(language, 'mock_suggestions'),
       intent: 'none',
       crisis: keywordCrisis,
       detectedLanguage: language,
       mood: 'neutral',
-      cards: buildCardsForResponse('none', keywordCrisis),
+      cards: buildCardsForResponse('none', keywordCrisis, language),
     };
   }
 
@@ -285,13 +368,13 @@ async function generateTinkResponse({ message, history = [], language = 'en', su
 
   if (!parsed) {
     return {
-      reply: "I'm so sorry — I'm having trouble thinking clearly right now. I'm still here though. Could you tell me a little more about what's going on?",
-      suggestions: ["Try again", "I feel overwhelmed", "Just venting"],
+      reply: fallbackString(language, 'error_reply'),
+      suggestions: fallbackList(language, 'error_suggestions'),
       intent: 'none',
       crisis: keywordCrisis,
       detectedLanguage: language,
       mood: 'neutral',
-      cards: buildCardsForResponse('none', keywordCrisis),
+      cards: buildCardsForResponse('none', keywordCrisis, language),
       error: lastErr,
     };
   }
@@ -309,7 +392,7 @@ async function generateTinkResponse({ message, history = [], language = 'en', su
     crisis,
     detectedLanguage: parsed.detectedLanguage || language,
     mood: ['positive', 'neutral', 'low', 'distressed'].includes(parsed.mood) ? parsed.mood : 'neutral',
-    cards: buildCardsForResponse(intent, crisis),
+    cards: buildCardsForResponse(intent, crisis, language),
     modelTier: tier,
   };
 }
@@ -520,7 +603,7 @@ async function composeGroundedReply({ message, facts = '', sources = [], languag
   // Rule-based fallback: surface the facts directly in a friendly wrapper.
   const ruleReply = () => {
     if (draft) {
-      return `Sure — I've prepared this for you: ${draft.summary}. Review the card below and tap confirm when you're ready.`;
+      return fallbackString(language, 'rule_draft', { summary: draft.summary });
     }
     if (facts && facts.trim()) {
       return facts.trim();
@@ -528,7 +611,7 @@ async function composeGroundedReply({ message, facts = '', sources = [], languag
     if (sources.length) {
       return sources.map(s => s.text).join('\n\n');
     }
-    return "I'm here to help. Could you tell me a little more about what you're looking for?";
+    return fallbackString(language, 'rule_more_info');
   };
 
   if (!useGemini) {
@@ -647,7 +730,7 @@ async function translateText({ text, targetLanguage = 'en' }) {
   return original;
 }
 
-const VERIFICATION_NOTE = "I'm not fully sure I understood — here's what I can tell you from what I found. Feel free to rephrase if this misses the mark.";
+const VERIFICATION_NOTE = FALLBACK_STRINGS.en.verification_note;
 
 function shouldGateConfidence(confidence) {
   return typeof confidence === 'number' && confidence < config.ai.confidenceGate;
@@ -691,6 +774,8 @@ module.exports = {
   translateText,
   getCapabilities,
   shouldGateConfidence,
+  getVerificationNote,
+  fallbackString,
   VERIFICATION_NOTE,
   LANGUAGE_NAMES,
   INTENTS,

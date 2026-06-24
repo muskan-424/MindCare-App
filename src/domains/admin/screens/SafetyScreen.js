@@ -1,16 +1,26 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking } from 'react-native';
 import { colors, sizes } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
 const DEFAULT_HELPLINES = [
-  { name: 'Vandrevala Foundation', number: '1860-2662-345', note: '24/7 mental health support (India)' },
-  { name: 'iCall', number: '9152987821', note: 'Mon–Sat, 10am–10pm (India)' },
-  { name: 'Kiran', number: '1800-599-0019', note: '24/7 (India)' },
-  { name: 'Crisis Text Line', number: 'Text HOME to 741741', note: '24/7 (US)' },
+  { nameKey: 'crisis.vandrevala', number: '1860-2662-345', noteKey: 'crisis.vandrevala_note' },
+  { nameKey: 'crisis.icall', number: '9152987821', noteKey: 'crisis.icall_note' },
+  { nameKey: 'crisis.kiran', number: '1800-599-0019', noteKey: 'crisis.kiran_note' },
+  { nameKey: 'crisis.crisis_text_line', number: 'Text HOME to 741741', noteKey: 'crisis.crisis_text_line_note' },
 ];
 
 const SafetyScreen = ({ navigation, route }) => {
-  const helplines = (route.params && route.params.helplines) || DEFAULT_HELPLINES;
+  const { t } = useTranslation();
+  const routeHelplines = route.params && route.params.helplines;
+  const helplines = routeHelplines && routeHelplines.length > 0
+    ? routeHelplines.map((line, i) => ({
+        name: line.name,
+        number: line.number,
+        note: line.note,
+        key: `route-${i}`,
+      }))
+    : DEFAULT_HELPLINES.map((line, i) => ({ ...line, key: `default-${i}` }));
 
   const dial = (num) => {
     const clean = (num || '').replace(/\D/g, '');
@@ -20,33 +30,35 @@ const SafetyScreen = ({ navigation, route }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-        <Text style={styles.backText}>← Back</Text>
+        <Text style={styles.backText}>← {t('common.back')}</Text>
       </TouchableOpacity>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>You're not alone</Text>
-        <Text style={styles.subtitle}>Reach out to someone who can listen and support you right now.</Text>
+        <Text style={styles.title}>{t('safety.title')}</Text>
+        <Text style={styles.subtitle}>{t('safety.subtitle')}</Text>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Talk to someone you trust</Text>
-          <Text style={styles.cardText}>A friend, family member, or counselor can help. You don't have to go through this alone.</Text>
+          <Text style={styles.cardTitle}>{t('safety.talk_trusted_title')}</Text>
+          <Text style={styles.cardText}>{t('safety.talk_trusted_text')}</Text>
         </View>
 
-        <Text style={styles.sectionTitle}>Helplines</Text>
-        {helplines.map((line, i) => (
+        <Text style={styles.sectionTitle}>{t('safety.helplines')}</Text>
+        {helplines.map((line) => (
           <TouchableOpacity
-            key={i}
+            key={line.key}
             style={styles.lineCard}
             onPress={() => line.number && dial(line.number)}
             activeOpacity={0.8}
           >
-            <Text style={styles.lineName}>{line.name}</Text>
+            <Text style={styles.lineName}>{line.nameKey ? t(line.nameKey) : line.name}</Text>
             {line.number ? <Text style={styles.lineNumber}>{line.number}</Text> : null}
-            {line.note ? <Text style={styles.lineNote}>{line.note}</Text> : null}
+            {line.noteKey || line.note ? (
+              <Text style={styles.lineNote}>{line.noteKey ? t(line.noteKey) : line.note}</Text>
+            ) : null}
           </TouchableOpacity>
         ))}
 
         <TouchableOpacity style={styles.consultBtn} onPress={() => navigation.getParent()?.navigate('TherapistTab', { screen: 'TherapistHome' })}>
-          <Text style={styles.consultBtnText}>Find a counselor</Text>
+          <Text style={styles.consultBtnText}>{t('safety.find_counselor')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

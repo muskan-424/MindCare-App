@@ -9,8 +9,10 @@ import {
 import { Searchbar } from 'react-native-paper';
 import TherapistCard from '../components/TherapistCard';
 import { colors } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
 const TherapistScreen = (props) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const { data: initialData = [], category } = props.route.params || {};
 
@@ -28,14 +30,14 @@ const TherapistScreen = (props) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => props.navigation.goBack()}>
-          <Text style={styles.backText}>← Back</Text>
+          <Text style={styles.backText}>← {t('common.back')}</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{category}</Text>
       </View>
       <View style={styles.searchWrap}>
         <Searchbar
           style={styles.search}
-          placeholder="Search in this category..."
+          placeholder={t('therapy.search_placeholder')}
           onChangeText={setQuery}
           value={query}
           placeholderTextColor={colors.gray}
@@ -44,7 +46,7 @@ const TherapistScreen = (props) => {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {filteredData.length === 0 ? (
           <View style={styles.emptyWrap}>
-            <Text style={styles.emptyText}>No professionals found.</Text>
+            <Text style={styles.emptyText}>{t('therapy.no_professionals')}</Text>
           </View>
         ) : (
           filteredData.map((doc) => (

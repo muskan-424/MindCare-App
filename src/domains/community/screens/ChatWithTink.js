@@ -42,26 +42,21 @@ const TINK_AVATAR = require('../../../assets/tink.gif');
 let idCounter = 0;
 const nextId = () => `${Date.now()}_${idCounter++}`;
 
-const INTENT_LABELS = {
-  support: 'Support',
-  help: 'App help',
-  lookup_mood: 'Your mood',
-  lookup_journal: 'Your journals',
-  lookup_goals: 'Your goals',
-  lookup_appointments: 'Your sessions',
-  discovery_groups: 'Group sessions',
-  action_log_mood: 'Log mood',
-  action_add_journal: 'New journal',
-  action_set_goal: 'New goal',
-  action_book_session: 'Book session',
-};
+const REFINE_MODES = ['shorter', 'simpler', 'steps', 'professional'];
 
-const REFINE_OPTIONS = [
-  { mode: 'shorter', label: 'Shorter' },
-  { mode: 'simpler', label: 'Simpler' },
-  { mode: 'steps', label: 'Steps' },
-  { mode: 'professional', label: 'Professional' },
-];
+const INTENT_I18N_KEYS = {
+  support: 'intent_support',
+  help: 'intent_help',
+  lookup_mood: 'intent_lookup_mood',
+  lookup_journal: 'intent_lookup_journal',
+  lookup_goals: 'intent_lookup_goals',
+  lookup_appointments: 'intent_lookup_appointments',
+  discovery_groups: 'intent_discovery_groups',
+  action_log_mood: 'intent_action_log_mood',
+  action_add_journal: 'intent_action_add_journal',
+  action_set_goal: 'intent_action_set_goal',
+  action_book_session: 'intent_action_book_session',
+};
 
 // ── Animated "Tink is typing" three-dot indicator ───────────────────────────
 const TypingDots = () => {
@@ -99,8 +94,10 @@ const TypingDots = () => {
 const DRAFT_ICONS = { mood: 'happy-outline', journal: 'book-outline', goal: 'flag-outline', appointment: 'calendar-outline' };
 
 const DraftReviewCard = ({ draft, status, onConfirm, onDismiss }) => {
+  const { t } = useTranslation();
   const [fields, setFields] = useState(draft.fields || {});
   const setField = (key, value) => setFields(prev => ({ ...prev, [key]: value }));
+  const draftTitle = draft.titleKey ? t(`chat.${draft.titleKey}`, draft.title) : draft.title;
 
   const confirm = () => {
     // Rebuild commit payload from the (possibly edited) fields
@@ -113,7 +110,7 @@ const DraftReviewCard = ({ draft, status, onConfirm, onDismiss }) => {
       case 'mood':
         return (
           <>
-            <Text style={styles.draftLabel}>Rating (1–10)</Text>
+            <Text style={styles.draftLabel}>{t('chat.draft_rating_label', 'Rating (1–10)')}</Text>
             <TextInput
               style={styles.draftInput}
               keyboardType="number-pad"
@@ -121,34 +118,34 @@ const DraftReviewCard = ({ draft, status, onConfirm, onDismiss }) => {
               onChangeText={v => setField('rating', Math.max(1, Math.min(10, Number(v.replace(/[^0-9]/g, '')) || 1)))}
               editable={status !== 'committed'}
             />
-            <Text style={styles.draftLabel}>Note (optional)</Text>
+            <Text style={styles.draftLabel}>{t('chat.draft_note_optional', 'Note (optional)')}</Text>
             <TextInput style={[styles.draftInput, styles.draftMultiline]} value={fields.note || ''} onChangeText={v => setField('note', v)} multiline editable={status !== 'committed'} />
           </>
         );
       case 'journal':
         return (
           <>
-            <Text style={styles.draftLabel}>Entry</Text>
-            <TextInput style={[styles.draftInput, styles.draftMultiline]} value={fields.content || ''} onChangeText={v => setField('content', v)} multiline editable={status !== 'committed'} placeholder="Write what's on your mind…" placeholderTextColor="#999" />
+            <Text style={styles.draftLabel}>{t('chat.draft_entry', 'Entry')}</Text>
+            <TextInput style={[styles.draftInput, styles.draftMultiline]} value={fields.content || ''} onChangeText={v => setField('content', v)} multiline editable={status !== 'committed'} placeholder={t('chat.draft_entry_placeholder', "Write what's on your mind…")} placeholderTextColor="#999" />
           </>
         );
       case 'goal':
         return (
           <>
-            <Text style={styles.draftLabel}>Goal title</Text>
-            <TextInput style={styles.draftInput} value={fields.title || ''} onChangeText={v => setField('title', v)} editable={status !== 'committed'} placeholder="e.g. Meditate daily" placeholderTextColor="#999" />
-            <Text style={styles.draftLabel}>Description (optional)</Text>
+            <Text style={styles.draftLabel}>{t('chat.draft_goal_title_label', 'Goal title')}</Text>
+            <TextInput style={styles.draftInput} value={fields.title || ''} onChangeText={v => setField('title', v)} editable={status !== 'committed'} placeholder={t('chat.draft_goal_title_placeholder', 'e.g. Meditate daily')} placeholderTextColor="#999" />
+            <Text style={styles.draftLabel}>{t('chat.draft_description_optional', 'Description (optional)')}</Text>
             <TextInput style={[styles.draftInput, styles.draftMultiline]} value={fields.description || ''} onChangeText={v => setField('description', v)} multiline editable={status !== 'committed'} />
           </>
         );
       case 'appointment':
         return (
           <>
-            <Text style={styles.draftLabel}>Speciality (optional)</Text>
-            <TextInput style={styles.draftInput} value={fields.requestedSpeciality || ''} onChangeText={v => setField('requestedSpeciality', v)} editable={status !== 'committed'} placeholder="e.g. Psychologist" placeholderTextColor="#999" />
-            <Text style={styles.draftLabel}>Preferred time</Text>
-            <TextInput style={styles.draftInput} value={fields.preferredTime || ''} onChangeText={v => setField('preferredTime', v)} editable={status !== 'committed'} placeholder="morning / afternoon / evening / any" placeholderTextColor="#999" />
-            <Text style={styles.draftLabel}>What do you need help with?</Text>
+            <Text style={styles.draftLabel}>{t('chat.draft_speciality_optional', 'Speciality (optional)')}</Text>
+            <TextInput style={styles.draftInput} value={fields.requestedSpeciality || ''} onChangeText={v => setField('requestedSpeciality', v)} editable={status !== 'committed'} placeholder={t('chat.draft_speciality_placeholder', 'e.g. Psychologist')} placeholderTextColor="#999" />
+            <Text style={styles.draftLabel}>{t('chat.draft_preferred_time', 'Preferred time')}</Text>
+            <TextInput style={styles.draftInput} value={fields.preferredTime || ''} onChangeText={v => setField('preferredTime', v)} editable={status !== 'committed'} placeholder={t('chat.draft_preferred_time_placeholder', 'morning / afternoon / evening / any')} placeholderTextColor="#999" />
+            <Text style={styles.draftLabel}>{t('chat.draft_help_with', 'What do you need help with?')}</Text>
             <TextInput style={[styles.draftInput, styles.draftMultiline]} value={fields.userNote || ''} onChangeText={v => setField('userNote', v)} multiline editable={status !== 'committed'} />
           </>
         );
@@ -161,21 +158,21 @@ const DraftReviewCard = ({ draft, status, onConfirm, onDismiss }) => {
     <View style={styles.draftCard}>
       <View style={styles.draftHeader}>
         <Icon name={DRAFT_ICONS[draft.kind] || 'create-outline'} size={18} color={colors.primary} />
-        <Text style={styles.draftTitle}>{draft.title}</Text>
+        <Text style={styles.draftTitle}>{draftTitle}</Text>
         {status === 'committed' && <Icon name="checkmark-circle" size={18} color="#2E7D32" style={styles.draftDoneIcon} />}
       </View>
       {renderFields()}
       {status === 'committed' ? (
-        <Text style={styles.draftDoneText}>Saved to your account ✓</Text>
+        <Text style={styles.draftDoneText}>{t('chat.draft_saved_account', 'Saved to your account ✓')}</Text>
       ) : (
         <View style={styles.draftActions}>
           <TouchableOpacity style={styles.draftDismiss} onPress={onDismiss} disabled={status === 'committing'}>
-            <Text style={styles.draftDismissText}>Dismiss</Text>
+            <Text style={styles.draftDismissText}>{t('chat.draft_dismiss', 'Dismiss')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.draftConfirm} onPress={confirm} disabled={status === 'committing'}>
             {status === 'committing'
               ? <ActivityIndicator size="small" color={colors.white} />
-              : <Text style={styles.draftConfirmText}>Confirm</Text>}
+              : <Text style={styles.draftConfirmText}>{t('chat.draft_confirm', 'Confirm')}</Text>}
           </TouchableOpacity>
         </View>
       )}
@@ -455,6 +452,12 @@ const ChatWithTink = props => {
   );
 
   // ── Renderers ───────────────────────────────────────────────────────────────
+  const cardText = (card, field) => {
+    const key = card[`${field}Key`] || (card.intent ? `card_${card.intent}_${field}` : null);
+    if (key) return t(`chat.${key}`, card[field]);
+    return card[field];
+  };
+
   const renderCards = (cards) => {
     if (!cards || !cards.length) return null;
     return cards.map((card, idx) => {
@@ -463,13 +466,15 @@ const ChatWithTink = props => {
           <View key={`crisis_${idx}`} style={styles.crisisCard}>
             <View style={styles.crisisHeader}>
               <Icon name={card.icon || 'alert-circle'} size={20} color="#C62828" />
-              <Text style={styles.crisisTitle}>{card.title}</Text>
+              <Text style={styles.crisisTitle}>{cardText(card, 'title')}</Text>
             </View>
-            {!!card.subtitle && <Text style={styles.crisisSubtitle}>{card.subtitle}</Text>}
+            {!!card.subtitle && <Text style={styles.crisisSubtitle}>{cardText(card, 'subtitle')}</Text>}
             <View style={styles.crisisActions}>
               {(card.actions || []).map((action, aIdx) => (
                 <TouchableOpacity key={aIdx} style={styles.crisisBtn} onPress={() => handleCardAction(action)}>
-                  <Text style={styles.crisisBtnText}>{action.label}</Text>
+                  <Text style={styles.crisisBtnText}>
+                    {action.labelKey ? t(`chat.${action.labelKey}`, action.label) : action.label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -482,8 +487,8 @@ const ChatWithTink = props => {
             <Icon name={card.icon || 'sparkles'} size={20} color={colors.primary} />
           </View>
           <View style={styles.flex1}>
-            <Text style={styles.actionTitle}>{card.title}</Text>
-            {!!card.subtitle && <Text style={styles.actionSubtitle}>{card.subtitle}</Text>}
+            <Text style={styles.actionTitle}>{cardText(card, 'title')}</Text>
+            {!!card.subtitle && <Text style={styles.actionSubtitle}>{cardText(card, 'subtitle')}</Text>}
           </View>
           <Icon name="chevron-forward" size={18} color={colors.gray} />
         </TouchableOpacity>
@@ -533,7 +538,9 @@ const ChatWithTink = props => {
           {!isStreaming && !item.isError && FEATURE_FLAGS.chatDebugBadges && item.intent && item.intent !== 'support' && (
             <View style={styles.badgeRow}>
               <View style={styles.intentBadge}>
-                <Text style={styles.intentBadgeText}>{INTENT_LABELS[item.intent] || item.intent}</Text>
+                <Text style={styles.intentBadgeText}>
+                  {INTENT_I18N_KEYS[item.intent] ? t(`chat.${INTENT_I18N_KEYS[item.intent]}`, item.intent) : item.intent}
+                </Text>
               </View>
               {typeof item.confidence === 'number' && (
                 <View style={styles.confBadge}>
@@ -581,9 +588,9 @@ const ChatWithTink = props => {
               {refiningId === item.id ? (
                 <ActivityIndicator size="small" color={colors.primary} style={styles.refineSpinner} />
               ) : (
-                REFINE_OPTIONS.map(opt => (
-                  <TouchableOpacity key={opt.mode} style={styles.refineChip} onPress={() => handleRefine(item.id, opt.mode)}>
-                    <Text style={styles.refineText}>{opt.label}</Text>
+                REFINE_MODES.map(mode => (
+                  <TouchableOpacity key={mode} style={styles.refineChip} onPress={() => handleRefine(item.id, mode)}>
+                    <Text style={styles.refineText}>{t(`chat.refine_${mode}`, mode)}</Text>
                   </TouchableOpacity>
                 ))
               )}
@@ -642,7 +649,7 @@ const ChatWithTink = props => {
             {capabilities && (
               <View style={styles.capPillRow}>
                 <View style={[styles.capPill, geminiLive ? styles.capPillLive : styles.capPillRule]}>
-                  <Text style={styles.capPillText}>{geminiLive ? 'AI live' : 'Rule-based'}</Text>
+                  <Text style={styles.capPillText}>{geminiLive ? t('chat.cap_ai_live', 'AI live') : t('chat.cap_rule_based', 'Rule-based')}</Text>
                 </View>
                 {FEATURE_FLAGS.chatDebugBadges && (
                   <View style={styles.capPillRag}>

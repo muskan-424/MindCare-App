@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { colors } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
 const OpenBlogScreen = props => {
+  const { t } = useTranslation();
   const {width, height} = Dimensions.get('window');
 
   const {data} = props.route.params;
@@ -94,7 +96,7 @@ const OpenBlogScreen = props => {
           <TouchableOpacity
             style={{padding: 12, flexDirection: 'row', alignItems: 'center'}}>
             <Feather name="heart" size={16} color="orange" />
-            <Text style={styles.liketext}>{data.likes} Likes</Text>
+            <Text style={styles.liketext}>{t('blog.open_likes', { count: data.likes })}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

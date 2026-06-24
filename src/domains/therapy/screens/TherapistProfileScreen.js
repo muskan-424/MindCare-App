@@ -9,8 +9,10 @@ import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import api from '../../../utils/apiClient';
 import { Button } from 'react-native-paper';
+import useTranslation from '../../../utils/i18n';
 
 const TherapistProfileScreen = ({ route, navigation }) => {
+  const { t } = useTranslation();
   const [therapist, setTherapist] = useState(route?.params?.therapist || null);
   const [loading, setLoading] = useState(!route?.params?.therapist);
 
@@ -55,7 +57,7 @@ const TherapistProfileScreen = ({ route, navigation }) => {
 
   const submitEdit = async () => {
     if (!editName.trim() || !editSpec.trim()) {
-      return Alert.alert('Required', 'Name and Specialisation are required.');
+      return Alert.alert(t('common.required'), t('therapy.name_spec_required'));
     }
     try {
       setSubmitting(true);
@@ -71,9 +73,9 @@ const TherapistProfileScreen = ({ route, navigation }) => {
       });
       setTherapist(res.data);
       setEditModalVisible(false);
-      Alert.alert('Success', 'Profile updated successfully!');
+      Alert.alert(t('common.success'), t('therapy.profile_updated'));
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.error || 'Failed to update profile.');
+      Alert.alert(t('common.error'), err.response?.data?.error || t('therapy.update_failed'));
     } finally {
       setSubmitting(false);
     }
@@ -90,7 +92,7 @@ const TherapistProfileScreen = ({ route, navigation }) => {
   if (!therapist) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: colors.cream }}>
-        <Text style={{ color: colors.secondary, fontSize: 16, fontWeight: '700' }}>Therapist profile not found.</Text>
+        <Text style={{ color: colors.secondary, fontSize: 16, fontWeight: '700' }}>{t('therapy.profile_not_found')}</Text>
       </View>
     );
   }
@@ -121,7 +123,7 @@ const TherapistProfileScreen = ({ route, navigation }) => {
           style={{ position: 'absolute', top: 25, left: 20 }}
           onPress={() => navigation.goBack()}
         />
-        <Text style={styles.profileText}>{isSelf ? 'My Clinician Profile' : 'Therapist Profile'}</Text>
+        <Text style={styles.profileText}>{isSelf ? t('therapy.my_clinician_profile') : t('therapy.therapist_profile')}</Text>
         {isSelf && (
           <FontAwesome5
             name="edit"
@@ -149,17 +151,17 @@ const TherapistProfileScreen = ({ route, navigation }) => {
       </View>
       <View style={styles.info2}>
         <View style={styles.partContainer}>
-          <Text style={styles.partText}>Timing</Text>
+          <Text style={styles.partText}>{t('therapy.timing')}</Text>
           <Text style={styles.part}>{therapist.timing}</Text>
         </View>
         <View style={styles.partContainer}>
-          <Text style={styles.partText}>Fee</Text>
+          <Text style={styles.partText}>{t('therapy.fee')}</Text>
           <Text style={styles.part}>{therapist.fee}</Text>
         </View>
       </View>
       <View style={styles.info3}>
-        <Text style={styles.aboutText}>About Therapist</Text>
-        <Text style={styles.about}>{therapist.bio || 'Your bio details go here.'}</Text>
+        <Text style={styles.aboutText}>{t('therapy.about_therapist')}</Text>
+        <Text style={styles.about}>{therapist.bio || t('therapy.bio_placeholder')}</Text>
       </View>
       <View style={styles.info4}>
         <View style={styles.contactBox}>
@@ -188,7 +190,7 @@ const TherapistProfileScreen = ({ route, navigation }) => {
             style={{ borderRadius: 12 }}
             onPress={() => navigation.navigate('BookAppointment', { therapist })}
           >
-            <Text style={{ color: colors.white, fontWeight: '700' }}>Book Appointment</Text>
+            <Text style={{ color: colors.white, fontWeight: '700' }}>{t('therapy.book_appointment')}</Text>
           </Button>
           <Button
             mode="outlined"
@@ -196,7 +198,7 @@ const TherapistProfileScreen = ({ route, navigation }) => {
             style={{ borderRadius: 12 }}
             onPress={() => navigation.navigate('Appointments')}
           >
-            <Text style={{ color: colors.secondary, fontWeight: '600' }}>My Appointments</Text>
+            <Text style={{ color: colors.secondary, fontWeight: '600' }}>{t('therapy.my_appointments')}</Text>
           </Button>
         </View>
       )}
@@ -205,71 +207,71 @@ const TherapistProfileScreen = ({ route, navigation }) => {
       <Modal visible={editModalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <ScrollView contentContainerStyle={styles.modalContent}>
-            <Text style={styles.modalTitle}>Edit Clinician Profile</Text>
+            <Text style={styles.modalTitle}>{t('therapy.edit_profile')}</Text>
             
-            <Text style={styles.label}>Full Name</Text>
+            <Text style={styles.label}>{t('therapy.full_name')}</Text>
             <TextInput
               style={styles.input}
               value={editName}
               onChangeText={setEditName}
-              placeholder="Full Name"
+              placeholder={t('therapy.full_name')}
             />
 
-            <Text style={styles.label}>Profile Photo URL</Text>
+            <Text style={styles.label}>{t('therapy.photo_url')}</Text>
             <TextInput
               style={styles.input}
               value={editImg}
               onChangeText={setEditImg}
-              placeholder="e.g. https://domain.com/photo.png"
+              placeholder={t('therapy.photo_placeholder')}
             />
 
-            <Text style={styles.label}>Specialisation</Text>
+            <Text style={styles.label}>{t('therapy.specialisation')}</Text>
             <TextInput
               style={styles.input}
               value={editSpec}
               onChangeText={setEditSpec}
-              placeholder="e.g. Clinical Psychologist"
+              placeholder={t('therapy.spec_placeholder')}
             />
 
-            <Text style={styles.label}>Bio</Text>
+            <Text style={styles.label}>{t('therapy.bio')}</Text>
             <TextInput
               style={[styles.input, { minHeight: 60, textAlignVertical: 'top' }]}
               value={editBio}
               onChangeText={setEditBio}
-              placeholder="Tell patients about yourself..."
+              placeholder={t('therapy.bio_input_placeholder')}
               multiline
             />
 
-            <Text style={styles.label}>Work Timings</Text>
+            <Text style={styles.label}>{t('therapy.work_timings')}</Text>
             <TextInput
               style={styles.input}
               value={editTiming}
               onChangeText={setEditTiming}
-              placeholder="e.g. 9:00 AM - 5:00 PM"
+              placeholder={t('therapy.timing_placeholder')}
             />
 
-            <Text style={styles.label}>Consultation Fee</Text>
+            <Text style={styles.label}>{t('therapy.consultation_fee')}</Text>
             <TextInput
               style={styles.input}
               value={editFee}
               onChangeText={setEditFee}
-              placeholder="e.g. $50/session"
+              placeholder={t('therapy.fee_placeholder')}
             />
 
-            <Text style={styles.label}>Contact Email</Text>
+            <Text style={styles.label}>{t('therapy.contact_email')}</Text>
             <TextInput
               style={styles.input}
               value={editEmail}
               onChangeText={setEditEmail}
-              placeholder="Email address"
+              placeholder={t('therapy.email_placeholder')}
             />
 
-            <Text style={styles.label}>Contact Phone</Text>
+            <Text style={styles.label}>{t('therapy.contact_phone')}</Text>
             <TextInput
               style={styles.input}
               value={editContact}
               onChangeText={setEditContact}
-              placeholder="Phone number"
+              placeholder={t('therapy.phone_placeholder')}
               keyboardType="phone-pad"
             />
 
@@ -279,14 +281,14 @@ const TherapistProfileScreen = ({ route, navigation }) => {
                 onPress={() => setEditModalVisible(false)}
                 disabled={submitting}
               >
-                <Text style={styles.modalBtnText}>Cancel</Text>
+                <Text style={styles.modalBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalBtn, { backgroundColor: colors.primary }]}
                 onPress={submitEdit}
                 disabled={submitting}
               >
-                {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.modalBtnText}>Save</Text>}
+                {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.modalBtnText}>{t('common.save')}</Text>}
               </TouchableOpacity>
             </View>
           </ScrollView>

@@ -7,13 +7,22 @@ import { connect } from 'react-redux';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import api from '../../../utils/apiClient';
 import { colors } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
 const GOALS_LIST = [
-  'Reduce Anxiety', 'Better Sleep', 'Manage Work Stress',
-  'Improve Focus', 'Overcome Burnout', 'Build Self-Esteem'
+  { value: 'Reduce Anxiety', labelKey: 'wellness.goal_reduce_anxiety' },
+  { value: 'Better Sleep', labelKey: 'wellness.goal_better_sleep' },
+  { value: 'Manage Work Stress', labelKey: 'wellness.goal_manage_stress' },
+  { value: 'Improve Focus', labelKey: 'wellness.goal_improve_focus' },
+  { value: 'Overcome Burnout', labelKey: 'wellness.goal_overcome_burnout' },
+  { value: 'Build Self-Esteem', labelKey: 'wellness.goal_build_self_esteem' },
 ];
 
-const PACES = ['Relaxed', 'Moderate', 'Intense'];
+const PACES = [
+  { value: 'Relaxed', labelKey: 'wellness.pace_relaxed' },
+  { value: 'Moderate', labelKey: 'wellness.pace_moderate' },
+  { value: 'Intense', labelKey: 'wellness.pace_intense' },
+];
 
 const TASK_ICONS = {
   breathing: 'weather-windy',
@@ -25,16 +34,15 @@ const TASK_ICONS = {
 };
 
 const WellnessPlanScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [planData, setPlanData] = useState(null);
 
-  // Questionnaire state
   const [selectedGoals, setSelectedGoals] = useState([]);
   const [struggles, setStruggles] = useState('');
   const [pace, setPace] = useState('Moderate');
   const [submitting, setSubmitting] = useState(false);
 
-  // Active Plan UI state
   const [activeDay, setActiveDay] = useState(1);
   const [togglingTask, setTogglingTask] = useState(null);
 
@@ -45,9 +53,8 @@ const WellnessPlanScreen = ({ navigation }) => {
       if (res.data && res.data.exists) {
         setPlanData(res.data);
         if (res.data.status === 'active' && res.data.dailyPlans) {
-          // Find the earliest day that isn't fully complete, or default to day 1
           const firstIncomplete = res.data.dailyPlans.find(
-            d => d.tasks.some(t => !t.completed)
+            d => d.tasks.some(task => !task.completed)
           );
           setActiveDay(firstIncomplete ? firstIncomplete.dayNumber : 1);
         }
@@ -55,22 +62,22 @@ const WellnessPlanScreen = ({ navigation }) => {
         setPlanData(null);
       }
     } catch (e) {
-      Alert.alert('Error', 'Could not load your wellness plan.');
+      Alert.alert(t('common.error'), t('wellness.error_load'));
     }
     setLoading(false);
-  }, []);
+  }, [t]);
 
   useEffect(() => { fetchPlan(); }, [fetchPlan]);
 
-  const toggleGoal = (goal) => {
-    setSelectedGoals(prev => 
-      prev.includes(goal) ? prev.filter(g => g !== goal) : [...prev, goal]
+  const toggleGoal = (goalValue) => {
+    setSelectedGoals(prev =>
+      prev.includes(goalValue) ? prev.filter(g => g !== goalValue) : [...prev, goalValue]
     );
   };
 
   const submitRequest = async () => {
     if (selectedGoals.length === 0) {
-      Alert.alert('Required', 'Please select at least one goal.');
+      Alert.alert(t('goals.required_title'), t('wellness.required_select_goal'));
       return;
     }
     setSubmitting(true);
@@ -82,7 +89,7 @@ const WellnessPlanScreen = ({ navigation }) => {
       });
       fetchPlan();
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Failed to submit request.');
+      Alert.alert(t('common.error'), e.response?.data?.error || t('wellness.error_submit'));
     }
     setSubmitting(false);
   };
@@ -95,14 +102,13 @@ const WellnessPlanScreen = ({ navigation }) => {
         completed: !task.completed,
       });
       if (res.data.success) {
-        // Optimistically update local state
         setPlanData(prev => {
           const newPlan = { ...prev, progress: res.data.totalTasksCompleted };
           const newDays = prev.dailyPlans.map(d => {
             if (d._id === dayId) {
               return {
                 ...d,
-                tasks: d.tasks.map(t => t._id === task._id ? { ...t, completed: !task.completed } : t)
+                tasks: d.tasks.map(taskItem => taskItem._id === task._id ? { ...taskItem, completed: !task.completed } : taskItem)
               };
             }
             return d;
@@ -112,7 +118,7 @@ const WellnessPlanScreen = ({ navigation }) => {
         });
       }
     } catch (e) {
-      Alert.alert('Error', 'Could not update task.');
+      Alert.alert(t('common.error'), t('wellness.error_update_task'));
     }
     setTogglingTask(null);
   };
@@ -125,7 +131,6 @@ const WellnessPlanScreen = ({ navigation }) => {
     );
   }
 
-  // 1️⃣ Render Questionnaire if no plan
   if (!planData) {
     return (
       <View style={styles.container}>
@@ -133,32 +138,32 @@ const WellnessPlanScreen = ({ navigation }) => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <MaterialCommunityIcons name="arrow-left" size={24} color={colors.white} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Wellness Plan</Text>
+          <Text style={styles.headerTitle}>{t('wellness.plan_title')}</Text>
         </View>
         <ScrollView contentContainerStyle={styles.scroll}>
           <View style={styles.questionCard}>
-            <Text style={styles.title}>Request a Custom Plan</Text>
+            <Text style={styles.title}>{t('wellness.request_title')}</Text>
             <Text style={styles.subtitle}>
-              Answer a few questions and our care team will curate a 30-day wellness routine just for you.
+              {t('wellness.request_subtitle')}
             </Text>
 
-            <Text style={styles.label}>1. What are your main goals? (Select at least one) *</Text>
+            <Text style={styles.label}>{t('wellness.label_goals')}</Text>
             <View style={styles.chipsWrap}>
               {GOALS_LIST.map(g => (
                 <TouchableOpacity
-                  key={g}
-                  style={[styles.chip, selectedGoals.includes(g) && styles.chipActive]}
-                  onPress={() => toggleGoal(g)}
+                  key={g.value}
+                  style={[styles.chip, selectedGoals.includes(g.value) && styles.chipActive]}
+                  onPress={() => toggleGoal(g.value)}
                 >
-                  <Text style={[styles.chipText, selectedGoals.includes(g) && styles.chipTextActive]}>{g}</Text>
+                  <Text style={[styles.chipText, selectedGoals.includes(g.value) && styles.chipTextActive]}>{t(g.labelKey)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={styles.label}>2. Tell us about your current struggles (Optional)</Text>
+            <Text style={styles.label}>{t('wellness.label_struggles')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. Having panic attacks at work..."
+              placeholder={t('wellness.placeholder_struggles')}
               value={struggles}
               onChangeText={setStruggles}
               multiline
@@ -166,25 +171,25 @@ const WellnessPlanScreen = ({ navigation }) => {
               placeholderTextColor={colors.gray}
             />
 
-            <Text style={styles.label}>3. Preferred Pace</Text>
+            <Text style={styles.label}>{t('wellness.label_pace')}</Text>
             <View style={styles.paceRow}>
               {PACES.map(p => (
                 <TouchableOpacity
-                  key={p}
-                  style={[styles.paceBtn, pace === p && styles.paceBtnActive]}
-                  onPress={() => setPace(p)}
+                  key={p.value}
+                  style={[styles.paceBtn, pace === p.value && styles.paceBtnActive]}
+                  onPress={() => setPace(p.value)}
                 >
-                  <Text style={[styles.paceText, pace === p && styles.paceTextActive]}>{p}</Text>
+                  <Text style={[styles.paceText, pace === p.value && styles.paceTextActive]}>{t(p.labelKey)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <TouchableOpacity 
-              style={styles.submitBtn} 
+            <TouchableOpacity
+              style={styles.submitBtn}
               onPress={submitRequest}
               disabled={submitting}
             >
-              {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.submitBtnText}>Submit Request</Text>}
+              {submitting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.submitBtnText}>{t('wellness.submit_request')}</Text>}
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -192,7 +197,6 @@ const WellnessPlanScreen = ({ navigation }) => {
     );
   }
 
-  // 2️⃣ Render Awaiting Admin
   if (planData.status === 'awaiting_admin') {
     return (
       <View style={styles.container}>
@@ -200,16 +204,16 @@ const WellnessPlanScreen = ({ navigation }) => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <MaterialCommunityIcons name="arrow-left" size={24} color={colors.white} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Wellness Plan</Text>
+          <Text style={styles.headerTitle}>{t('wellness.plan_title')}</Text>
         </View>
         <View style={styles.centeredPending}>
           <MaterialCommunityIcons name="clipboard-text-clock" size={60} color={colors.primary} />
-          <Text style={styles.pendingTitle}>Plan is being built...</Text>
+          <Text style={styles.pendingTitle}>{t('wellness.pending_title')}</Text>
           <Text style={styles.pendingText}>
-            Our team is reviewing your goals and creating a custom 30-day routine for you. Check back soon!
+            {t('wellness.pending_text')}
           </Text>
           <View style={styles.pendingGoalsBox}>
-            <Text style={styles.pendingGoalsLabel}>Your focus areas:</Text>
+            <Text style={styles.pendingGoalsLabel}>{t('wellness.pending_focus_label')}</Text>
             {planData.goals.map(g => <Text key={g} style={styles.pendingGoalItem}>• {g}</Text>)}
           </View>
         </View>
@@ -217,29 +221,29 @@ const WellnessPlanScreen = ({ navigation }) => {
     );
   }
 
-  // 3️⃣ Render Active Plan
   const currentDayData = planData.dailyPlans?.find(d => d.dayNumber === activeDay) || null;
   const totalTasks = planData.dailyPlans?.reduce((acc, d) => acc + d.tasks.length, 0) || 1;
   const progressPercent = Math.round((planData.progress / totalTasks) * 100);
 
   return (
     <View style={styles.container}>
-      {/* Dynamic Header */}
       <View style={[styles.header, { paddingBottom: 24 }]}>
         <View style={styles.headerTop}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <MaterialCommunityIcons name="arrow-left" size={24} color={colors.white} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>My Wellness Plan</Text>
+            <Text style={styles.headerTitle}>{t('wellness.my_plan_title')}</Text>
             <Text style={styles.headerFocus}>{planData.planFocus}</Text>
           </View>
         </View>
 
         <View style={styles.progressBox}>
           <View style={styles.progressTextRow}>
-            <Text style={styles.progressLabel}>Overall Progress</Text>
-            <Text style={styles.progressValue}>{progressPercent}% ({planData.progress}/{totalTasks})</Text>
+            <Text style={styles.progressLabel}>{t('wellness.overall_progress')}</Text>
+            <Text style={styles.progressValue}>
+              {t('wellness.progress_value', { percent: progressPercent, completed: planData.progress, total: totalTasks })}
+            </Text>
           </View>
           <View style={styles.progressBarBg}>
             <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
@@ -254,11 +258,10 @@ const WellnessPlanScreen = ({ navigation }) => {
         </View>
       ) : null}
 
-      {/* Days Timeline Horizontal Scroll */}
       <View style={styles.timelineWrap}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timelineScroll}>
           {planData.dailyPlans?.map(d => {
-            const allDone = d.tasks.length > 0 && d.tasks.every(t => t.completed);
+            const allDone = d.tasks.length > 0 && d.tasks.every(task => task.completed);
             const isActive = d.dayNumber === activeDay;
             return (
               <TouchableOpacity
@@ -269,17 +272,16 @@ const WellnessPlanScreen = ({ navigation }) => {
                 <Text style={[styles.dayCircleNum, isActive && styles.dayCircleNumActive, allDone && { color: colors.white }]}>
                   {allDone ? '✓' : d.dayNumber}
                 </Text>
-                <Text style={[styles.dayCircleLabel, isActive && styles.dayCircleLabelActive, allDone && { color: colors.white }]}>Day</Text>
+                <Text style={[styles.dayCircleLabel, isActive && styles.dayCircleLabelActive, allDone && { color: colors.white }]}>{t('wellness.day_label')}</Text>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
       </View>
 
-      {/* Tasks for Active Day */}
       <ScrollView contentContainerStyle={styles.tasksScroll}>
-        <Text style={styles.dayTitle}>Day {activeDay} Routine</Text>
-        
+        <Text style={styles.dayTitle}>{t('wellness.day_routine', { day: activeDay })}</Text>
+
         {currentDayData?.tasks?.map(task => (
           <TouchableOpacity
             key={task._id}
@@ -289,10 +291,10 @@ const WellnessPlanScreen = ({ navigation }) => {
             disabled={togglingTask === task._id}
           >
             <View style={[styles.taskIconBox, { backgroundColor: task.completed ? colors.white : colors.cream }]}>
-              <MaterialCommunityIcons 
-                name={TASK_ICONS[task.type] || 'star'} 
-                size={24} 
-                color={task.completed ? '#81C784' : colors.primary} 
+              <MaterialCommunityIcons
+                name={TASK_ICONS[task.type] || 'star'}
+                size={24}
+                color={task.completed ? '#81C784' : colors.primary}
               />
             </View>
             <View style={styles.taskInfo}>
@@ -315,7 +317,7 @@ const WellnessPlanScreen = ({ navigation }) => {
         ))}
 
         {(!currentDayData || currentDayData.tasks.length === 0) && (
-          <Text style={styles.emptyTasksHint}>No tasks assigned for this day. Rest up!</Text>
+          <Text style={styles.emptyTasksHint}>{t('wellness.empty_tasks')}</Text>
         )}
       </ScrollView>
 
@@ -352,8 +354,7 @@ const styles = StyleSheet.create({
   paceTextActive: { color: colors.white },
   submitBtn: { backgroundColor: colors.secondary, borderRadius: 24, paddingVertical: 16, alignItems: 'center', marginTop: 30 },
   submitBtnText: { color: colors.white, fontWeight: '700', fontSize: 16 },
-  
-  // Pending UI
+
   centeredPending: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   pendingTitle: { fontSize: 22, fontWeight: '800', color: colors.secondary, marginTop: 16, marginBottom: 8 },
   pendingText: { fontSize: 14, color: colors.gray, textAlign: 'center', marginBottom: 24, lineHeight: 22 },
@@ -361,7 +362,6 @@ const styles = StyleSheet.create({
   pendingGoalsLabel: { fontSize: 14, fontWeight: '700', color: colors.secondary, marginBottom: 8 },
   pendingGoalItem: { fontSize: 14, color: colors.primary, fontWeight: '500', marginBottom: 4 },
 
-  // Active Plan UI
   progressBox: { backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: 10, padding: 12 },
   progressTextRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   progressLabel: { color: colors.white, fontSize: 13, fontWeight: '600' },

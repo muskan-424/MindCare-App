@@ -14,7 +14,8 @@ const {
   classifyIntent,
   composeGroundedReply,
   shouldGateConfidence,
-  VERIFICATION_NOTE,
+  getVerificationNote,
+  fallbackString,
 } = require('./tinkChatService');
 const rag = require('./tinkRagService');
 const { LOOKUP_TOOLS, DRAFT_BUILDERS } = require('./tinkTools');
@@ -124,7 +125,7 @@ async function processAgenticChat({
     const needsAuth = LOOKUP_INTENTS.includes(intent) || ACTION_INTENTS.includes(intent);
     if (needsAuth && !userId) {
       result = {
-        reply: "I'd love to help with that, but I can't access your personal info until you're logged in. Please log in and ask me again.",
+        reply: fallbackString(lang, 'login_required'),
         suggestions: [], cards: [], crisis: false, mood: 'neutral', detectedLanguage: lang,
       };
       confidence = 0.9;
@@ -146,7 +147,7 @@ async function processAgenticChat({
       }
 
       const gateLlm = shouldGateConfidence(confidence) && !crisisFlag;
-      if (gateLlm) verificationNote = VERIFICATION_NOTE;
+      if (gateLlm) verificationNote = getVerificationNote(lang);
 
       const composed = await composeGroundedReply({
         intent, message: trimmed, facts, sources, language: lang,

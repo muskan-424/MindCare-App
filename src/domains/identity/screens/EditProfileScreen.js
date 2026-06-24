@@ -20,7 +20,8 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import Entypo from 'react-native-vector-icons/Entypo';
-import { concerns } from '../../../constants/concerns';
+import { concerns, getConcernLabel } from '../../../constants/concerns';
+import useTranslation from '../../../utils/i18n';
 import { updateUser } from '../../../redux/actions/profile';
 import { connect } from 'react-redux';
 import { getAvatarForGender } from '../../../utils/avatar';
@@ -36,9 +37,9 @@ const renderGenderRadio = (value, checked, setChecked) => (
   />
 );
 
-const renderProblem = (prob, selectedConcerns, setSelectedConcerns) => (
+const renderProblem = (prob, selectedConcerns, setSelectedConcerns, t) => (
   <View style={styles.checkbox}>
-    <Text style={{ width: '57%' }}>{prob.name}</Text>
+    <Text style={{ width: '57%' }}>{getConcernLabel(prob, t)}</Text>
     <Checkbox
       color={colors.primary}
       status={selectedConcerns.includes(prob.id) ? 'checked' : 'unchecked'}
@@ -56,6 +57,7 @@ const renderProblem = (prob, selectedConcerns, setSelectedConcerns) => (
 );
 
 const Profile = props => {
+  const { t } = useTranslation();
   const [checked, setChecked] = useState(props.auth.profile.gender);
   const [selectedConcerns, setSelectedConcerns] = useState(
     props.auth.profile.concerns,
@@ -257,7 +259,7 @@ const Profile = props => {
               {concerns.map(prob => {
                 return (
                   <View key={prob.id} style={styles.problemsPart}>
-                    {renderProblem(prob, selectedConcerns, setSelectedConcerns)}
+                    {renderProblem(prob, selectedConcerns, setSelectedConcerns, t)}
                   </View>
                 );
               })}

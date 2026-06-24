@@ -57,10 +57,15 @@ const renderWithStore = (lang, keyPath, fallback) => {
 // 1. Translations dictionary structure
 // ─────────────────────────────────────────────────────────────────────────────
 describe('1. Translations dictionary structure', () => {
-  const EXPECTED_LANGS = ['en', 'hi', 'pa', 'mr', 'bn', 'te', 'ta', 'gu', 'kn', 'ml', 'es'];
-  const EXPECTED_SECTIONS = ['language', 'home', 'mood', 'profile', 'peer', 'groups', 'common'];
+  const EXPECTED_LANGS = ['en', 'hi', 'pa', 'mr', 'bn', 'te', 'ta', 'gu', 'kn', 'ml', 'es', 'fr', 'de', 'pt', 'ar', 'zh'];
+  const EXPECTED_SECTIONS = [
+    'language', 'home', 'mood', 'mood_check', 'profile', 'peer', 'groups', 'common',
+    'auth', 'crisis', 'concerns', 'journal', 'chat', 'goals', 'wellness', 'badges',
+    'breathing', 'affirmations', 'gratitude', 'grounding', 'blog', 'streak',
+    'appointments', 'therapy', 'assessment', 'admin', 'safety', 'emergency', 'institution',
+  ];
 
-  test('should contain all 11 supported languages', () => {
+  test('should contain all 16 supported languages', () => {
     EXPECTED_LANGS.forEach(lang => {
       expect(translations).toHaveProperty(lang);
     });
@@ -172,6 +177,16 @@ describe('4. useTranslation hook — Punjabi', () => {
     const json = renderWithStore('pa', 'language.select');
     expect(json).toContain('ਭਾਸ਼ਾ ਚੁਣੋ');
   });
+
+  test('resolves auth.login in Hindi', () => {
+    const json = renderWithStore('hi', 'auth.login');
+    expect(json).toContain('लॉगिन');
+  });
+
+  test('resolves crisis.title in Hindi', () => {
+    const json = renderWithStore('hi', 'crisis.title');
+    expect(json).toContain('संकट');
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -245,11 +260,45 @@ describe('7. Redux — auth reducer SET_LANGUAGE action', () => {
     expect(state.language).toBe('es');
   });
 
-  test('LOGOUT action resets language back to "en"', () => {
+  test('LOGOUT action preserves language preference', () => {
     let state = authReducer(undefined, { type: SET_LANGUAGE, payload: 'hi' });
     expect(state.language).toBe('hi');
     state = authReducer(state, { type: 'LOGOUT' });
-    expect(state.language).toBe('en');
+    expect(state.language).toBe('hi');
+    expect(state.isLogin).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 9. Interpolation support
+// ─────────────────────────────────────────────────────────────────────────────
+describe('9. Interpolation support', () => {
+  test('replaces {name} placeholder in profile.join_success', () => {
+    const store = createLangStore('en');
+    let text;
+    renderer.act(() => {
+      const Comp = () => {
+        const { t } = useTranslation();
+        text = t('profile.join_success', { name: 'TestOrg' });
+        return null;
+      };
+      renderer.create(
+        <Provider store={store}>
+          <Comp />
+        </Provider>,
+      );
+    });
+    expect(text).toContain('TestOrg');
+  });
+
+  test('Hindi mood_check.title resolves correctly', () => {
+    const json = renderWithStore('hi', 'mood_check.title');
+    expect(json).toContain('आप कैसा महसूस कर रहे हैं');
+  });
+
+  test('Hindi appointments.title resolves correctly', () => {
+    const json = renderWithStore('hi', 'appointments.title');
+    expect(json).toContain('अपॉइंटमेंट');
   });
 });
 

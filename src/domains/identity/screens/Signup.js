@@ -19,8 +19,18 @@ import { RadioButton } from 'react-native-paper';
 import { register } from '../../../redux/actions/auth';
 import { validateEmail, validatePhone, validatePassword } from '../../../utils/validation';
 import { connect } from 'react-redux';
+import useTranslation from '../../../utils/i18n';
+import LanguagePicker from '../../../components/LanguagePicker';
+
+const ROLE_KEYS = {
+  Psychologist: 'auth.roles.psychologist',
+  Psychiatrist: 'auth.roles.psychiatrist',
+  Counsellor: 'auth.roles.counsellor',
+  'Social Worker': 'auth.roles.social_worker',
+};
 
 const Signup = props => {
+  const { t } = useTranslation();
   const [state, setState] = useState({
     fullName: '',
     email: '',
@@ -30,7 +40,7 @@ const Signup = props => {
     password: '',
     password2: '',
     isClinician: false,
-    specialisation: 'Psychologist'
+    specialisation: 'Psychologist',
   });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -41,17 +51,17 @@ const Signup = props => {
     setError('');
 
     if (!state.fullName || !state.fullName.trim()) {
-      setError('Full name is required');
+      setError(t('auth.validation.full_name_required'));
       return;
     }
 
-    const emailCheck = validateEmail(state.email);
+    const emailCheck = validateEmail(state.email, t);
     if (!emailCheck.valid) {
       setError(emailCheck.message);
       return;
     }
 
-    const phoneCheck = validatePhone(state.phone_no);
+    const phoneCheck = validatePhone(state.phone_no, t);
     if (!phoneCheck.valid) {
       setError(phoneCheck.message);
       return;
@@ -59,23 +69,23 @@ const Signup = props => {
 
     const ageNum = parseInt(state.age, 10);
     if (isNaN(ageNum) || ageNum <= 0 || ageNum >= 150) {
-      setError('Please enter a valid age (1–150)');
+      setError(t('auth.validation.age_invalid'));
       return;
     }
 
     if (!state.gender) {
-      setError('Please select gender');
+      setError(t('auth.validation.gender_required'));
       return;
     }
 
-    const passwordCheck = validatePassword(state.password);
+    const passwordCheck = validatePassword(state.password, t);
     if (!passwordCheck.valid) {
       setError(passwordCheck.message);
       return;
     }
 
     if (state.password !== state.password2) {
-      setError('Passwords do not match');
+      setError(t('auth.validation.passwords_mismatch'));
       return;
     }
 
@@ -91,12 +101,12 @@ const Signup = props => {
         role: state.isClinician ? 'clinician' : 'user',
         specialisation: state.isClinician ? state.specialisation : '',
       });
-      // Success: auth state updates and user is navigated; confirmation shows on Home
     } catch (err) {
-      setError(err.message || 'Signup failed. Please try again.');
+      setError(err.message || t('auth.signup_failed'));
     }
     setLoading(false);
   };
+
   return (
     <KeyboardAvoidingView
       style={styles.flexOne}
@@ -115,26 +125,22 @@ const Signup = props => {
               source={require('../../../assets/yoga_main.jpg')}
               style={{
                 width: Dimensions.get('screen').width,
-                height: 160
+                height: 160,
               }}
             />
           </View>
           <View style={styles.signUpContainer}>
-            <Text style={styles.headerText}>Signup</Text>
+            <LanguagePicker compact />
+            <Text style={styles.headerText}>{t('auth.signup_title')}</Text>
             <TextInput
               style={styles.textInput}
-              placeholder={'Full Name'}
+              placeholder={t('auth.full_name')}
               value={state.fullName}
-              onChangeText={text =>
-                setState({
-                  ...state,
-                  fullName: text
-                })
-              }
+              onChangeText={text => setState({ ...state, fullName: text })}
             />
             <TextInput
               style={[styles.textInput, error && styles.inputError]}
-              placeholder={'Email'}
+              placeholder={t('auth.email')}
               placeholderTextColor={colors.gray}
               value={state.email}
               onChangeText={text => {
@@ -146,7 +152,7 @@ const Signup = props => {
             />
             <TextInput
               style={[styles.textInput, error && styles.inputError]}
-              placeholder={'Phone Number'}
+              placeholder={t('auth.phone')}
               placeholderTextColor={colors.gray}
               keyboardType="phone-pad"
               maxLength={10}
@@ -158,64 +164,44 @@ const Signup = props => {
             />
             <TextInput
               style={[styles.textInput, error && styles.inputError]}
-              placeholder={'Age'}
+              placeholder={t('auth.age')}
               keyboardType="numeric"
               value={state.age}
-              onChangeText={text => {
-                setState({
-                  ...state,
-                  age: text
-                });
-              }}
+              onChangeText={text => setState({ ...state, age: text })}
             />
             <View style={styles.radioButton}>
               <View style={styles.radio}>
-                <Text style={{ color: colors.secondary }}>Male</Text>
+                <Text style={{ color: colors.secondary }}>{t('auth.male')}</Text>
                 <RadioButton
                   value="male"
                   color={colors.secondary}
                   status={state.gender === 'male' ? 'checked' : 'unchecked'}
-                  onPress={() => {
-                    setState({
-                      ...state,
-                      gender: 'male'
-                    });
-                  }}
+                  onPress={() => setState({ ...state, gender: 'male' })}
                 />
               </View>
               <View style={styles.radio}>
-                <Text style={{ color: colors.secondary }}>Female</Text>
+                <Text style={{ color: colors.secondary }}>{t('auth.female')}</Text>
                 <RadioButton
                   value="female"
                   color={colors.secondary}
                   status={state.gender === 'female' ? 'checked' : 'unchecked'}
-                  onPress={() => {
-                    setState({
-                      ...state,
-                      gender: 'female'
-                    });
-                  }}
+                  onPress={() => setState({ ...state, gender: 'female' })}
                 />
               </View>
               <View style={styles.radio}>
-                <Text style={{ color: colors.secondary }}>Other</Text>
+                <Text style={{ color: colors.secondary }}>{t('auth.other')}</Text>
                 <RadioButton
                   color={colors.secondary}
                   value="other"
                   status={state.gender === 'other' ? 'checked' : 'unchecked'}
-                  onPress={() => {
-                    setState({
-                      ...state,
-                      gender: 'other'
-                    });
-                  }}
+                  onPress={() => setState({ ...state, gender: 'other' })}
                 />
               </View>
             </View>
             <View style={styles.passwordRow}>
               <TextInput
                 style={[styles.textInput, styles.passwordInput, error && styles.inputError]}
-                placeholder={'Password'}
+                placeholder={t('auth.password')}
                 placeholderTextColor={colors.gray}
                 value={state.password}
                 onChangeText={text => {
@@ -238,7 +224,7 @@ const Signup = props => {
             <View style={styles.passwordRow}>
               <TextInput
                 style={[styles.textInput, styles.passwordInput, error && styles.inputError]}
-                placeholder={'Confirm Password'}
+                placeholder={t('auth.confirm_password')}
                 placeholderTextColor={colors.gray}
                 value={state.password2}
                 onChangeText={text => {
@@ -259,30 +245,34 @@ const Signup = props => {
               </TouchableOpacity>
             </View>
             <View style={styles.clinicianToggleContainer}>
-              <Text style={styles.clinicianToggleText}>Register as a Professional Clinician</Text>
+              <Text style={styles.clinicianToggleText}>{t('auth.register_clinician')}</Text>
               <Switch
                 value={state.isClinician}
-                onValueChange={(val) => setState({ ...state, isClinician: val })}
+                onValueChange={val => setState({ ...state, isClinician: val })}
                 trackColor={{ false: '#767577', true: colors.primary }}
                 thumbColor={state.isClinician ? colors.white : '#f4f3f4'}
               />
             </View>
             {state.isClinician && (
               <View style={styles.specialisationContainer}>
-                <Text style={styles.specialisationTitle}>Select your role:</Text>
-                {['Psychologist', 'Psychiatrist', 'Counsellor', 'Social Worker'].map(role => (
+                <Text style={styles.specialisationTitle}>{t('auth.select_role')}</Text>
+                {Object.keys(ROLE_KEYS).map(role => (
                   <TouchableOpacity
                     key={role}
                     style={[
                       styles.specChip,
-                      state.specialisation === role && styles.specChipActive
+                      state.specialisation === role && styles.specChipActive,
                     ]}
                     onPress={() => setState({ ...state, specialisation: role })}
                   >
-                    <Text style={[
-                      styles.specChipText,
-                      state.specialisation === role && styles.specChipTextActive
-                    ]}>{role}</Text>
+                    <Text
+                      style={[
+                        styles.specChipText,
+                        state.specialisation === role && styles.specChipTextActive,
+                      ]}
+                    >
+                      {t(ROLE_KEYS[role])}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -293,12 +283,12 @@ const Signup = props => {
                 {loading ? (
                   <ActivityIndicator color={colors.white} size="small" />
                 ) : (
-                  <Text style={styles.submitText}>Signup</Text>
+                  <Text style={styles.submitText}>{t('auth.signup_button')}</Text>
                 )}
               </View>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => props.navigation.navigate('Login')}>
-              <Text style={styles.already}>Already have an account?</Text>
+              <Text style={styles.already}>{t('auth.has_account')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -316,7 +306,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     position: 'relative',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   signUpContainer: {
     backgroundColor: colors.white,
@@ -327,10 +317,10 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 15,
     top: -20,
     zIndex: 200,
-    width: '100%'
+    width: '100%',
   },
   scrollContent: {
-    flexGrow: 1
+    flexGrow: 1,
   },
   flexOne: {
     flex: 1,
@@ -345,7 +335,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     elevation: 1,
     padding: 10,
-    color: colors.black
+    color: colors.black,
   },
   passwordRow: {
     position: 'relative',
@@ -370,11 +360,11 @@ const styles = StyleSheet.create({
   radioButton: {
     flexDirection: 'row',
     paddingLeft: 20,
-    width: '100%'
+    width: '100%',
   },
   radio: {
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   submitButton: {
     alignSelf: 'center',
@@ -383,14 +373,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.yellow,
     height: 40,
-    borderRadius: 60
+    borderRadius: 60,
   },
   submitText: {
     color: colors.white,
     textTransform: 'uppercase',
     fontWeight: 'bold',
     fontSize: 15,
-    letterSpacing: 2
+    letterSpacing: 2,
   },
   headerText: {
     color: colors.secondary,
@@ -398,7 +388,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     padding: 10,
     alignSelf: 'center',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   errorText: {
     color: colors.redPink || '#c62828',
@@ -406,16 +396,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginHorizontal: 16,
     marginTop: 4,
-    marginBottom: 8
+    marginBottom: 8,
   },
   submitButtonDisabled: {
-    opacity: 0.7
+    opacity: 0.7,
   },
   already: {
     alignSelf: 'flex-end',
     paddingRight: 20,
     paddingBottom: 10,
-    color: colors.secondary
+    color: colors.secondary,
   },
   clinicianToggleContainer: {
     flexDirection: 'row',
@@ -428,7 +418,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginHorizontal: 10,
     borderWidth: 1,
-    borderColor: '#EFEFEF'
+    borderColor: '#EFEFEF',
   },
   clinicianToggleText: {
     color: colors.secondary,
@@ -468,5 +458,5 @@ const styles = StyleSheet.create({
   specChipTextActive: {
     color: colors.white,
     fontWeight: 'bold',
-  }
+  },
 });

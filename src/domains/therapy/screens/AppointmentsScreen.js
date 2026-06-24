@@ -6,6 +6,7 @@ import {
 import { connect } from 'react-redux';
 import api from '../../../utils/apiClient';
 import { colors } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
 const STATUS_COLORS = {
   awaiting_admin: '#9E9E9E',
@@ -15,17 +16,26 @@ const STATUS_COLORS = {
   completed: '#64B5F6',
 };
 
-const STATUS_CONFIG = {
-  awaiting_admin: { icon: '', label: 'Under Admin Review', hint: 'Admin is checking therapist availability for you.' },
-  pending:        { icon: '', label: 'Pending Confirmation', hint: 'Therapist assigned. Awaiting final confirmation.' },
-  confirmed:      { icon: '', label: 'Confirmed!', hint: 'Your session is set. See details below.' },
-  cancelled:      { icon: '', label: 'Cancelled', hint: 'This appointment was cancelled.' },
-  completed:      { icon: '', label: 'Completed', hint: 'Session completed. Hope it helped!' },
-};
-
 const FILTERS = ['all', 'awaiting_admin', 'confirmed', 'cancelled'];
 
 const AppointmentsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
+
+  const STATUS_CONFIG = {
+    awaiting_admin: { icon: '', label: t('appointments.status_awaiting_admin_label'), hint: t('appointments.status_awaiting_admin_hint') },
+    pending:        { icon: '', label: t('appointments.status_pending_label'), hint: t('appointments.status_pending_hint') },
+    confirmed:      { icon: '', label: t('appointments.status_confirmed_label'), hint: t('appointments.status_confirmed_hint') },
+    cancelled:      { icon: '', label: t('appointments.status_cancelled_label'), hint: t('appointments.status_cancelled_hint') },
+    completed:      { icon: '', label: t('appointments.status_completed_label'), hint: t('appointments.status_completed_hint') },
+  };
+
+  const FILTER_LABELS = {
+    all: t('appointments.filter_all'),
+    awaiting_admin: t('appointments.filter_pending'),
+    confirmed: t('appointments.filter_confirmed'),
+    cancelled: t('appointments.filter_cancelled'),
+  };
+
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -53,10 +63,10 @@ const AppointmentsScreen = ({ navigation }) => {
         userNote: modNote
       });
       setEditingAppt(null);
-      Alert.alert('Success', 'Your request has been updated.');
+      Alert.alert(t('common.success'), t('appointments.update_success'));
       fetchAppointments(true);
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Could not update request.');
+      Alert.alert(t('common.error'), e.response?.data?.error || t('appointments.update_failed'));
     }
   };
 
@@ -66,30 +76,30 @@ const AppointmentsScreen = ({ navigation }) => {
       const res = await api.get('/api/appointments');
       setAppointments(res.data || []);
     } catch (e) {
-      Alert.alert('Error', 'Could not load appointments.');
+      Alert.alert(t('common.error'), t('appointments.load_failed'));
     }
     setLoading(false);
     setRefreshing(false);
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchAppointments();
   }, [fetchAppointments]);
 
   const cancelRequest = async (id, status) => {
-    const label = status === 'awaiting_admin' ? 'request' : 'appointment';
+    const isRequest = status === 'awaiting_admin';
     Alert.alert(
-      `Cancel ${label.charAt(0).toUpperCase() + label.slice(1)}`,
-      `Are you sure you want to cancel this ${label}?`,
+      t(isRequest ? 'appointments.cancel_request_title' : 'appointments.cancel_appointment_title'),
+      t(isRequest ? 'appointments.cancel_request_msg' : 'appointments.cancel_appointment_msg'),
       [
-        { text: 'No', style: 'cancel' },
+        { text: t('common.no'), style: 'cancel' },
         {
-          text: 'Yes, Cancel', style: 'destructive', onPress: async () => {
+          text: t('appointments.yes_cancel'), style: 'destructive', onPress: async () => {
             try {
               await api.patch(`/api/appointments/${id}/cancel`);
               setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'cancelled' } : a));
             } catch (e) {
-              Alert.alert('Error', e.response?.data?.error || 'Could not cancel.');
+              Alert.alert(t('common.error'), e.response?.data?.error || t('appointments.cancel_failed'));
             }
           },
         },
@@ -118,24 +128,24 @@ const AppointmentsScreen = ({ navigation }) => {
 
         {/* Request info */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Request</Text>
-          {item.requestedSpeciality ? <Text style={styles.detail}>Type: {item.requestedSpeciality}</Text> : null}
-          {item.preferredTime ? <Text style={styles.detail}>Time: {item.preferredTime} preference</Text> : null}
+          <Text style={styles.sectionTitle}>{t('appointments.your_request')}</Text>
+          {item.requestedSpeciality ? <Text style={styles.detail}>{t('appointments.detail_type', { value: item.requestedSpeciality })}</Text> : null}
+          {item.preferredTime ? <Text style={styles.detail}>{t('appointments.detail_time_pref', { time: item.preferredTime })}</Text> : null}
           {item.preferredDates?.length > 0 ? (
-            <Text style={styles.detail}>Preferred: {item.preferredDates.slice(0, 3).join(', ')}{item.preferredDates.length > 3 ? '...' : ''}</Text>
+            <Text style={styles.detail}>{t('appointments.detail_preferred', { dates: `${item.preferredDates.slice(0, 3).join(', ')}${item.preferredDates.length > 3 ? '...' : ''}` })}</Text>
           ) : null}
-          {item.userNote ? <Text style={styles.noteText}>Note: "{item.userNote}"</Text> : null}
+          {item.userNote ? <Text style={styles.noteText}>{t('appointments.detail_note', { note: item.userNote })}</Text> : null}
         </View>
 
         {/* Confirmed session details */}
         {(item.status === 'confirmed' || item.status === 'completed') && item.therapistName ? (
           <View style={[styles.section, styles.confirmedSection]}>
-            <Text style={styles.sectionTitle}>Assigned Session</Text>
+            <Text style={styles.sectionTitle}>{t('appointments.assigned_session')}</Text>
             <Text style={styles.therapistName}>{item.therapistName}</Text>
             {item.specialisation ? <Text style={styles.therapistSpec}>{item.specialisation}</Text> : null}
-            <Text style={styles.detail}>Date: {item.date ? new Date(item.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '—'}</Text>
-            <Text style={styles.detail}>Time: {item.timeSlot || '—'}</Text>
-            {item.adminNote ? <Text style={styles.adminNoteText}>Admin note: {item.adminNote}</Text> : null}
+            <Text style={styles.detail}>{t('appointments.detail_date', { date: item.date ? new Date(item.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '—' })}</Text>
+            <Text style={styles.detail}>{t('appointments.detail_time', { time: item.timeSlot || '—' })}</Text>
+            {item.adminNote ? <Text style={styles.adminNoteText}>{t('appointments.detail_admin_note', { note: item.adminNote })}</Text> : null}
           </View>
         ) : null}
 
@@ -143,10 +153,10 @@ const AppointmentsScreen = ({ navigation }) => {
         {(item.status === 'awaiting_admin' || item.status === 'pending') && (
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
             <TouchableOpacity style={[styles.cancelBtn, { flex: 1, marginTop: 0 }]} onPress={() => openModify(item)}>
-              <Text style={[styles.cancelBtnText, { color: colors.primary }]}>Modify</Text>
+              <Text style={[styles.cancelBtnText, { color: colors.primary }]}>{t('appointments.modify')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.cancelBtn, { flex: 1, marginTop: 0 }]} onPress={() => cancelRequest(item.id, item.status)}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
+              <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -158,9 +168,9 @@ const AppointmentsScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>← Back</Text>
+          <Text style={styles.backText}>← {t('common.back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Appointments</Text>
+        <Text style={styles.headerTitle}>{t('appointments.title')}</Text>
       </View>
 
       {/* Filter chips */}
@@ -173,7 +183,7 @@ const AppointmentsScreen = ({ navigation }) => {
           >
             <View style={[styles.filterDot, { backgroundColor: f === 'all' ? colors.secondary : STATUS_COLORS[f] }]} />
             <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-              {f === 'awaiting_admin' ? 'Pending' : f.charAt(0).toUpperCase() + f.slice(1)}
+              {FILTER_LABELS[f]}
             </Text>
           </TouchableOpacity>
         ))}
@@ -183,13 +193,13 @@ const AppointmentsScreen = ({ navigation }) => {
         <ActivityIndicator color={colors.primary} size="large" style={styles.loadingIndicator} />
       ) : filtered.length === 0 ? (
         <View style={styles.emptyWrap}>
-          <Text style={styles.emptyTitle}>{filter === 'all' ? 'No appointments yet' : `No ${filter} requests`}</Text>
+          <Text style={styles.emptyTitle}>{filter === 'all' ? t('appointments.empty_title') : t('appointments.empty_filter_title', { filter: FILTER_LABELS[filter] || filter })}</Text>
           <Text style={styles.emptyText}>
-            {filter === 'all' ? 'Submit a consultation request and our admin team will assign you a therapist.' : `You have no ${filter} appointments right now.`}
+            {filter === 'all' ? t('appointments.empty_all_text') : t('appointments.empty_filter_text', { filter: FILTER_LABELS[filter] || filter })}
           </Text>
           {filter === 'all' && (
             <TouchableOpacity style={styles.newReqBtn} onPress={() => navigation.navigate('TherapistHome')}>
-              <Text style={styles.newReqText}>Request a Consultation</Text>
+              <Text style={styles.newReqText}>{t('appointments.request_consultation')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -207,39 +217,39 @@ const AppointmentsScreen = ({ navigation }) => {
       <Modal visible={!!editingAppt} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Modify Request</Text>
+            <Text style={styles.modalTitle}>{t('appointments.modify_request')}</Text>
             
-            <Text style={styles.label}>Preferred Dates (comma separated)</Text>
+            <Text style={styles.label}>{t('appointments.preferred_dates_label')}</Text>
             <TextInput
               style={styles.input}
               value={modDates}
               onChangeText={setModDates}
-              placeholder="e.g. 2026-05-10, 2026-05-12"
+              placeholder={t('appointments.preferred_dates_placeholder')}
             />
 
-            <Text style={styles.label}>Preferred Time</Text>
+            <Text style={styles.label}>{t('appointments.preferred_time_label')}</Text>
             <TextInput
               style={styles.input}
               value={modTime}
               onChangeText={setModTime}
-              placeholder="e.g. morning, evening"
+              placeholder={t('appointments.preferred_time_placeholder')}
             />
 
-            <Text style={styles.label}>Notes</Text>
+            <Text style={styles.label}>{t('appointments.notes_label')}</Text>
             <TextInput
               style={[styles.input, { minHeight: 60 }]}
               value={modNote}
               onChangeText={setModNote}
-              placeholder="Your extra notes..."
+              placeholder={t('appointments.notes_placeholder')}
               multiline
             />
 
             <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
               <TouchableOpacity style={[styles.modalBtn, { backgroundColor: colors.gray3 }]} onPress={() => setEditingAppt(null)}>
-                <Text style={styles.modalBtnText}>Cancel</Text>
+                <Text style={styles.modalBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.modalBtn, { backgroundColor: colors.primary }]} onPress={submitModify}>
-                <Text style={styles.modalBtnText}>Save</Text>
+                <Text style={styles.modalBtnText}>{t('common.save')}</Text>
               </TouchableOpacity>
             </View>
           </View>

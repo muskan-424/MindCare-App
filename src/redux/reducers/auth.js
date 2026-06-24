@@ -44,6 +44,7 @@ export default function(state = initialState, action) {
     case LOGOUT:
       return {
         ...initialState,
+        language: state.language,
       };
     case CLEAR_WELCOME:
 

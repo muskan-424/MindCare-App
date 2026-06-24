@@ -15,9 +15,10 @@ import { colors } from '../../../constants/theme';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import useTranslation from '../../../utils/i18n';
+import { formatDateTime } from '../../../utils/locale';
 
 const GroupSessionsScreen = ({ navigation }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [myGroups, setMyGroups] = useState([]);
   const [allGroups, setAllGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,8 +79,7 @@ const GroupSessionsScreen = ({ navigation }) => {
         <View style={styles.cardHeader}>
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.date}>
-            {d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}{' '}
-            {d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {formatDateTime(d, language, { month: 'short', day: 'numeric' }, { hour: '2-digit', minute: '2-digit' })}
           </Text>
         </View>
         <Text style={styles.desc}>{item.description}</Text>

@@ -1,17 +1,20 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking } from 'react-native';
 import { colors, sizes } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
 const LINES = [
-  { name: 'Vandrevala Foundation', number: '1860-2662-345', note: '24/7 mental health support (India)' },
-  { name: 'iCall', number: '9152987821', note: 'Mon–Sat, 10am–10pm (India)' },
-  { name: 'Kiran', number: '1800-599-0019', note: '24/7 (India)' },
-  { name: 'Samaritans', number: '116 123', note: '24/7 (UK)' },
-  { name: 'Crisis Text Line', number: 'Text HOME to 741741', note: '24/7 (US)' },
-  { name: 'International Association for Suicide Prevention', note: 'findahelpline.com', url: 'https://findahelpline.com' },
+  { nameKey: 'crisis.vandrevala', number: '1860-2662-345', noteKey: 'crisis.vandrevala_note' },
+  { nameKey: 'crisis.icall', number: '9152987821', noteKey: 'crisis.icall_note' },
+  { nameKey: 'crisis.kiran', number: '1800-599-0019', noteKey: 'crisis.kiran_note' },
+  { nameKey: 'crisis.samaritans', number: '116 123', noteKey: 'crisis.samaritans_note' },
+  { nameKey: 'crisis.crisis_text_line', number: 'Text HOME to 741741', noteKey: 'crisis.crisis_text_line_note' },
+  { nameKey: 'crisis.iasp', noteKey: 'crisis.iasp_note', url: 'https://findahelpline.com' },
 ];
 
 const CrisisResourcesScreen = ({ navigation }) => {
+  const { t } = useTranslation();
+
   const openUrl = (url) => {
     if (url) Linking.openURL(url).catch(() => {});
   };
@@ -24,25 +27,25 @@ const CrisisResourcesScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-        <Text style={styles.backText}>← Back</Text>
+        <Text style={styles.backText}>← {t('common.back')}</Text>
       </TouchableOpacity>
-      <Text style={styles.title}>Crisis & support</Text>
-      <Text style={styles.subtitle}>You matter. Reach out anytime.</Text>
+      <Text style={styles.title}>{t('crisis.title')}</Text>
+      <Text style={styles.subtitle}>{t('crisis.subtitle')}</Text>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Talk to someone you trust</Text>
-          <Text style={styles.cardText}>A friend, family member, or counselor can help. You don’t have to go through this alone.</Text>
+          <Text style={styles.cardTitle}>{t('crisis.talk_trusted_title')}</Text>
+          <Text style={styles.cardText}>{t('crisis.talk_trusted_text')}</Text>
         </View>
         {LINES.map((line, i) => (
           <TouchableOpacity
             key={i}
             style={styles.lineCard}
-            onPress={() => line.url ? openUrl(line.url) : dial(line.number)}
+            onPress={() => (line.url ? openUrl(line.url) : dial(line.number))}
             activeOpacity={0.8}
           >
-            <Text style={styles.lineName}>{line.name}</Text>
+            <Text style={styles.lineName}>{t(line.nameKey)}</Text>
             {line.number ? <Text style={styles.lineNumber}>{line.number}</Text> : null}
-            <Text style={styles.lineNote}>{line.note}</Text>
+            <Text style={styles.lineNote}>{t(line.noteKey)}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -63,7 +66,17 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.accent, borderRadius: 12, padding: 16, marginBottom: 16 },
   cardTitle: { fontSize: 16, fontWeight: '700', color: colors.secondary, marginBottom: 6 },
   cardText: { fontSize: 14, color: colors.secondary, opacity: 0.9 },
-  lineCard: { backgroundColor: colors.white, borderRadius: 12, padding: 16, marginBottom: 10, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4 },
+  lineCard: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+  },
   lineName: { fontSize: 16, fontWeight: '700', color: colors.secondary },
   lineNumber: { fontSize: 18, color: colors.primary, marginTop: 4, fontWeight: '600' },
   lineNote: { fontSize: 12, color: colors.gray, marginTop: 4 },

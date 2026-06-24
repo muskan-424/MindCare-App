@@ -42,6 +42,7 @@
     "react-native-image-overlay": "^0.1.2",
     "react-native-image-pan-zoom": "^2.1.12",
     "react-native-image-picker": "^8.2.1",
+    "react-native-localize": "^3.7.0",
     "react-native-masonry-brick-list": "^1.0.3",
     "react-native-nitro-image": "^0.14.0",
     "react-native-nitro-modules": "^0.35.6",

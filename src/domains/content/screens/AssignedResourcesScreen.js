@@ -6,6 +6,7 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import api from '../../../utils/apiClient';
 import { colors } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
 const ICONS = {
   video: 'play-circle',
@@ -14,6 +15,7 @@ const ICONS = {
 };
 
 const AssignedResourcesScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [resources, setResources] = useState([]);
 
@@ -25,7 +27,7 @@ const AssignedResourcesScreen = ({ navigation }) => {
           setResources(res.data.resources);
         }
       } catch (err) {
-        Alert.alert('Error', 'Failed to load recommended resources.');
+        Alert.alert(t('common.error'), t('blog.error_load'));
       }
       setLoading(false);
     };
@@ -34,7 +36,7 @@ const AssignedResourcesScreen = ({ navigation }) => {
 
   const openUrl = (url) => {
     Linking.openURL(url).catch(() => {
-      Alert.alert('Error', 'Could not open this resource link.');
+      Alert.alert(t('common.error'), t('blog.error_open_link'));
     });
   };
 
@@ -52,20 +54,20 @@ const AssignedResourcesScreen = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <MaterialCommunityIcons name="arrow-left" size={24} color={colors.white} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>For You</Text>
+        <Text style={styles.headerTitle}>{t('blog.resources_title')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.bannerBox}>
           <MaterialCommunityIcons name="star-shooting" size={32} color={colors.secondary} style={{ marginBottom: 8 }} />
-          <Text style={styles.bannerTitle}>Curated Resources</Text>
+          <Text style={styles.bannerTitle}>{t('blog.resources_banner_title')}</Text>
           <Text style={styles.bannerText}>
-            These verified resources were individually assigned to you by our care team following your check-ins.
+            {t('blog.resources_banner_text')}
           </Text>
         </View>
 
         {resources.length === 0 ? (
-          <Text style={styles.emptyHint}>No resources have been assigned to you yet.</Text>
+          <Text style={styles.emptyHint}>{t('blog.resources_empty')}</Text>
         ) : (
           resources.map((res, index) => (
             <TouchableOpacity
@@ -81,7 +83,10 @@ const AssignedResourcesScreen = ({ navigation }) => {
                 <Text style={styles.resType}>{res.type.toUpperCase()}</Text>
                 <Text style={styles.resTitle}>{res.title}</Text>
                 <Text style={styles.resDate}>
-                  Assigned {new Date(res.assignedAt).toLocaleDateString()} after your {res.reportCategory?.replace(/_/g, ' ')} check-in
+                  {t('blog.assigned_date', {
+                    date: new Date(res.assignedAt).toLocaleDateString(),
+                    category: res.reportCategory?.replace(/_/g, ' '),
+                  })}
                 </Text>
               </View>
               <MaterialCommunityIcons name="chevron-right" size={24} color={colors.primary} />

@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { connect } from 'react-redux';
 import { colors, sizes } from '../../../constants/theme';
-import { concerns } from '../../../constants/concerns';
+import { concerns, getConcernLabel } from '../../../constants/concerns';
+import useTranslation from '../../../utils/i18n';
 import api from '../../../utils/apiClient';
 
 const GOALS = [
@@ -27,6 +28,7 @@ const DAYS_OPTIONS = [3, 4, 5, 7];
 const PREFERRED_TYPES = ['Yoga', 'Meditation', 'Cardio', 'Stretching'];
 
 const FitnessCoachScreen = ({ navigation, auth }) => {
+  const { t } = useTranslation();
   const [step, setStep] = useState('form'); // 'form' | 'plan'
   const [goal, setGoal] = useState('General wellness');
   const [durationMinutes, setDurationMinutes] = useState(15);
@@ -207,11 +209,11 @@ const FitnessCoachScreen = ({ navigation, auth }) => {
           {concerns.map((c) => (
             <TouchableOpacity
               key={c.id}
-              style={[styles.chipSmall, selectedConcernNames.includes(c.name) && styles.chipActive]}
-              onPress={() => toggleConcern(c.name)}
+              style={[styles.chipSmall, selectedConcernNames.includes(c.apiName) && styles.chipActive]}
+              onPress={() => toggleConcern(c.apiName)}
             >
-              <Text style={[styles.chipTextSmall, selectedConcernNames.includes(c.name) && styles.chipTextActive]} numberOfLines={1}>
-                {c.name}
+              <Text style={[styles.chipTextSmall, selectedConcernNames.includes(c.apiName) && styles.chipTextActive]} numberOfLines={1}>
+                {getConcernLabel(c, t)}
               </Text>
             </TouchableOpacity>
           ))}

@@ -5,23 +5,25 @@ import {
 } from 'react-native';
 import api from '../../../utils/apiClient';
 import { colors } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const CATEGORIES = [
-    { label: 'Progress',  icon: 'trending-up',     color: '#4CAF50' },
-    { label: 'Clinical',  icon: 'stethoscope',     color: '#2196F3' },
-    { label: 'Crisis',    icon: 'alert-decagram',  color: '#F44336' },
-    { label: 'Follow-up', icon: 'calendar-clock',  color: '#FF9800' }
+    { id: 'Progress',  icon: 'trending-up',     color: '#4CAF50', labelKey: 'history_cat_progress' },
+    { id: 'Clinical',  icon: 'stethoscope',     color: '#2196F3', labelKey: 'history_cat_clinical' },
+    { id: 'Crisis',    icon: 'alert-decagram',  color: '#F44336', labelKey: 'history_cat_crisis' },
+    { id: 'Follow-up', icon: 'calendar-clock',  color: '#FF9800', labelKey: 'history_cat_followup' }
 ];
 
 const CONFIDENTIALITY_LEVELS = [
-    { level: 1, label: 'Low',    icon: 'lock-open-outline',  color: '#4CAF50', desc: 'General progress note' },
-    { level: 2, label: 'Medium', icon: 'lock-outline',       color: '#FF9800', desc: 'Sensitive clinical info' },
-    { level: 3, label: 'High',   icon: 'lock',               color: '#F44336', desc: 'Crisis / restricted access' },
+    { level: 1, labelKey: 'note_conf_low', descKey: 'note_conf_low_desc', icon: 'lock-open-outline',  color: '#4CAF50' },
+    { level: 2, labelKey: 'note_conf_medium', descKey: 'note_conf_medium_desc', icon: 'lock-outline',       color: '#FF9800' },
+    { level: 3, labelKey: 'note_conf_high', descKey: 'note_conf_high_desc', icon: 'lock',               color: '#F44336' },
 ];
 
 const AddSessionNoteScreen = ({ route, navigation }) => {
+  const { t } = useTranslation();
   const { patientId, patientName } = route.params;
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('Progress');
@@ -29,7 +31,7 @@ const AddSessionNoteScreen = ({ route, navigation }) => {
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
-    if (!content.trim()) return Alert.alert('Required', 'Please enter session details.');
+    if (!content.trim()) return Alert.alert(t('common.required'), t('therapy.note_required'));
     setLoading(true);
     try {
       await api.post('/api/therapists/notes', {
@@ -39,10 +41,10 @@ const AddSessionNoteScreen = ({ route, navigation }) => {
         confidentialityLevel,
         sessionDate: new Date()
       });
-      Alert.alert('Success', 'Session note saved successfully!');
+      Alert.alert(t('common.success'), t('therapy.note_saved'));
       navigation.goBack();
     } catch (e) {
-      Alert.alert('Error', 'Failed to save note. Please check your credentials.');
+      Alert.alert(t('common.error'), t('therapy.note_save_failed'));
     } finally {
       setLoading(false);
     }
@@ -59,42 +61,42 @@ const AddSessionNoteScreen = ({ route, navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} disabled={loading}>
           <AntDesign name="close" size={26} color={colors.white} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>New Session Note</Text>
+        <Text style={styles.headerTitle}>{t('therapy.note_title')}</Text>
         <TouchableOpacity onPress={handleSave} disabled={loading}>
-          {loading ? <ActivityIndicator color={colors.white} /> : <Text style={styles.saveText}>Save</Text>}
+          {loading ? <ActivityIndicator color={colors.white} /> : <Text style={styles.saveText}>{t('common.save')}</Text>}
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.infoCard}>
-          <Text style={styles.infoLbl}>Patient</Text>
+          <Text style={styles.infoLbl}>{t('therapy.note_patient')}</Text>
           <Text style={styles.infoVal}>{patientName}</Text>
         </View>
 
-        <Text style={styles.lbl}>Category</Text>
+        <Text style={styles.lbl}>{t('therapy.note_category')}</Text>
         <View style={styles.catRow}>
           {CATEGORIES.map(c => (
             <TouchableOpacity
-              key={c.label}
+              key={c.id}
               style={[
                 styles.catBtn, 
-                category === c.label && { backgroundColor: c.color, borderColor: c.color }
+                category === c.id && { backgroundColor: c.color, borderColor: c.color }
               ]}
-              onPress={() => setCategory(c.label)}
+              onPress={() => setCategory(c.id)}
             >
               <MaterialCommunityIcons 
                 name={c.icon} 
                 size={16} 
-                color={category === c.label ? '#fff' : c.color} 
+                color={category === c.id ? '#fff' : c.color} 
               />
-              <Text style={[styles.catBtnText, { color: category === c.label ? '#fff' : '#333' }]}>
-                {c.label}
+              <Text style={[styles.catBtnText, { color: category === c.id ? '#fff' : '#333' }]}>
+                {t(`therapy.${c.labelKey}`)}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.lbl}>Confidentiality Level</Text>
+        <Text style={styles.lbl}>{t('therapy.note_confidentiality')}</Text>
         <View style={styles.confRow}>
           {CONFIDENTIALITY_LEVELS.map(c => {
             const isActive = confidentialityLevel === c.level;
@@ -109,18 +111,18 @@ const AddSessionNoteScreen = ({ route, navigation }) => {
               >
                 <MaterialCommunityIcons name={c.icon} size={20} color={isActive ? '#fff' : c.color} />
                 <View>
-                  <Text style={[styles.confLabel, isActive && { color: '#fff' }]}>{c.label}</Text>
-                  <Text style={[styles.confDesc, isActive && { color: 'rgba(255,255,255,0.8)' }]}>{c.desc}</Text>
+                  <Text style={[styles.confLabel, isActive && { color: '#fff' }]}>{t(`therapy.${c.labelKey}`)}</Text>
+                  <Text style={[styles.confDesc, isActive && { color: 'rgba(255,255,255,0.8)' }]}>{t(`therapy.${c.descKey}`)}</Text>
                 </View>
               </TouchableOpacity>
             );
           })}
         </View>
 
-        <Text style={styles.lbl}>Session Documentation</Text>
+        <Text style={styles.lbl}>{t('therapy.note_documentation')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Document the clinical observations, progress, and future plan for this session..."
+          placeholder={t('therapy.note_placeholder')}
           placeholderTextColor={colors.gray}
           multiline
           numberOfLines={10}
@@ -133,7 +135,7 @@ const AddSessionNoteScreen = ({ route, navigation }) => {
         <View style={styles.privacyMsg}>
           <MaterialCommunityIcons name="shield-lock-outline" size={18} color="#666" />
           <Text style={styles.privacyText}>
-            Clinical Confidentiality: Note contents are only visible to you. The patient will NOT be notified or allowed to view these notes.
+            {t('therapy.note_privacy')}
           </Text>
         </View>
       </ScrollView>

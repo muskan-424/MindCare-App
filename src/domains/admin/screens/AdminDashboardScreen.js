@@ -11,6 +11,7 @@ import { logout } from '../../../redux/actions/auth';
 import { useNavigation } from '@react-navigation/native';
 import { ADMIN_TOKEN } from '@env';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import useTranslation from '../../../utils/i18n';
 
 const H = { headers: { 'x-admin-token': ADMIN_TOKEN } };
 
@@ -128,6 +129,7 @@ const ActionButton = ({ label, icon, color, onPress, style }) => {
 
 // ─── Pending Tab ──────────────────────────────────────────────────────────────
 const PendingTab = () => {
+  const { t } = useTranslation();
   const { D, ss } = useContext(ThemeContext);
   const [data, setData] = useState({ appointmentRequests: [], riskReports: [], pendingContacts: [], wellnessPlans: [], deletionRequests: [], totalPending: 0, escalatedCount: 0 });
   const [loading, setLoading] = useState(true);
@@ -363,43 +365,49 @@ const PendingTab = () => {
   if (loading) return (
     <View style={ss.loadingContainer}>
       <ActivityIndicator color={D.primary} size="large" />
-      <Text style={ss.loadingText}>Loading pending items...</Text>
+      <Text style={ss.loadingText}>{t('admin.loading_pending')}</Text>
     </View>
   );
 
   const STATS = [
     {
-      label: 'Consultations',
+      id: 'consultations',
+      labelKey: 'admin.stat_consultations',
       value: data.appointmentRequests.length,
       icon: 'event-note',
       color: D.accent,
     },
     {
-      label: 'Risk Reports',
+      id: 'risk_reports',
+      labelKey: 'admin.stat_risk_reports',
       value: data.riskReports.length,
       icon: 'warning',
       color: D.danger,
     },
     {
-      label: 'Emergency Contacts',
+      id: 'emergency_contacts',
+      labelKey: 'admin.stat_emergency_contacts',
       value: (data.pendingContacts || []).length,
       icon: 'contact-emergency',
       color: D.warning,
     },
     {
-      label: 'Wellness Plans',
+      id: 'wellness_plans',
+      labelKey: 'admin.stat_wellness_plans',
       value: (data.wellnessPlans || []).length,
       icon: 'self-improvement',
       color: D.success,
     },
     {
-      label: 'Deletion Requests',
+      id: 'deletion_requests',
+      labelKey: 'admin.stat_deletion_requests',
       value: (data.deletionRequests || []).length,
       icon: 'delete-forever',
       color: D.dangerDeep,
     },
     {
-      label: 'Total Pending',
+      id: 'total_pending',
+      labelKey: 'admin.stat_total_pending',
       value: data.totalPending,
       icon: 'pending-actions',
       color: D.primaryLight,
@@ -428,11 +436,11 @@ const PendingTab = () => {
 
       {/* ── Overview Stats Grid ── */}
       <View style={ss.overviewHeader}>
-        <Text style={ss.overviewTitle}>Overview</Text>
+        <Text style={ss.overviewTitle}>{t('admin.overview')}</Text>
         <View style={[ss.overviewBadge, data.totalPending > 0 && { backgroundColor: D.danger + '22', borderColor: D.danger + '55' }]}>
           <View style={[ss.overviewBadgeDot, { backgroundColor: data.totalPending > 0 ? D.danger : D.success }]} />
           <Text style={[ss.overviewBadgeText, { color: data.totalPending > 0 ? D.danger : D.success }]}>
-            {data.totalPending > 0 ? `${data.totalPending} pending` : 'All clear'}
+            {data.totalPending > 0 ? t('admin.pending_count', { count: data.totalPending }) : t('admin.all_clear')}
           </Text>
         </View>
       </View>
@@ -442,18 +450,18 @@ const PendingTab = () => {
           <TouchableOpacity 
             key={i} 
             activeOpacity={0.7}
-            onPress={() => setActiveFilter(activeFilter === s.label || s.label === 'Total Pending' ? null : s.label)}
+            onPress={() => setActiveFilter(activeFilter === s.id || s.id === 'total_pending' ? null : s.id)}
             style={[
               ss.statTile, 
               { borderTopColor: s.color },
-              activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
+              activeFilter === s.id && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
             ]}
           >
             <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
               <MaterialIcons name={s.icon} size={18} color={s.color} />
             </View>
             <Text style={ss.statValue}>{s.value}</Text>
-            <Text style={ss.statLabel}>{s.label}</Text>
+            <Text style={ss.statLabel}>{t(s.labelKey)}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -461,11 +469,11 @@ const PendingTab = () => {
       {/* ── Divider heading into work queue ── */}
       <View style={ss.workQueueHeader}>
         <View style={ss.workQueueLine} />
-        <Text style={ss.workQueueLabel}>Work Queue</Text>
+        <Text style={ss.workQueueLabel}>{t('admin.work_queue')}</Text>
         <View style={ss.workQueueLine} />
       </View>
 
-      {(!activeFilter || activeFilter === 'Consultations') && (
+      {(!activeFilter || activeFilter === 'consultations') && (
       <View>
       {/* Appointment Requests */}
       <SectionHeader icon="event-note" title="Consultation Requests" count={data.appointmentRequests.length} />
@@ -522,7 +530,7 @@ const PendingTab = () => {
       </View>
       )}
 
-      {(!activeFilter || activeFilter === 'Risk Reports') && (
+      {(!activeFilter || activeFilter === 'risk_reports') && (
       <View>
       {/* Risk Reports */}
       <SectionHeader icon="warning" title="Unverified Risk Reports" count={data.riskReports.length} />
@@ -597,7 +605,7 @@ const PendingTab = () => {
       </View>
       )}
 
-      {(!activeFilter || activeFilter === 'Emergency Contacts') && (
+      {(!activeFilter || activeFilter === 'emergency_contacts') && (
       <View>
       {/* Emergency Contacts */}
       <SectionHeader icon="contact-emergency" title="Emergency Contacts" count={(data.pendingContacts || []).length} />
@@ -641,7 +649,7 @@ const PendingTab = () => {
       </View>
       )}
 
-      {(!activeFilter || activeFilter === 'Wellness Plans') && (
+      {(!activeFilter || activeFilter === 'wellness_plans') && (
       <View>
       {/* Wellness Plans */}
       <SectionHeader icon="self-improvement" title="Wellness Plan Requests" count={(data.wellnessPlans || []).length} />
@@ -691,7 +699,7 @@ const PendingTab = () => {
       </View>
       )}
 
-      {(!activeFilter || activeFilter === 'Deletion Requests') && (
+      {(!activeFilter || activeFilter === 'deletion_requests') && (
       <View>
       {/* Deletion Requests */}
       <SectionHeader icon="delete-forever" title="Account Deletion Requests" count={(data.deletionRequests || []).length} />
@@ -3011,6 +3019,7 @@ const NotificationsTab = () => {
 
 // ─── Main Admin Dashboard ─────────────────────────────────────────────────────
 const AdminDashboardScreen = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState('pending');
@@ -3075,16 +3084,16 @@ const AdminDashboardScreen = () => {
 
 
   const TABS = [
-    { id: 'pending',       label: 'Actions',       icon: 'notifications-active' },
-    { id: 'analytics',     label: 'Analytics',     icon: 'bar-chart' },
-    { id: 'feed',          label: 'Live Feed',     icon: 'stream' },
-    { id: 'users',         label: 'Users',         icon: 'group' },
-    { id: 'notes',         label: 'Notes',         icon: 'description' },
-    { id: 'groups',        label: 'Groups',        icon: 'people' },
-    { id: 'therapists',    label: 'Therapists',    icon: 'psychology' },
-    { id: 'resources',     label: 'Resources',     icon: 'library-books' },
-    { id: 'audit',         label: 'Audit',         icon: 'security' },
-    { id: 'notifications', label: 'Broadcasts',    icon: 'campaign' },
+    { id: 'pending',       labelKey: 'admin.tab_actions',       icon: 'notifications-active' },
+    { id: 'analytics',     labelKey: 'admin.tab_analytics',     icon: 'bar-chart' },
+    { id: 'feed',          labelKey: 'admin.tab_live_feed',     icon: 'stream' },
+    { id: 'users',         labelKey: 'admin.tab_users',         icon: 'group' },
+    { id: 'notes',         labelKey: 'admin.tab_notes',         icon: 'description' },
+    { id: 'groups',        labelKey: 'admin.tab_groups',        icon: 'people' },
+    { id: 'therapists',    labelKey: 'admin.tab_therapists',    icon: 'psychology' },
+    { id: 'resources',     labelKey: 'admin.tab_resources',     icon: 'library-books' },
+    { id: 'audit',         labelKey: 'admin.tab_audit',         icon: 'security' },
+    { id: 'notifications', labelKey: 'admin.tab_broadcasts',  icon: 'campaign' },
   ];
 
   return (
@@ -3096,8 +3105,8 @@ const AdminDashboardScreen = () => {
       <View style={ss.header}>
         <View style={ss.headerTop}>
           <View>
-            <Text style={ss.headerTitle}>MindCare</Text>
-            <Text style={ss.headerSub}>Admin Control Panel</Text>
+            <Text style={ss.headerTitle}>{t('admin.dashboard_title')}</Text>
+            <Text style={ss.headerSub}>{t('admin.dashboard_subtitle')}</Text>
           </View>
           <View style={ss.headerActions}>
             <TouchableOpacity
@@ -3127,7 +3136,7 @@ const AdminDashboardScreen = () => {
             <ScrollView contentContainerStyle={ss.modalSheet} keyboardShouldPersistTaps="handled">
               <View style={ss.modalHandle} />
               <View style={ss.modalHeaderRow}>
-                <Text style={ss.modalTitle}>Edit Profile</Text>
+                <Text style={ss.modalTitle}>{t('admin.edit_profile')}</Text>
                 <TouchableOpacity onPress={() => setProfileModal(false)} style={ss.modalCloseBtn}>
                   <MaterialIcons name="close" size={20} color={D.textSecondary} />
                 </TouchableOpacity>
@@ -3144,11 +3153,11 @@ const AdminDashboardScreen = () => {
                 </View>
                 <View style={{ marginLeft: 14 }}>
                   <Text style={ss.profileAvatarName}>{profileName || 'Admin'}</Text>
-                  <Text style={ss.profileAvatarRole}>Administrator</Text>
+                  <Text style={ss.profileAvatarRole}>{t('admin.administrator')}</Text>
                 </View>
               </View>
 
-              <Text style={ss.modalLabel}>Profile Photo URL</Text>
+              <Text style={ss.modalLabel}>{t('admin.profile_photo_url')}</Text>
               <TextInput
                 style={ss.modalInput}
                 value={profilePic}
@@ -3158,7 +3167,7 @@ const AdminDashboardScreen = () => {
                 autoCapitalize="none"
               />
 
-              <Text style={ss.modalLabel}>Display Name</Text>
+              <Text style={ss.modalLabel}>{t('admin.display_name')}</Text>
               <TextInput
                 style={ss.modalInput}
                 value={profileName}
@@ -3181,11 +3190,11 @@ const AdminDashboardScreen = () => {
 
               <View style={ss.sectionDivider}>
                 <View style={ss.sectionDividerLine} />
-                <Text style={ss.sectionDividerText}>Change Password</Text>
+                <Text style={ss.sectionDividerText}>{t('admin.change_password')}</Text>
                 <View style={ss.sectionDividerLine} />
               </View>
 
-              <Text style={ss.modalLabel}>New Password</Text>
+              <Text style={ss.modalLabel}>{t('admin.new_password')}</Text>
               <View style={ss.passwordRow}>
                 <TextInput
                   style={[ss.modalInput, { flex: 1 }]}
@@ -3208,7 +3217,7 @@ const AdminDashboardScreen = () => {
                 </TouchableOpacity>
               </View>
 
-              <Text style={ss.modalLabel}>Confirm Password</Text>
+              <Text style={ss.modalLabel}>{t('admin.confirm_password')}</Text>
               <TextInput
                 style={ss.modalInput}
                 value={profileConfirm}
@@ -3229,12 +3238,12 @@ const AdminDashboardScreen = () => {
                 ) : (
                   <>
                     <MaterialIcons name="save" size={16} color="#fff" style={{ marginRight: 6 }} />
-                    <Text style={ss.modalPrimaryBtnText}>Save Changes</Text>
+                    <Text style={ss.modalPrimaryBtnText}>{t('admin.save_changes')}</Text>
                   </>
                 )}
               </TouchableOpacity>
               <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setProfileModal(false)}>
-                <Text style={ss.modalCancelText}>Cancel</Text>
+                <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -3242,15 +3251,15 @@ const AdminDashboardScreen = () => {
 
         {/* Tab Bar */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={ss.tabBar} contentContainerStyle={{ paddingRight: 12 }}>
-          {TABS.map(t => (
+          {TABS.map(tab => (
             <TouchableOpacity
-              key={t.id}
-              style={[ss.tab, activeTab === t.id && ss.tabActive]}
-              onPress={() => setActiveTab(t.id)}
+              key={tab.id}
+              style={[ss.tab, activeTab === tab.id && ss.tabActive]}
+              onPress={() => setActiveTab(tab.id)}
               activeOpacity={0.8}
             >
-              <MaterialIcons name={t.icon} size={14} color={activeTab === t.id ? D.textPrimary : D.textMuted} style={{ marginRight: 5 }} />
-              <Text style={[ss.tabText, activeTab === t.id && ss.tabTextActive]}>{t.label}</Text>
+              <MaterialIcons name={tab.icon} size={14} color={activeTab === tab.id ? D.textPrimary : D.textMuted} style={{ marginRight: 5 }} />
+              <Text style={[ss.tabText, activeTab === tab.id && ss.tabTextActive]}>{t(tab.labelKey)}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -3277,12 +3286,12 @@ const AdminDashboardScreen = () => {
         <View style={{ flex: 1 }}>
           <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8, flexDirection: 'row', alignItems: 'center' }}>
             <View style={[ss.liveIndicator, loadingFeed && { opacity: 0.5 }]} />
-            <Text style={ss.tabPageTitle}>Live Activity Stream</Text>
+            <Text style={ss.tabPageTitle}>{t('admin.live_activity_stream')}</Text>
           </View>
           {loadingFeed && feed.length === 0 ? (
             <View style={ss.loadingContainer}>
               <ActivityIndicator color={D.primary} size="large" />
-              <Text style={ss.loadingText}>Connecting to live feed...</Text>
+              <Text style={ss.loadingText}>{t('admin.connecting_feed')}</Text>
             </View>
           ) : (
             <FlatList
@@ -3301,7 +3310,7 @@ const AdminDashboardScreen = () => {
                   </View>
                 </View>
               )}
-              ListEmptyComponent={<EmptyState icon="stream" message="No live activity to display" />}
+              ListEmptyComponent={<EmptyState icon="stream" message={t('admin.no_live_activity')} />}
               ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: D.borderColor }} />}
             />
           )}

@@ -10,6 +10,7 @@ import AnimatedLoader from 'react-native-animated-loader';
 import Grid from 'react-native-grid-component';
 import FitnessSubScreenCard from '../components/FitnessSubScreenCard';
 import api from '../../../utils/apiClient';
+import useTranslation from '../../../utils/i18n';
 
 const fallbackSubcategories = {
   Yoga: {
@@ -38,6 +39,7 @@ const fallbackSubcategories = {
 
 const FitnessSubScreen = ({route}) => {
   const { category } = route.params;
+  const { t } = useTranslation();
   const [content, setContent] = useState([]);
   const [title, setTitle] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -81,7 +83,6 @@ const FitnessSubScreen = ({route}) => {
         <Grid
           style={styles.list}
           renderItem={_renderItem}
-          //renderPlaceholder={this._renderPlaceholder}
           data={title}
           contentContainerStyle={styles.innerStyle}
           showsVerticalScrollIndicator={false}
@@ -95,7 +96,7 @@ const FitnessSubScreen = ({route}) => {
             style={{width: 200, height: 200}}
           />
           <Text style={{paddingHorizontal: 5}}>
-            Uh ohh! We are hard at curating the most useful data for you.{' '}
+            {t('wellness.fitness_empty_curating')}
           </Text>
         </View>
       )}

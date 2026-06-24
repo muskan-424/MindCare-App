@@ -1,58 +1,32 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { colors, sizes } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
-const AFFIRMATIONS = {
-  calm: [
-    'I am safe in this moment.',
-    'I allow myself to breathe and relax.',
-    'I choose peace over worry.',
-    'My mind is becoming still.',
-    'I release what I cannot control.',
-  ],
-  confidence: [
-    'I am enough, exactly as I am.',
-    'I believe in my ability to handle today.',
-    'I am worthy of respect and kindness.',
-    'I choose to speak and act with confidence.',
-    'I am capable of growth every day.',
-  ],
-  sleep: [
-    'My body is ready for rest.',
-    'I let go of the day and allow sleep.',
-    'I deserve a peaceful night.',
-    'I am safe and can sleep soundly.',
-    'Tomorrow can wait; tonight I rest.',
-  ],
-  stress: [
-    'I can handle one step at a time.',
-    'I give myself permission to take a break.',
-    'I am doing my best, and that is enough.',
-    'I release tension with each breath.',
-    'I choose to respond, not react.',
-  ],
-};
+const CATEGORIES = ['calm', 'confidence', 'sleep', 'stress'];
+const AFFIRMATION_COUNTS = { calm: 5, confidence: 5, sleep: 5, stress: 5 };
 
 const AffirmationsScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [category, setCategory] = useState('calm');
   const [index, setIndex] = useState(0);
-  const list = AFFIRMATIONS[category] || AFFIRMATIONS.calm;
-  const current = list[index % list.length];
+  const count = AFFIRMATION_COUNTS[category] || 5;
+  const current = t(`affirmations.${category}_${index % count}`);
 
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-        <Text style={styles.backText}>← Back</Text>
+        <Text style={styles.backText}>← {t('common.back')}</Text>
       </TouchableOpacity>
-      <Text style={styles.title}>Affirmations</Text>
+      <Text style={styles.title}>{t('affirmations.title')}</Text>
       <View style={styles.chipRow}>
-        {Object.keys(AFFIRMATIONS).map((cat) => (
+        {CATEGORIES.map((cat) => (
           <TouchableOpacity
             key={cat}
             style={[styles.chip, category === cat && styles.chipActive]}
             onPress={() => { setCategory(cat); setIndex(0); }}
           >
-            <Text style={[styles.chipText, category === cat && styles.chipTextActive]}>{cat}</Text>
+            <Text style={[styles.chipText, category === cat && styles.chipTextActive]}>{t(`affirmations.category_${cat}`)}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -61,7 +35,7 @@ const AffirmationsScreen = ({ navigation }) => {
           <Text style={styles.affirmationText}>"{current}"</Text>
         </View>
         <TouchableOpacity style={styles.nextBtn} onPress={() => setIndex((i) => i + 1)}>
-          <Text style={styles.nextBtnText}>Next</Text>
+          <Text style={styles.nextBtnText}>{t('affirmations.next')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

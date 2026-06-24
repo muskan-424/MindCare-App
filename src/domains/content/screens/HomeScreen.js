@@ -27,10 +27,24 @@ import { clearWelcome } from '../../../redux/actions/auth';
 import { getAvatarForGender } from '../../../utils/avatar';
 import StreakBanner from '../../wellness/components/StreakBanner';
 import useTranslation from '../../../utils/i18n';
+import { formatDate } from '../../../utils/locale';
 
-const SEVERITY_LABELS = { 1: 'A bit', 2: 'Somewhat', 3: 'Moderate', 4: 'Quite a bit', 5: 'Very much' };
-const MOOD_TAGS = ['calm', 'anxious', 'sad', 'angry', 'tired', 'hopeful', 'overwhelmed', 'okay'];
-const DEFAULT_CATEGORIES = ['academic_stress', 'anxiety', 'relationship', 'family', 'finances', 'health', 'loneliness', 'grief', 'self_esteem', 'sleep', 'work_life_balance', 'other'];
+const SELF_HELP_LABEL_KEYS = {
+  Breathing: 'home.self_help_breathing',
+  Affirmations: 'home.self_help_affirmations',
+  CrisisResources: 'home.self_help_crisis',
+  Gratitude: 'home.self_help_gratitude',
+  Grounding: 'home.self_help_grounding',
+};
+
+const CONTENT_CATEGORY_KEYS = {
+  recommended: 'home.content_recommended',
+  meditation: 'home.content_meditation',
+  motivation: 'home.content_motivation',
+  sleep: 'home.content_sleep',
+  relaxing_music: 'home.content_relaxing_music',
+  therapy: 'home.content_therapy',
+};
 
 const FALLBACK_SELF_HELP = [
   { id: 'Breathing', screen: 'Breathing', label: 'Breathing', icon: 'https://cdn-icons-png.flaticon.com/512/4151/4151607.png' },
@@ -101,7 +115,7 @@ const fallbackContentByCategory = {
 };
 
 const HomeScreen = props => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const welcomeMessage = props.auth.welcomeMessage;
   const clearWelcomeMessage = props.clearWelcome;
   const [contentFeed, setContentFeed] = useState([]);
@@ -244,12 +258,12 @@ const HomeScreen = props => {
       <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#FFFFFF' }]}>
         {props.auth.welcomeMessage === 'login' && (
           <View style={styles.welcomeBanner}>
-            <Text style={styles.welcomeText}>✓ Login successful! Welcome back.</Text>
+            <Text style={styles.welcomeText}>{t('home.welcome_login')}</Text>
           </View>
         )}
         {props.auth.welcomeMessage === 'signup' && (
           <View style={styles.welcomeBanner}>
-            <Text style={styles.welcomeText}>✓ Account created successfully! Welcome to MindCare.</Text>
+            <Text style={styles.welcomeText}>{t('home.welcome_signup')}</Text>
           </View>
         )}
         <View style={[styles.header, { backgroundColor: isDarkMode ? '#1C2030' : colors.primary }]}>
@@ -309,7 +323,7 @@ const HomeScreen = props => {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Broadcasts</Text>
+                <Text style={styles.modalTitle}>{t('home.notifications_title')}</Text>
                 <TouchableOpacity onPress={() => setNotificationsVisible(false)} style={styles.modalCloseButton}>
                   <MaterialCommunityIcons name="close" size={24} color={colors.gray} />
                 </TouchableOpacity>
@@ -317,12 +331,12 @@ const HomeScreen = props => {
               {loadingNotifications ? (
                 <View style={styles.modalLoading}>
                   <ActivityIndicator size="large" color={colors.primary} />
-                  <Text style={styles.modalSub}>Loading notifications...</Text>
+                  <Text style={styles.modalSub}>{t('home.notifications_loading')}</Text>
                 </View>
               ) : notifications.length === 0 ? (
                 <View style={styles.modalEmpty}>
                   <MaterialCommunityIcons name="bell-outline" size={32} color={colors.gray} />
-                  <Text style={styles.modalEmptyText}>No notifications broadcasted yet.</Text>
+                  <Text style={styles.modalEmptyText}>{t('home.notifications_empty')}</Text>
                 </View>
               ) : (
                 <FlatList
@@ -337,7 +351,7 @@ const HomeScreen = props => {
                       </View>
                       <Text style={styles.notificationBody}>{item.body}</Text>
                       <Text style={styles.notificationDate}>
-                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-IN') : ''}
+                        {item.createdAt ? formatDate(item.createdAt, language) : ''}
                       </Text>
                     </View>
                   )}
@@ -441,7 +455,9 @@ const HomeScreen = props => {
                 onPress={() => props.navigation.navigate(opt.screen)}
               >
                 <Image source={{ uri: opt.icon }} style={styles.selfHelpIcon} />
-                <Text style={[styles.selfHelpLabel, { color: isDarkMode ? '#EAEDF4' : '#111' }]} numberOfLines={2}>{opt.label}</Text>
+                <Text style={[styles.selfHelpLabel, { color: isDarkMode ? '#EAEDF4' : '#111' }]} numberOfLines={2}>
+                  {t(SELF_HELP_LABEL_KEYS[opt.id] || `home.self_help_${String(opt.id).toLowerCase()}`, opt.label)}
+                </Text>
               </TrackedTouchable>
             ))}
           </ScrollView>
@@ -465,7 +481,7 @@ const HomeScreen = props => {
                 onPress={() => setSelectedCategory(cat.id)}
                 style={[styles.chip, selectedCategory === cat.id && styles.chipActive]}>
                 <Text style={[styles.chipText, selectedCategory === cat.id && styles.chipTextActive]}>
-                  {cat.label}
+                  {t(CONTENT_CATEGORY_KEYS[cat.id] || `home.content_${cat.id}`, cat.label)}
                 </Text>
               </TouchableOpacity>
             ))}

@@ -11,19 +11,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Switch,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { colors } from '../../../constants/theme';
 import { connect } from 'react-redux';
 import { login } from '../../../redux/actions/auth';
 import { validateEmail, validatePassword } from '../../../utils/validation';
+import useTranslation from '../../../utils/i18n';
+import LanguagePicker from '../../../components/LanguagePicker';
 
 const Login = props => {
+  const { t } = useTranslation();
   const [state, setState] = useState({
     email: '',
     password: '',
-    loginType: 'patient' // 'patient', 'professional', or 'admin'
+    loginType: 'patient',
   });
   const [error, setError] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -31,17 +33,24 @@ const Login = props => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const headerText =
+    state.loginType === 'professional'
+      ? t('auth.clinician_login')
+      : state.loginType === 'admin'
+        ? t('auth.admin_login')
+        : t('auth.login');
+
   const handleLogin = async () => {
     setError('');
     setEmailError('');
     setPasswordError('');
 
-    const emailCheck = validateEmail(state.email);
+    const emailCheck = validateEmail(state.email, t);
     if (!emailCheck.valid) {
       setEmailError(emailCheck.message);
     }
 
-    const passwordCheck = validatePassword(state.password);
+    const passwordCheck = validatePassword(state.password, t);
     if (!passwordCheck.valid) {
       setPasswordError(passwordCheck.message);
     }
@@ -53,9 +62,8 @@ const Login = props => {
     setLoading(true);
     try {
       await props.login({ email: state.email.trim(), password: state.password });
-      // Success: auth state updates and user is navigated to app; confirmation shows on Home
     } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
+      setError(err.message || t('auth.login_failed'));
     }
     setLoading(false);
   };
@@ -78,33 +86,47 @@ const Login = props => {
               source={require('../../../assets/yoga_main.jpg')}
               style={{
                 width: Dimensions.get('screen').width,
-                height: Dimensions.get('screen').width
+                height: Dimensions.get('screen').width,
               }}
             />
           </View>
           <View style={styles.signUpContainer}>
+            <LanguagePicker compact />
             <View style={styles.tabContainer}>
-              <TouchableOpacity style={state.loginType === 'patient' ? styles.activeTab : styles.inactiveTab} onPress={() => setState({...state, loginType: 'patient'})}>
-                <Text style={state.loginType === 'patient' ? styles.activeTabText : styles.inactiveTabText}>Patient</Text>
+              <TouchableOpacity
+                style={state.loginType === 'patient' ? styles.activeTab : styles.inactiveTab}
+                onPress={() => setState({ ...state, loginType: 'patient' })}
+              >
+                <Text style={state.loginType === 'patient' ? styles.activeTabText : styles.inactiveTabText}>
+                  {t('auth.patient')}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={state.loginType === 'professional' ? styles.activeTab : styles.inactiveTab} onPress={() => setState({...state, loginType: 'professional'})}>
-                <Text style={state.loginType === 'professional' ? styles.activeTabText : styles.inactiveTabText}>Professional</Text>
+              <TouchableOpacity
+                style={state.loginType === 'professional' ? styles.activeTab : styles.inactiveTab}
+                onPress={() => setState({ ...state, loginType: 'professional' })}
+              >
+                <Text style={state.loginType === 'professional' ? styles.activeTabText : styles.inactiveTabText}>
+                  {t('auth.professional')}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={state.loginType === 'admin' ? styles.activeTab : styles.inactiveTab} onPress={() => setState({...state, loginType: 'admin'})}>
-                <Text style={state.loginType === 'admin' ? styles.activeTabText : styles.inactiveTabText}>Admin</Text>
+              <TouchableOpacity
+                style={state.loginType === 'admin' ? styles.activeTab : styles.inactiveTab}
+                onPress={() => setState({ ...state, loginType: 'admin' })}
+              >
+                <Text style={state.loginType === 'admin' ? styles.activeTabText : styles.inactiveTabText}>
+                  {t('auth.admin')}
+                </Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.headerText}>
-              {state.loginType === 'professional' ? 'Clinician Login' : state.loginType === 'admin' ? 'Admin Login' : 'Login'}
-            </Text>
+            <Text style={styles.headerText}>{headerText}</Text>
             <TextInput
               style={[styles.textInput, (emailError || error) && styles.inputError]}
-              placeholder={'Email'}
+              placeholder={t('auth.email')}
               placeholderTextColor={colors.gray}
               value={state.email}
               onChangeText={text => {
                 setState({ ...state, email: text });
-                const check = validateEmail(text);
+                const check = validateEmail(text, t);
                 setEmailError(check.valid ? '' : check.message);
                 if (check.valid) setError('');
               }}
@@ -115,12 +137,12 @@ const Login = props => {
             <View style={styles.passwordRow}>
               <TextInput
                 style={[styles.textInput, styles.passwordInput, (passwordError || error) && styles.inputError]}
-                placeholder={'Password'}
+                placeholder={t('auth.password')}
                 placeholderTextColor={colors.gray}
                 value={state.password}
                 onChangeText={text => {
                   setState({ ...state, password: text });
-                  const check = validatePassword(text);
+                  const check = validatePassword(text, t);
                   setPasswordError(check.valid ? '' : check.message);
                   if (check.valid) setError('');
                 }}
@@ -146,15 +168,15 @@ const Login = props => {
                 {loading ? (
                   <ActivityIndicator color={colors.white} size="small" />
                 ) : (
-                  <Text style={styles.submitText}>Login</Text>
+                  <Text style={styles.submitText}>{t('auth.login_button')}</Text>
                 )}
               </View>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => props.navigation.navigate('SignUp')}>
-              <Text style={styles.already}>Don't have an account?</Text>
+              <Text style={styles.already}>{t('auth.no_account')}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => props.navigation.navigate('ForgotPassword')}>
-              <Text style={styles.already}>Forgot Password?</Text>
+              <Text style={styles.already}>{t('auth.forgot_password_link')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -169,10 +191,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     zIndex: 100,
-    backgroundColor: colors.white
+    backgroundColor: colors.white,
   },
   scrollContent: {
-    flexGrow: 1
+    flexGrow: 1,
   },
   flexOne: {
     flex: 1,
@@ -187,7 +209,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
-    top: -10
+    top: -10,
   },
   textInput: {
     backgroundColor: colors.accent,
@@ -196,7 +218,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     elevation: 1,
     padding: 10,
-    color: colors.black
+    color: colors.black,
   },
   passwordRow: {
     position: 'relative',
@@ -218,14 +240,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.redPink,
   },
-  radioButton: {
-    flexDirection: 'row',
-    paddingLeft: 20
-  },
-  radio: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
   submitButton: {
     alignSelf: 'center',
     width: 150,
@@ -233,14 +247,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.yellow,
     height: 40,
-    borderRadius: 60
+    borderRadius: 60,
   },
   submitText: {
     color: colors.white,
     textTransform: 'uppercase',
     fontWeight: 'bold',
     fontSize: 15,
-    letterSpacing: 2
+    letterSpacing: 2,
   },
   headerText: {
     color: colors.secondary,
@@ -248,7 +262,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     padding: 10,
     alignSelf: 'center',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   errorText: {
     color: colors.redPink || '#c62828',
@@ -256,16 +270,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginHorizontal: 16,
     marginTop: 4,
-    marginBottom: 8
+    marginBottom: 8,
   },
   submitButtonDisabled: {
-    opacity: 0.7
+    opacity: 0.7,
   },
   already: {
     alignSelf: 'flex-end',
     paddingRight: 20,
     paddingBottom: 10,
-    color: colors.secondary
+    color: colors.secondary,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -290,7 +304,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 17,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   activeTabText: {
     color: colors.primary,
@@ -299,5 +313,5 @@ const styles = StyleSheet.create({
   inactiveTabText: {
     color: colors.gray,
     fontWeight: '600',
-  }
+  },
 });

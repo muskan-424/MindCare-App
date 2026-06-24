@@ -6,35 +6,43 @@ import {
 import { connect } from 'react-redux';
 import api from '../../../utils/apiClient';
 import { colors } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
-const RELATIONSHIPS = ['Parent', 'Sibling', 'Partner', 'Friend', 'Roommate', 'Relative', 'Other'];
+const RELATIONSHIP_KEYS = [
+  'Parent', 'Sibling', 'Partner', 'Friend', 'Roommate', 'Relative', 'Other',
+].map((r) => ({ id: r, key: `emergency.relationship_${r.toLowerCase()}` }));
+
 const REACH_OPTIONS = [
-  { id: 'call', label: 'Call', hint: 'Phone call only' },
-  { id: 'whatsapp', label: 'WhatsApp', hint: 'WhatsApp message' },
-  { id: 'both', label: 'Both', hint: 'Call or WhatsApp' },
+  { id: 'call', labelKey: 'emergency.reach_call', hintKey: 'emergency.reach_call_hint' },
+  { id: 'whatsapp', labelKey: 'emergency.reach_whatsapp', hintKey: 'emergency.reach_whatsapp_hint' },
+  { id: 'both', labelKey: 'emergency.reach_both', hintKey: 'emergency.reach_both_hint' },
 ];
 
-const STATUS_CONFIG = {
-  awaiting_admin: { color: '#FFB74D', icon: 'Pending', label: 'Pending Verification', hint: 'Admin is reviewing your submission.' },
-  verified:       { color: '#81C784', icon: 'Verified', label: 'Verified & Active', hint: 'Your contact will be reached in a life-threatening emergency.' },
-  rejected:       { color: '#E57373', icon: 'Rejected', label: 'Not Approved', hint: 'Admin could not verify this contact. Please update and resubmit.' },
-};
-
-
 const EmergencyContactScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [existing, setExisting] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Form state
   const [name, setName] = useState('');
   const [relationship, setRelationship] = useState('');
   const [phone, setPhone] = useState('');
   const [reachVia, setReachVia] = useState('call');
   const [userMessage, setUserMessage] = useState('');
   const [consentGiven, setConsentGiven] = useState(false);
+
+  const statusConfig = {
+    awaiting_admin: { color: '#FFB74D', icon: 'Pending', labelKey: 'emergency.status_pending', hintKey: 'emergency.hint_pending' },
+    verified: { color: '#81C784', icon: 'Verified', labelKey: 'emergency.status_verified', hintKey: 'emergency.hint_verified' },
+    rejected: { color: '#E57373', icon: 'Rejected', labelKey: 'emergency.status_rejected', hintKey: 'emergency.hint_rejected' },
+  };
+
+  const relationshipLabel = (rel) => {
+    const match = RELATIONSHIP_KEYS.find((r) => r.id === rel);
+    return match ? t(match.key) : rel;
+  };
 
   const fetchContact = useCallback(async () => {
     setLoading(true);
@@ -48,29 +56,29 @@ const EmergencyContactScreen = ({ navigation }) => {
         setUserMessage(res.data.userMessage || '');
       } else {
         setExisting(null);
-        setEditing(true); // no contact yet — show form
+        setEditing(true);
       }
     } catch (e) {
-      Alert.alert('Error', 'Could not load emergency contact info.');
+      Alert.alert(t('common.error'), t('emergency.load_error'));
     }
     setLoading(false);
-  }, []);
+  }, [t]);
 
   useEffect(() => { fetchContact(); }, [fetchContact]);
 
   const submit = async () => {
-    if (!name.trim()) { Alert.alert('Required', 'Please enter your contact\'s name.'); return; }
-    if (!relationship) { Alert.alert('Required', 'Please select a relationship.'); return; }
-    if (!phone.trim()) { Alert.alert('Required', 'Please enter a phone number.'); return; }
-    if (!consentGiven) { Alert.alert('Consent Required', 'You must give consent before saving an emergency contact.'); return; }
+    if (!name.trim()) { Alert.alert(t('common.required'), t('emergency.name_required')); return; }
+    if (!relationship) { Alert.alert(t('common.required'), t('emergency.relationship_required')); return; }
+    if (!phone.trim()) { Alert.alert(t('common.required'), t('emergency.phone_required')); return; }
+    if (!consentGiven) { Alert.alert(t('emergency.consent_title'), t('emergency.consent_required')); return; }
 
     Alert.alert(
-      'Save Emergency Contact',
-      `You're submitting ${name} (${relationship}) as your emergency contact.\n\nAdmin will verify this and they will ONLY be contacted in a life-threatening emergency. Continue?`,
+      t('emergency.save_title'),
+      t('emergency.save_message', { name: name.trim(), relationship: relationshipLabel(relationship) }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Confirm & Submit', onPress: async () => {
+          text: t('emergency.confirm_submit'), onPress: async () => {
             setSubmitting(true);
             try {
               await api.post('/api/emergency-contact', {
@@ -80,7 +88,7 @@ const EmergencyContactScreen = ({ navigation }) => {
               setEditing(false);
               fetchContact();
             } catch (e) {
-              Alert.alert('Error', e.response?.data?.error || 'Could not save contact.');
+              Alert.alert(t('common.error'), e.response?.data?.error || t('emergency.save_error'));
             }
             setSubmitting(false);
           },
@@ -91,12 +99,12 @@ const EmergencyContactScreen = ({ navigation }) => {
 
   const removeContact = () => {
     Alert.alert(
-      'Remove Emergency Contact',
-      'This will permanently remove your emergency contact and revoke consent. Are you sure?',
+      t('emergency.remove_title'),
+      t('emergency.remove_message'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Remove', style: 'destructive', onPress: async () => {
+          text: t('emergency.remove'), style: 'destructive', onPress: async () => {
             setDeleting(true);
             try {
               await api.delete('/api/emergency-contact');
@@ -105,7 +113,7 @@ const EmergencyContactScreen = ({ navigation }) => {
               setReachVia('call'); setUserMessage(''); setConsentGiven(false);
               setEditing(true);
             } catch (e) {
-              Alert.alert('Error', 'Could not remove contact.');
+              Alert.alert(t('common.error'), t('emergency.remove_error'));
             }
             setDeleting(false);
           },
@@ -126,85 +134,84 @@ const EmergencyContactScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>← Back</Text>
+          <Text style={styles.backText}>← {t('common.back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Emergency Contact</Text>
+        <Text style={styles.headerTitle}>{t('emergency.title')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
-        {/* How it works */}
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>How this works</Text>
-          <Text style={styles.infoText}>
-            Add a trusted person's contact. If you're ever in a life-threatening crisis, our admin team can reach out to them directly — with your consent. This is a human-reviewed safety net.
-          </Text>
+          <Text style={styles.infoTitle}>{t('emergency.how_it_works')}</Text>
+          <Text style={styles.infoText}>{t('emergency.how_it_works_text')}</Text>
         </View>
 
-        {/* Status card for existing contact */}
         {existing && !editing && (() => {
-          const cfg = STATUS_CONFIG[existing.status] || STATUS_CONFIG.awaiting_admin;
+          const cfg = statusConfig[existing.status] || statusConfig.awaiting_admin;
           return (
             <View style={[styles.statusCard, { borderLeftColor: cfg.color }]}>
               <View style={styles.statusRow}>
                 <Text style={styles.statusIcon}>{cfg.icon}</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.statusLabel, { color: cfg.color }]}>{cfg.label}</Text>
-                  <Text style={styles.statusHint}>{cfg.hint}</Text>
+                  <Text style={[styles.statusLabel, { color: cfg.color }]}>{t(cfg.labelKey)}</Text>
+                  <Text style={styles.statusHint}>{t(cfg.hintKey)}</Text>
                 </View>
               </View>
 
               <View style={styles.contactPreview}>
                 <Text style={styles.contactName}>{existing.name}</Text>
-                <Text style={styles.contactRel}>{existing.relationship}</Text>
-                <Text style={styles.contactPhone}>Phone: {existing.phoneMasked}</Text>
-                <Text style={styles.contactReach}>Preferred: {existing.reachVia}</Text>
+                <Text style={styles.contactRel}>{relationshipLabel(existing.relationship)}</Text>
+                <Text style={styles.contactPhone}>{t('emergency.phone_label', { phone: existing.phoneMasked })}</Text>
+                <Text style={styles.contactReach}>{t('emergency.preferred', { via: existing.reachVia })}</Text>
                 {existing.callLogCount > 0 && (
-                  <Text style={styles.callLogText}>Used {existing.callLogCount} time{existing.callLogCount !== 1 ? 's' : ''}</Text>
+                  <Text style={styles.callLogText}>
+                    {existing.callLogCount === 1
+                      ? t('emergency.used_times_one', { count: existing.callLogCount })
+                      : t('emergency.used_times_other', { count: existing.callLogCount })}
+                  </Text>
                 )}
 
               </View>
 
               {existing.status === 'rejected' && existing.rejectionReason ? (
                 <View style={styles.rejectionCard}>
-                  <Text style={styles.rejectionText}>Reason: {existing.rejectionReason}</Text>
+                  <Text style={styles.rejectionText}>{t('emergency.reason', { reason: existing.rejectionReason })}</Text>
                 </View>
               ) : null}
 
               {existing.status === 'rejected' && (
-                <Text style={styles.resubmitHint}>Please update and resubmit below.</Text>
+                <Text style={styles.resubmitHint}>{t('emergency.resubmit_hint')}</Text>
               )}
 
               <View style={styles.actionRow}>
                 <TouchableOpacity style={styles.editBtn} onPress={() => setEditing(true)}>
-                  <Text style={styles.editBtnText}>Update Contact</Text>
+                  <Text style={styles.editBtnText}>{t('emergency.update_contact')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.removeBtn} onPress={removeContact} disabled={deleting}>
-                  {deleting ? <ActivityIndicator size="small" color="#E57373" /> : <Text style={styles.removeBtnText}>Remove</Text>}
+                  {deleting ? <ActivityIndicator size="small" color="#E57373" /> : <Text style={styles.removeBtnText}>{t('emergency.remove')}</Text>}
                 </TouchableOpacity>
               </View>
             </View>
           );
         })()}
 
-        {/* Form */}
         {editing && (
           <View style={styles.form}>
-            <Text style={styles.formTitle}>{existing ? 'Update Contact' : 'Add Emergency Contact'}</Text>
+            <Text style={styles.formTitle}>{existing ? t('emergency.update_contact') : t('emergency.add_title')}</Text>
 
-            <Text style={styles.fieldLabel}>Contact Name *</Text>
-            <TextInput style={styles.input} placeholder="e.g. Mom / Rahul Sharma" placeholderTextColor={colors.gray} value={name} onChangeText={setName} />
+            <Text style={styles.fieldLabel}>{t('emergency.contact_name')}</Text>
+            <TextInput style={styles.input} placeholder={t('emergency.name_placeholder')} placeholderTextColor={colors.gray} value={name} onChangeText={setName} />
 
-            <Text style={styles.fieldLabel}>Relationship *</Text>
+            <Text style={styles.fieldLabel}>{t('emergency.relationship')}</Text>
             <View style={styles.chipsWrap}>
-              {RELATIONSHIPS.map(r => (
-                <TouchableOpacity key={r} style={[styles.chip, relationship === r && styles.chipActive]} onPress={() => setRelationship(r)}>
-                  <Text style={[styles.chipText, relationship === r && styles.chipTextActive]}>{r}</Text>
+              {RELATIONSHIP_KEYS.map((r) => (
+                <TouchableOpacity key={r.id} style={[styles.chip, relationship === r.id && styles.chipActive]} onPress={() => setRelationship(r.id)}>
+                  <Text style={[styles.chipText, relationship === r.id && styles.chipTextActive]}>{t(r.key)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={styles.fieldLabel}>Phone Number *</Text>
+            <Text style={styles.fieldLabel}>{t('emergency.phone_number')}</Text>
             <TextInput
               style={styles.input}
               placeholder="+91-XXXXXXXXXX"
@@ -214,24 +221,24 @@ const EmergencyContactScreen = ({ navigation }) => {
               keyboardType="phone-pad"
             />
 
-            <Text style={styles.fieldLabel}>How to reach them</Text>
+            <Text style={styles.fieldLabel}>{t('emergency.reach_label')}</Text>
             <View style={styles.reachRow}>
-              {REACH_OPTIONS.map(opt => (
+              {REACH_OPTIONS.map((opt) => (
                 <TouchableOpacity
                   key={opt.id}
                   style={[styles.reachCard, reachVia === opt.id && styles.reachCardActive]}
                   onPress={() => setReachVia(opt.id)}
                 >
-                  <Text style={[styles.reachLabel, reachVia === opt.id && styles.reachLabelActive]}>{opt.label}</Text>
-                  <Text style={[styles.reachHint, reachVia === opt.id && { color: 'rgba(255,255,255,0.8)' }]}>{opt.hint}</Text>
+                  <Text style={[styles.reachLabel, reachVia === opt.id && styles.reachLabelActive]}>{t(opt.labelKey)}</Text>
+                  <Text style={[styles.reachHint, reachVia === opt.id && { color: 'rgba(255,255,255,0.8)' }]}>{t(opt.hintKey)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={styles.fieldLabel}>Context note for admin (optional)</Text>
+            <Text style={styles.fieldLabel}>{t('emergency.context_note')}</Text>
             <TextInput
               style={[styles.input, { minHeight: 80 }]}
-              placeholder="e.g. My mom knows about my anxiety. Please mention MindCare when calling."
+              placeholder={t('emergency.context_placeholder')}
               placeholderTextColor={colors.gray}
               value={userMessage}
               onChangeText={setUserMessage}
@@ -241,13 +248,10 @@ const EmergencyContactScreen = ({ navigation }) => {
             />
             <Text style={styles.charCount}>{userMessage.length}/300</Text>
 
-            {/* Consent switch */}
             <View style={styles.consentBox}>
               <View style={styles.consentLeft}>
-                <Text style={styles.consentTitle}>I give consent *</Text>
-                <Text style={styles.consentText}>
-                  I authorize MindCare admins to contact this person ONLY in a life-threatening emergency situation, in accordance with MindCare's safety policy.
-                </Text>
+                <Text style={styles.consentTitle}>{t('emergency.consent_title')}</Text>
+                <Text style={styles.consentText}>{t('emergency.consent_text')}</Text>
               </View>
               <Switch
                 value={consentGiven}
@@ -259,7 +263,7 @@ const EmergencyContactScreen = ({ navigation }) => {
 
             {existing && (
               <TouchableOpacity style={styles.cancelEditBtn} onPress={() => setEditing(false)}>
-                <Text style={styles.cancelEditBtnText}>Cancel</Text>
+                <Text style={styles.cancelEditBtnText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
             )}
 
@@ -270,18 +274,15 @@ const EmergencyContactScreen = ({ navigation }) => {
             >
               {submitting
                 ? <ActivityIndicator color={colors.white} />
-                : <Text style={styles.submitBtnText}>Submit for Admin Verification</Text>}
+                : <Text style={styles.submitBtnText}>{t('emergency.submit_verification')}</Text>}
             </TouchableOpacity>
           </View>
         )}
 
-        {/* Privacy note */}
         <View style={styles.privacyCard}>
-          <Text style={styles.privacyTitle}>Privacy</Text>
+          <Text style={styles.privacyTitle}>{t('emergency.privacy_title')}</Text>
           <Text style={styles.privacyText}>
-            Your contact's full phone number is{' '}
-            <Text style={{ fontWeight: '700' }}>never stored in plaintext accessible to any user</Text>.
-            Only authorized MindCare admins can view it during a verified crisis. You can revoke consent at any time.
+            {t('emergency.privacy_text')}
           </Text>
         </View>
       </ScrollView>
@@ -303,7 +304,6 @@ const styles = StyleSheet.create({
   infoCard: { backgroundColor: '#C62828', borderRadius: 14, padding: 16, marginBottom: 20 },
   infoTitle: { fontSize: 15, fontWeight: '700', color: colors.white, marginBottom: 6 },
   infoText: { fontSize: 13, color: 'rgba(255,255,255,0.9)', lineHeight: 20 },
-  // Status
   statusCard: { backgroundColor: colors.white, borderRadius: 14, padding: 16, marginBottom: 20, elevation: 2, borderLeftWidth: 5 },
   statusRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12, gap: 10 },
   statusIcon: { fontSize: 22 },
@@ -323,7 +323,6 @@ const styles = StyleSheet.create({
   editBtnText: { color: colors.white, fontWeight: '600', fontSize: 13 },
   removeBtn: { paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: '#E57373', borderRadius: 12, alignItems: 'center' },
   removeBtnText: { color: '#E57373', fontWeight: '600', fontSize: 13 },
-  // Form
   form: { backgroundColor: colors.white, borderRadius: 14, padding: 16, marginBottom: 20, elevation: 1 },
   formTitle: { fontSize: 17, fontWeight: '800', color: colors.secondary, marginBottom: 16 },
   fieldLabel: { fontSize: 14, fontWeight: '700', color: colors.secondary, marginBottom: 8, marginTop: 12 },
@@ -349,7 +348,6 @@ const styles = StyleSheet.create({
   submitBtn: { backgroundColor: '#C62828', borderRadius: 24, paddingVertical: 16, alignItems: 'center', marginTop: 16, elevation: 2 },
   submitBtnDisabled: { opacity: 0.4 },
   submitBtnText: { color: colors.white, fontWeight: '700', fontSize: 16 },
-  // Privacy
   privacyCard: { backgroundColor: colors.white, borderRadius: 12, padding: 16, elevation: 1 },
   privacyTitle: { fontSize: 14, fontWeight: '700', color: colors.secondary, marginBottom: 6 },
   privacyText: { fontSize: 13, color: colors.gray, lineHeight: 20 },

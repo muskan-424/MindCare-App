@@ -141,6 +141,7 @@ function buildMoodDraft(entities = {}) {
   const note = (entities.note || '').toString().slice(0, 300);
   return {
     kind: 'mood',
+    titleKey: 'draft_title_mood',
     title: 'Log your mood',
     fields: { rating, note },
     commit: { method: 'POST', endpoint: '/api/mood', payload: { rating, note } },
@@ -152,6 +153,7 @@ function buildJournalDraft(entities = {}) {
   const content = (entities.content || entities.note || '').toString().slice(0, 4000);
   return {
     kind: 'journal',
+    titleKey: 'draft_title_journal',
     title: 'New journal entry',
     fields: { content },
     commit: { method: 'POST', endpoint: '/api/journals', payload: { content } },
@@ -166,6 +168,7 @@ function buildGoalDraft(entities = {}) {
   if (!VALID_GOAL_CATEGORIES.includes(category)) category = 'mental_health';
   return {
     kind: 'goal',
+    titleKey: 'draft_title_goal',
     title: 'New goal',
     fields: { title, description, category },
     commit: { method: 'POST', endpoint: '/api/goals', payload: { title, description, category } },
@@ -179,6 +182,7 @@ function buildAppointmentDraft(entities = {}) {
   const userNote = (entities.note || entities.userNote || '').toString().slice(0, 1000);
   return {
     kind: 'appointment',
+    titleKey: 'draft_title_appointment',
     title: 'Request a therapy session',
     fields: { requestedSpeciality, preferredTime, userNote },
     commit: { method: 'POST', endpoint: '/api/appointments', payload: { requestedSpeciality, preferredTime, userNote } },

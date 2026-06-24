@@ -12,12 +12,14 @@ import TouchableScale from 'react-native-touchable-scale';
 import api from '../../../utils/apiClient';
 import {data as localData, popular as localPopular} from '../../../constants/BlogData';
 import {colors, sizes} from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 import OpenBlogScreen from './OpenBlogScreen';
 import {createStackNavigator} from '@react-navigation/stack';
 import {FAB} from 'react-native-paper';
 import AddBlog from './AddBlog';
 
 const MainScreen = ({navigation}) => {
+  const { t } = useTranslation();
   const [featured, setFeatured] = React.useState(localData);
   const [popular, setPopular] = React.useState(localPopular);
 
@@ -41,7 +43,7 @@ const MainScreen = ({navigation}) => {
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Your daily read</Text>
+        <Text style={styles.sectionTitle}>{t('blog.daily_read')}</Text>
       </View>
 
       <FlatList
@@ -77,7 +79,7 @@ const MainScreen = ({navigation}) => {
       />
 
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Popular stories</Text>
+        <Text style={styles.sectionTitle}>{t('blog.popular_stories')}</Text>
       </View>
 
       <FlatList
@@ -99,7 +101,7 @@ const MainScreen = ({navigation}) => {
                   <Text style={styles.popularAuthor}>{item.author}</Text>
                   <View style={styles.likesRow}>
                     <Feather name="thumbs-up" size={14} color={colors.gray} />
-                    <Text style={styles.likesText}>{item.likes} likes</Text>
+                    <Text style={styles.likesText}>{t('blog.likes', { count: item.likes })}</Text>
                   </View>
                 </View>
               </View>

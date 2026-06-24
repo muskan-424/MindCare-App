@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { colors, sizes } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
 const GratitudeScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [entry, setEntry] = useState('');
   const [saved, setSaved] = useState(false);
 
@@ -14,13 +16,13 @@ const GratitudeScreen = ({ navigation }) => {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>← Back</Text>
+          <Text style={styles.backText}>← {t('common.back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>One good thing</Text>
-        <Text style={styles.subtitle}>What’s one thing you’re grateful for today?</Text>
+        <Text style={styles.title}>{t('gratitude.title')}</Text>
+        <Text style={styles.subtitle}>{t('gratitude.subtitle')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="e.g. A warm drink, a friend’s message, the weather..."
+          placeholder={t('gratitude.placeholder')}
           placeholderTextColor={colors.gray}
           value={entry}
           onChangeText={setEntry}
@@ -28,11 +30,11 @@ const GratitudeScreen = ({ navigation }) => {
           numberOfLines={4}
         />
         <TouchableOpacity style={styles.saveBtn} onPress={save}>
-          <Text style={styles.saveBtnText}>Save</Text>
+          <Text style={styles.saveBtnText}>{t('gratitude.save')}</Text>
         </TouchableOpacity>
         {saved ? (
           <View style={styles.doneCard}>
-            <Text style={styles.doneText}>Noted. Small moments count.</Text>
+            <Text style={styles.doneText}>{t('gratitude.done_text')}</Text>
           </View>
         ) : null}
       </ScrollView>

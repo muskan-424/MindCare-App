@@ -6,19 +6,18 @@ import {
 import { connect } from 'react-redux';
 import { colors, sizes } from '../../../constants/theme';
 import api from '../../../utils/apiClient';
+import useTranslation from '../../../utils/i18n';
 
-const MOODS = [
-  { id: 'great', label: 'Great', rating: 10 },
-  { id: 'good', label: 'Good', rating: 8 },
-  { id: 'okay', label: 'Okay', rating: 5 },
-  { id: 'low', label: 'Low', rating: 3 },
-  { id: 'anxious', label: 'Anxious', rating: 2 },
-];
+const MOOD_IDS = ['great', 'good', 'okay', 'low', 'anxious'];
+const MOOD_RATINGS = { great: 10, good: 8, okay: 5, low: 3, anxious: 2 };
 
 const MoodCheckScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const getMoodLabel = (id) => t(`mood_check.mood_${id}`);
 
   const handleSelect = (id) => {
     setSelected(id);
@@ -29,10 +28,10 @@ const MoodCheckScreen = ({ navigation }) => {
     if (!selected) return;
     setLoading(true);
     try {
-      const moodData = MOODS.find(m => m.id === selected);
+      const label = getMoodLabel(selected);
       await api.post('/api/mood', {
-        rating: moodData.rating,
-        note: `Quick check-in: ${moodData.label}`,
+        rating: MOOD_RATINGS[selected],
+        note: t('mood_check.quick_checkin_note', { label }),
       });
       setSubmitted(true);
     } catch (error) {
@@ -43,30 +42,30 @@ const MoodCheckScreen = ({ navigation }) => {
   };
 
   const message = selected === 'great' || selected === 'good'
-    ? "Glad you're doing well. Keep taking care of yourself."
+    ? t('mood_check.msg_positive')
     : selected === 'okay'
-      ? 'Some days are like that. Be gentle with yourself.'
+      ? t('mood_check.msg_okay')
       : selected
-        ? 'Thanks for checking in. You can talk to Tink or reach out to someone you trust.'
+        ? t('mood_check.msg_low')
         : '';
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-        <Text style={styles.backText}>← Back</Text>
+        <Text style={styles.backText}>← {t('common.back')}</Text>
       </TouchableOpacity>
-      <Text style={styles.title}>How are you feeling?</Text>
-      <Text style={styles.subtitle}>A quick check-in. No judgment.</Text>
+      <Text style={styles.title}>{t('mood_check.title')}</Text>
+      <Text style={styles.subtitle}>{t('mood_check.subtitle')}</Text>
 
       <View style={styles.moodRow}>
-        {MOODS.map((m) => (
+        {MOOD_IDS.map((id) => (
           <TouchableOpacity
-            key={m.id}
-            style={[styles.moodBtn, selected === m.id && styles.moodBtnActive]}
-            onPress={() => handleSelect(m.id)}
+            key={id}
+            style={[styles.moodBtn, selected === id && styles.moodBtnActive]}
+            onPress={() => handleSelect(id)}
             disabled={loading}
           >
-            <Text style={[styles.moodLabel, selected === m.id && styles.moodLabelActive]}>{m.label}</Text>
+            <Text style={[styles.moodLabel, selected === id && styles.moodLabelActive]}>{getMoodLabel(id)}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -76,7 +75,7 @@ const MoodCheckScreen = ({ navigation }) => {
           {loading ? (
             <ActivityIndicator color={colors.white} size="small" />
           ) : (
-            <Text style={styles.submitBtnText}>Done</Text>
+            <Text style={styles.submitBtnText}>{t('mood_check.done')}</Text>
           )}
         </TouchableOpacity>
       ) : null}
@@ -88,7 +87,7 @@ const MoodCheckScreen = ({ navigation }) => {
             style={styles.talkBtn}
             onPress={() => { navigation.navigate('Chat', { name: 'Tink' }); }}
           >
-            <Text style={styles.talkBtnText}>Talk to Tink</Text>
+            <Text style={styles.talkBtnText}>{t('mood_check.talk_to_tink')}</Text>
           </TouchableOpacity>
         </View>
       ) : null}

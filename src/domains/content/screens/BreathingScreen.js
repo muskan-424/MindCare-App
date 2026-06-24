@@ -8,19 +8,21 @@ import {
   Easing,
 } from 'react-native';
 import { colors, sizes } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
-const PHASES = [
-  { label: 'Breathe in', duration: 4 },
-  { label: 'Hold', duration: 7 },
-  { label: 'Breathe out', duration: 8 },
+const PHASE_KEYS = [
+  { labelKey: 'breathing.phase_in', duration: 4 },
+  { labelKey: 'breathing.phase_hold', duration: 7 },
+  { labelKey: 'breathing.phase_out', duration: 8 },
 ];
 
 const BreathingScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [scale] = useState(new Animated.Value(0.6));
   const [running, setRunning] = useState(false);
 
-  const phase = PHASES[phaseIndex];
+  const phase = PHASE_KEYS[phaseIndex];
 
   useEffect(() => {
     if (!running) return;
@@ -33,7 +35,7 @@ const BreathingScreen = ({ navigation }) => {
       useNativeDriver: true,
       easing: Easing.bezier(0.4, 0, 0.2, 1),
     }).start(() => {
-      setPhaseIndex((prevPhaseIndex) => (prevPhaseIndex + 1) % PHASES.length);
+      setPhaseIndex((prevPhaseIndex) => (prevPhaseIndex + 1) % PHASE_KEYS.length);
     });
   }, [running, phaseIndex, phase.duration, scale]);
 
@@ -50,17 +52,17 @@ const BreathingScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-        <Text style={styles.backText}>← Back</Text>
+        <Text style={styles.backText}>← {t('common.back')}</Text>
       </TouchableOpacity>
-      <Text style={styles.title}>4-7-8 Breathing</Text>
-      <Text style={styles.subtitle}>Calms the nervous system. Repeat 3–4 cycles.</Text>
+      <Text style={styles.title}>{t('breathing.title')}</Text>
+      <Text style={styles.subtitle}>{t('breathing.subtitle')}</Text>
       <View style={styles.circleWrap}>
         <Animated.View style={[styles.circle, { transform: [{ scale }] }]} />
       </View>
-      <Text style={styles.phaseLabel}>{phase.label}</Text>
-      <Text style={styles.phaseHint}>{phase.duration} seconds</Text>
+      <Text style={styles.phaseLabel}>{t(phase.labelKey)}</Text>
+      <Text style={styles.phaseHint}>{t('breathing.seconds', { count: phase.duration })}</Text>
       <TouchableOpacity style={[styles.btn, running && styles.btnStop]} onPress={startStop}>
-        <Text style={styles.btnText}>{running ? 'Stop' : 'Start'}</Text>
+        <Text style={styles.btnText}>{running ? t('breathing.stop') : t('breathing.start')}</Text>
       </TouchableOpacity>
     </View>
   );

@@ -14,20 +14,21 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import api from '../../../utils/apiClient';
 import { colors, sizes } from '../../../constants/theme';
 import BadgeCard from '../components/BadgeCard';
+import useTranslation from '../../../utils/i18n';
 
-// Define the static list of all badges so we can show locked ones
 const ALL_BADGE_KEYS = [
-  { key: 'first_checkin',   label: 'First Step',       icon: 'star-face',          color: '#F59E0B', desc: 'Logged your first mood check-in' },
-  { key: 'week_warrior',    label: 'Week Warrior',      icon: 'fire',               color: '#EF4444', desc: 'Maintained a 7-day streak' },
-  { key: 'fortnight_focus', label: 'Fortnight Focus',   icon: 'calendar-check',     color: '#8B5CF6', desc: 'Maintained a 14-day streak' },
-  { key: 'monthly_master',  label: 'Monthly Master',    icon: 'crown',              color: '#10B981', desc: 'Maintained a 30-day streak' },
-  { key: 'mood_explorer',   label: 'Mood Explorer',     icon: 'compass',            color: '#3B82F6', desc: 'Logged 10 mood check-ins' },
-  { key: 'consistent_50',   label: 'Consistent Mind',   icon: 'brain',              color: '#EC4899', desc: 'Logged 50 mood check-ins' },
-  { key: 'centurion',       label: 'Centurion',         icon: 'shield-star',        color: '#F97316', desc: 'Logged 100 mood check-ins' },
+  { key: 'first_checkin',   labelKey: 'badges.first_checkin_label',       icon: 'star-face',          color: '#F59E0B', descKey: 'badges.first_checkin_desc' },
+  { key: 'week_warrior',    labelKey: 'badges.week_warrior_label',        icon: 'fire',               color: '#EF4444', descKey: 'badges.week_warrior_desc' },
+  { key: 'fortnight_focus', labelKey: 'badges.fortnight_focus_label',     icon: 'calendar-check',     color: '#8B5CF6', descKey: 'badges.fortnight_focus_desc' },
+  { key: 'monthly_master',  labelKey: 'badges.monthly_master_label',      icon: 'crown',              color: '#10B981', descKey: 'badges.monthly_master_desc' },
+  { key: 'mood_explorer',   labelKey: 'badges.mood_explorer_label',       icon: 'compass',            color: '#3B82F6', descKey: 'badges.mood_explorer_desc' },
+  { key: 'consistent_50',   labelKey: 'badges.consistent_50_label',       icon: 'brain',              color: '#EC4899', descKey: 'badges.consistent_50_desc' },
+  { key: 'centurion',       labelKey: 'badges.centurion_label',           icon: 'shield-star',        color: '#F97316', descKey: 'badges.centurion_desc' },
 ];
 
 const BadgesScreen = ({ navigation }) => {
   const isFocused = useIsFocused();
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +43,6 @@ const BadgesScreen = ({ navigation }) => {
       const res = await api.get('/api/streaks/me');
       setData(res.data);
       
-      // Clear badge alerts on view
       await api.patch('/api/streaks/seen');
     } catch (err) {
       console.warn('Error loading badges:', err.message);
@@ -62,11 +62,12 @@ const BadgesScreen = ({ navigation }) => {
   const { currentStreak, longestStreak, totalCheckins, badges = [], nextStreakGoal, nextCheckinGoal } = data || {};
   const earnedKeys = new Set((badges || []).map(b => b.key));
 
-  // Build full list of badges: if earned, include earnedAt, otherwise mark locked
   const fullBadges = ALL_BADGE_KEYS.map(meta => {
     const earnedBadge = badges.find(b => b.key === meta.key);
     return {
       ...meta,
+      label: t(meta.labelKey),
+      desc: t(meta.descKey),
       earnedAt: earnedBadge ? earnedBadge.earnedAt : null,
       locked: !earnedKeys.has(meta.key),
     };
@@ -74,39 +75,36 @@ const BadgesScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <MaterialCommunityIcons name="arrow-left" size={24} color={colors.secondary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Achievements & Streaks</Text>
+        <Text style={styles.headerTitle}>{t('badges.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Stats Summary Panel */}
         <View style={styles.statsPanel}>
           <View style={styles.statBox}>
             <MaterialCommunityIcons name="fire" size={32} color="#FF6D00" />
             <Text style={styles.statNum}>{currentStreak}</Text>
-            <Text style={styles.statLabel}>Current Streak</Text>
+            <Text style={styles.statLabel}>{t('badges.current_streak')}</Text>
           </View>
           <View style={[styles.statBox, styles.statBoxBorder]}>
             <MaterialCommunityIcons name="trophy-outline" size={32} color="#F59E0B" />
             <Text style={styles.statNum}>{longestStreak}</Text>
-            <Text style={styles.statLabel}>Longest Streak</Text>
+            <Text style={styles.statLabel}>{t('badges.longest_streak')}</Text>
           </View>
           <View style={styles.statBox}>
             <MaterialCommunityIcons name="check-all" size={32} color="#10B981" />
             <Text style={styles.statNum}>{totalCheckins}</Text>
-            <Text style={styles.statLabel}>Total Logs</Text>
+            <Text style={styles.statLabel}>{t('badges.total_logs')}</Text>
           </View>
         </View>
 
-        {/* Goals Progress */}
         {(nextStreakGoal || nextCheckinGoal) && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Next Milestone Goals</Text>
+            <Text style={styles.sectionTitle}>{t('badges.next_milestone')}</Text>
             {nextStreakGoal && (
               <View style={styles.goalCard}>
                 <View style={styles.goalHeader}>
@@ -115,7 +113,7 @@ const BadgesScreen = ({ navigation }) => {
                     <Text style={styles.goalLabel}>{nextStreakGoal.label}</Text>
                   </View>
                   <Text style={styles.goalProgressText}>
-                    {nextStreakGoal.progress} / {nextStreakGoal.target} days
+                    {t('badges.days_progress', { progress: nextStreakGoal.progress, target: nextStreakGoal.target })}
                   </Text>
                 </View>
                 <View style={styles.progressBarBg}>
@@ -141,7 +139,7 @@ const BadgesScreen = ({ navigation }) => {
                     <Text style={styles.goalLabel}>{nextCheckinGoal.label}</Text>
                   </View>
                   <Text style={styles.goalProgressText}>
-                    {nextCheckinGoal.progress} / {nextCheckinGoal.target} logs
+                    {t('badges.logs_progress', { progress: nextCheckinGoal.progress, target: nextCheckinGoal.target })}
                   </Text>
                 </View>
                 <View style={styles.progressBarBg}>
@@ -161,9 +159,8 @@ const BadgesScreen = ({ navigation }) => {
           </View>
         )}
 
-        {/* Badges Grid */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Badges ({badges.length} / {ALL_BADGE_KEYS.length})</Text>
+          <Text style={styles.sectionTitle}>{t('badges.your_badges', { earned: badges.length, total: ALL_BADGE_KEYS.length })}</Text>
           <View style={styles.badgesGrid}>
             {fullBadges.map(item => (
               <BadgeCard

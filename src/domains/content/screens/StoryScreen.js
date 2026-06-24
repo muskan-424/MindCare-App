@@ -6,6 +6,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import Entypo from 'react-native-vector-icons/Entypo';
 import BlogMainScreen from '../../community/screens/BlogMainScreen';
 import JournalScreen from '../../wellness/screens/JournalScreen';
+import useTranslation from '../../../utils/i18n';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -13,6 +14,7 @@ const BlogsTabIcon = ({ color }) => <Feather name="book-open" size={20} color={c
 const JournalsTabIcon = ({ color }) => <Entypo name="book" size={20} color={color} />;
 
 function StoryScreen() {
+  const { t } = useTranslation();
   const commonTabOptions = {
     tabBarActiveTintColor: colors.white,
     tabBarInactiveTintColor: colors.white2,
@@ -28,12 +30,12 @@ function StoryScreen() {
         <Tab.Screen
           name="Blogs"
           component={BlogMainScreen}
-          options={{ tabBarLabel: 'Blogs', tabBarIcon: BlogsTabIcon }}
+          options={{ tabBarLabel: t('blog.tab_blogs'), tabBarIcon: BlogsTabIcon }}
         />
         <Tab.Screen
           name="Journals"
           component={JournalScreen}
-          options={{ tabBarLabel: 'My Journals', tabBarIcon: JournalsTabIcon }}
+          options={{ tabBarLabel: t('blog.tab_journals'), tabBarIcon: JournalsTabIcon }}
         />
       </Tab.Navigator>
     </View>

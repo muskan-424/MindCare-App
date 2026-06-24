@@ -4,10 +4,12 @@ import { useNavigation, useIsFocused } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import api from '../../../utils/apiClient';
 import { colors } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
 const StreakBanner = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
+  const { t } = useTranslation();
   const [streakData, setStreakData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -58,13 +60,13 @@ const StreakBanner = () => {
           <View style={styles.textColumn}>
             <Text style={styles.titleText}>
               {currentStreak > 0
-                ? `${currentStreak}-Day Streak!`
-                : 'Start your streak today!'}
+                ? t('streak.day_streak', { count: currentStreak })
+                : t('streak.start_today')}
             </Text>
             <Text style={styles.subtitleText}>
               {currentStreak > 0
-                ? "You're doing great! Keep logging daily."
-                : 'Log your mood to build a daily habit.'}
+                ? t('streak.subtitle_active')
+                : t('streak.subtitle_inactive')}
             </Text>
           </View>
         </View>
@@ -75,10 +77,10 @@ const StreakBanner = () => {
         <View style={styles.progressSection}>
           <View style={styles.goalInfoRow}>
             <Text style={styles.goalText}>
-              Next: <Text style={{ fontWeight: '700' }}>{nextStreakGoal.label}</Text>
+              {t('streak.next_label', { label: nextStreakGoal.label })}
             </Text>
             <Text style={styles.progressText}>
-              {nextStreakGoal.progress} / {nextStreakGoal.target} days
+              {t('streak.days_progress', { progress: nextStreakGoal.progress, target: nextStreakGoal.target })}
             </Text>
           </View>
           <View style={styles.progressBarBg}>

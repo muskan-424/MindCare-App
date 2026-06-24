@@ -14,10 +14,12 @@ import { LineChart, BarChart, ProgressChart } from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import api from '../../../utils/apiClient';
 import { colors } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
 const screenWidth = Dimensions.get('window').width;
 
 const EmotionalFingerprintScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
 
@@ -40,7 +42,7 @@ const EmotionalFingerprintScreen = ({ navigation }) => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#5c3ab6" />
-        <Text style={styles.loadingText}>Unlocking your emotional patterns...</Text>
+        <Text style={styles.loadingText}>{t('assessment.fingerprint_loading')}</Text>
       </View>
     );
   }
@@ -51,10 +53,10 @@ const EmotionalFingerprintScreen = ({ navigation }) => {
         <View style={styles.errorIconWrap}>
           <Icon name="alert-circle-outline" size={48} color="#FF7675" />
         </View>
-        <Text style={styles.errorTitle}>Not Enough Data Yet</Text>
-        <Text style={styles.errorText}>Keep tracking your mood for a few more days to view your dynamic emotional signature.</Text>
+        <Text style={styles.errorTitle}>{t('assessment.fingerprint_not_enough_title')}</Text>
+        <Text style={styles.errorText}>{t('assessment.fingerprint_not_enough_text')}</Text>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.backBtnText}>Go Back</Text>
+          <Text style={styles.backBtnText}>{t('common.back')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -79,8 +81,15 @@ const EmotionalFingerprintScreen = ({ navigation }) => {
   const stability = safeNum(data.metrics?.sentimentStability, 0.5);
   const sleep = safeNum(data.metrics?.sleepQualityScore, 3);
 
+  const stressProneDays = data.insights?.stressProneDays?.join(' and ')
+    || t('assessment.fingerprint_various_days');
+
   const progressData = {
-    labels: ["Resilience", "Stability", "Rest"],
+    labels: [
+      t('assessment.fingerprint_chart_resilience'),
+      t('assessment.fingerprint_chart_stability'),
+      t('assessment.fingerprint_chart_rest'),
+    ],
     data: [
       Math.max(0, Math.min(1, 48 / (velocity === 0 ? 48 : velocity))),
       Math.max(0, Math.min(1, stability)),
@@ -94,7 +103,7 @@ const EmotionalFingerprintScreen = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="chevron-left" size={28} color="#2D3436" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Emotional Fingerprint</Text>
+        <Text style={styles.headerTitle}>{t('assessment.fingerprint_title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -106,8 +115,8 @@ const EmotionalFingerprintScreen = ({ navigation }) => {
               <Icon name="fingerprint" size={36} color="#ffffff" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>Your Emotional Profile</Text>
-              <Text style={styles.cardSubtitle}>Analytics derived from your recent logs</Text>
+              <Text style={styles.cardTitle}>{t('assessment.fingerprint_profile_title')}</Text>
+              <Text style={styles.cardSubtitle}>{t('assessment.fingerprint_profile_subtitle')}</Text>
             </View>
           </View>
 
@@ -115,14 +124,14 @@ const EmotionalFingerprintScreen = ({ navigation }) => {
             <View style={styles.metricItem}>
               <View style={styles.metricLabelRow}>
                 <Icon name="timer-sand" size={16} color="#5c3ab6" style={{ marginRight: 4 }} />
-                <Text style={styles.metricLabel}>Recovery Rate</Text>
+                <Text style={styles.metricLabel}>{t('assessment.fingerprint_recovery_rate')}</Text>
               </View>
               <Text style={styles.metricValue}>{data.metrics?.recoveryVelocityHours || 0}h</Text>
             </View>
             <View style={[styles.metricItem, { borderLeftWidth: 1, borderLeftColor: '#f1f2f6' }]}>
               <View style={styles.metricLabelRow}>
                 <Icon name="fire" size={16} color="#e17055" style={{ marginRight: 4 }} />
-                <Text style={styles.metricLabel}>Burnout Risk</Text>
+                <Text style={styles.metricLabel}>{t('assessment.fingerprint_burnout_risk')}</Text>
               </View>
               <Text style={[styles.metricValue, { color: (data.metrics?.burnoutRiskIndex || 0) > 0.6 ? '#d63031' : '#27ae60' }]}>
                 {((data.metrics?.burnoutRiskIndex || 0) * 100).toFixed(0)}%
@@ -133,7 +142,7 @@ const EmotionalFingerprintScreen = ({ navigation }) => {
 
         {/* Progress Chart */}
         <View style={styles.premiumCard}>
-          <Text style={styles.sectionTitle}>✨ Resilience & Recovery Dynamics</Text>
+          <Text style={styles.sectionTitle}>{t('assessment.fingerprint_resilience_dynamics')}</Text>
           <ProgressChart
             data={progressData}
             width={screenWidth - 64}
@@ -147,10 +156,10 @@ const EmotionalFingerprintScreen = ({ navigation }) => {
 
         {/* Heatmap Card */}
         <View style={styles.premiumCard}>
-          <Text style={styles.sectionTitle}>📊 Stress Distribution</Text>
+          <Text style={styles.sectionTitle}>{t('assessment.fingerprint_stress_distribution')}</Text>
           <BarChart
             data={{
-              labels: Object.keys(data.insights?.stressHeatmap || {}).length > 0 ? Object.keys(data.insights.stressHeatmap) : ['None'],
+              labels: Object.keys(data.insights?.stressHeatmap || {}).length > 0 ? Object.keys(data.insights.stressHeatmap) : [t('assessment.fingerprint_chart_none')],
               datasets: [{ data: Object.values(data.insights?.stressHeatmap || {}).length > 0 ? Object.values(data.insights.stressHeatmap).map(v => safeNum(v, 0)) : [0] }]
             }}
             width={screenWidth - 64}
@@ -167,18 +176,18 @@ const EmotionalFingerprintScreen = ({ navigation }) => {
 
         {/* Triggers Card */}
         <View style={styles.premiumCard}>
-          <Text style={styles.sectionTitle}>⚠️ Identified Triggers</Text>
+          <Text style={styles.sectionTitle}>{t('assessment.fingerprint_identified_triggers')}</Text>
           {(data.insights?.commonTriggers || []).map((trigger, index) => (
             <View key={index} style={styles.triggerItem}>
               <View style={[styles.dot, { backgroundColor: index === 0 ? '#ff7675' : index === 1 ? '#e17055' : '#fdcb6e' }]} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.triggerName}>{trigger.name}</Text>
-                <Text style={styles.triggerCount}>{trigger.count} incidents logged</Text>
+                <Text style={styles.triggerCount}>{t('assessment.fingerprint_incidents_logged', { count: trigger.count })}</Text>
               </View>
             </View>
           ))}
           {(!data.insights?.commonTriggers || data.insights.commonTriggers.length === 0) && (
-            <Text style={styles.noData}>No triggers identified yet.</Text>
+            <Text style={styles.noData}>{t('assessment.fingerprint_no_triggers')}</Text>
           )}
         </View>
 
@@ -188,10 +197,9 @@ const EmotionalFingerprintScreen = ({ navigation }) => {
             <Icon name="lightbulb-on" size={24} color="#5c3ab6" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.insightTitle}>Care Insight</Text>
+            <Text style={styles.insightTitle}>{t('assessment.fingerprint_care_insight')}</Text>
             <Text style={styles.insightText}>
-              You are typically most stress-prone on <Text style={{ fontWeight: '800', color: '#5c3ab6' }}>{data.insights?.stressProneDays?.join(' and ') || 'various days'}</Text>. 
-              Focus on breathing exercises or talk to Tink around these periods to keep calm.
+              {t('assessment.fingerprint_insight_text', { days: stressProneDays })}
             </Text>
           </View>
         </View>

@@ -1,78 +1,20 @@
- export const concerns = [
-  {
-    id: '1',
-    name: 'Anger'
-  },
-  {
-    id: '2',
-    name: 'Anxiety and Panic Attacks'
-  },
-  {
-    id: '3',
-    name: 'Depression'
-  },
-  {
-    id: '4',
-    name: 'Eating disorders'
-  },
-  {
-    id: '5',
-    name: 'Self-esteem'
-  },
-  {
-    id: '6',
-    name: 'Self-harm'
-  },
-  {
-    id: '7',
-    name: 'Stress'
-  },
-  {
-    id: '8',
-    name: 'Sleep disorders'
-  }
+export const concerns = [
+  { id: '1', nameKey: 'concerns.anger', apiName: 'Anger' },
+  { id: '2', nameKey: 'concerns.anxiety', apiName: 'Anxiety and Panic Attacks' },
+  { id: '3', nameKey: 'concerns.depression', apiName: 'Depression' },
+  { id: '4', nameKey: 'concerns.eating_disorders', apiName: 'Eating disorders' },
+  { id: '5', nameKey: 'concerns.self_esteem', apiName: 'Self-esteem' },
+  { id: '6', nameKey: 'concerns.self_harm', apiName: 'Self-harm' },
+  { id: '7', nameKey: 'concerns.stress', apiName: 'Stress' },
+  { id: '8', nameKey: 'concerns.sleep_disorders', apiName: 'Sleep disorders' },
 ];
 
+/** Resolve localized concern label via t(). */
+export function getConcernLabel(concern, t) {
+  return t(concern.nameKey);
+}
 
-// export const concerns = [
-//   {
-//     id: 1,
-//     value: 'Anger',
-//     selected: true
-//   },
-//   {
-//     id: 2,
-//     value: 'Depression',
-//     selected: false
-//   },
-//   {
-//     id: 3,
-//     value: 'Anxiety',
-//     selected: false
-//   },
-//   {
-//     id: 4,
-//     value: 'Stress',
-//     selected: true
-//   },
-//   {
-//     id: 5,
-//     value: 'Self-esteem',
-//     selected: true
-//   },
-//   {
-//     id: 6,
-//     value: 'Self-harm',
-//     selected: true
-//   },
-//   {
-//     id: 7,
-//     value: 'Eat-disorder',
-//     selected: true
-//   },
-//   {
-//     id: 8,
-//     value: 'Sleep-disorder',
-//     selected: false
-//   }
-// ];
+/** @deprecated use nameKey + getConcernLabel — kept for API payloads */
+export function getConcernApiName(concern) {
+  return concern.apiName;
+}

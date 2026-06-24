@@ -10,6 +10,7 @@ import api from '../../../utils/apiClient';
 import { colors, sizes } from '../../../constants/theme';
 import { LineChart, ContributionGraph } from 'react-native-chart-kit';
 import useTranslation from '../../../utils/i18n';
+import { formatDate } from '../../../utils/locale';
 
 const RATING_LABELS = { 1: 'Terrible', 2: 'Very Low', 3: 'Low', 4: 'Below Okay', 5: 'Okay', 6: 'Decent', 7: 'Good', 8: 'Great', 9: 'Very Good', 10: 'Excellent' };
 const RATING_COLORS = { low: '#E57373', mid: '#FFB74D', high: '#81C784' };
@@ -25,7 +26,7 @@ const BADGE_META = {
 };
 
 const MoodTrackerScreen = ({ auth, navigation }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [rating, setRating] = useState(5);
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
@@ -188,7 +189,7 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
           <View style={{ marginTop: 10, alignItems: 'center' }}>
             <LineChart
               data={{
-                labels: trend.filter(d => d.rating != null).map(d => new Date(d.date).toLocaleDateString(undefined, { day: 'numeric' })),
+                labels: trend.filter(d => d.rating != null).map(d => formatDate(d.date, language, { day: 'numeric' })),
                 datasets: [{ data: trend.filter(d => d.rating != null).map(d => d.rating) }]
               }}
               width={Dimensions.get('window').width - 40}
@@ -215,12 +216,12 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
           <View style={styles.insightRow}>
             <View style={[styles.insightCard, { borderLeftColor: RATING_COLORS.high }]}>
               <Text style={styles.insightLabel}>Best Day 🌟</Text>
-              <Text style={styles.insightValue}>{new Date(stats.bestDay.date).toLocaleDateString()}</Text>
+              <Text style={styles.insightValue}>{formatDate(stats.bestDay.date, language)}</Text>
               <Text style={styles.insightSub}>Rating: {stats.bestDay.rating}</Text>
             </View>
             <View style={[styles.insightCard, { borderLeftColor: RATING_COLORS.low }]}>
               <Text style={styles.insightLabel}>Rough Day 💙</Text>
-              <Text style={styles.insightValue}>{new Date(stats.worstDay.date).toLocaleDateString()}</Text>
+              <Text style={styles.insightValue}>{formatDate(stats.worstDay.date, language)}</Text>
               <Text style={styles.insightSub}>Rating: {stats.worstDay.rating}</Text>
             </View>
           </View>

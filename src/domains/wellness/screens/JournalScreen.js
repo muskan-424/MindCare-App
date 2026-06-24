@@ -16,20 +16,21 @@ import { connect } from 'react-redux';
 import AddJournal from './AddJournal';
 import DisplayJournal from './DisplayJournal';
 import { getAvatarForGender } from '../../../utils/avatar';
-
-const monthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
+import useTranslation from '../../../utils/i18n';
+import { formatDate } from '../../../utils/locale';
 
 const RISK_BG = { MEDIUM: '#FFB74D', HIGH: '#E57373', CRITICAL: '#C62828' };
 
 const JournalScreen = ({ navigation, auth }) => {
+  const { t, language } = useTranslation();
   const [entries, setEntries] = React.useState(localData);
   const [loading, setLoading] = React.useState(false);
 
-  const d = new Date();
-  const dateStr = `${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+  const dateStr = formatDate(new Date(), language, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
   const fetchJournals = React.useCallback(async () => {
     setLoading(true);
@@ -61,20 +62,20 @@ const JournalScreen = ({ navigation, auth }) => {
       <View style={styles.header}>
         <Image style={styles.headerAvatar} source={getAvatarForGender(auth.profile.gender)} />
         <View style={styles.headerTextWrap}>
-          <Text style={styles.headerGreeting}>Hi there!</Text>
+          <Text style={styles.headerGreeting}>{t('journal.greeting')}</Text>
           <Text style={styles.headerDate}>{dateStr}</Text>
         </View>
       </View>
 
       {loading ? (
         <View style={styles.emptyWrap}>
-          <Text style={styles.emptyText}>Loading your journal entries...</Text>
+          <Text style={styles.emptyText}>{t('journal.loading')}</Text>
         </View>
       ) : !entries || entries.length === 0 ? (
         <View style={styles.emptyWrap}>
           <Text style={styles.emptyEmoji}>📔</Text>
-          <Text style={styles.emptyTitle}>No entries yet</Text>
-          <Text style={styles.emptyText}>Tap + to write your first journal entry.</Text>
+          <Text style={styles.emptyTitle}>{t('journal.empty_title')}</Text>
+          <Text style={styles.emptyText}>{t('journal.empty_text')}</Text>
         </View>
       ) : (
         <FlatList
