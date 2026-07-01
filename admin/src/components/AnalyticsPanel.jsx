@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from '../i18n.jsx';
 
-function BarChart({ items, valueKey, labelKey, maxVal, color, T }) {
-  const max = maxVal || Math.max(...items.map((i) => i[valueKey] || 0), 1);
+function BarChart({ items, valueKey, labelKey, color, T }) {
+  const max = Math.max(...items.map((i) => i[valueKey] || 0), 1);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {items.map((item, idx) => {
-        const v = item[valueKey] || 0;
+      {items.map((row, idx) => {
+        const v = row[valueKey] || 0;
         const pct = Math.round((v / max) * 100);
         return (
           <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12 }}>
-            <span style={{ width: 72, color: T.textMuted, flexShrink: 0 }}>{item[labelKey]}</span>
+            <span style={{ width: 72, color: T.textMuted }}>{row[labelKey]}</span>
             <div style={{ flex: 1, height: 18, background: T.bg, borderRadius: 4, overflow: 'hidden' }}>
-              <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 4, minWidth: v ? 4 : 0 }} />
+              <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 4 }} />
             </div>
             <span style={{ width: 36, textAlign: 'right', fontWeight: 600 }}>{typeof v === 'number' && v % 1 ? v.toFixed(1) : v}</span>
           </div>
@@ -22,67 +23,59 @@ function BarChart({ items, valueKey, labelKey, maxVal, color, T }) {
 }
 
 export default function AnalyticsPanel({ client, T }) {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState('');
 
   useEffect(() => {
-    setLoading(true);
-    client.getAnalytics()
-      .then(setData)
-      .catch((e) => setErr(e.response?.data?.error || e.message))
-      .finally(() => setLoading(false));
+    client.getAnalytics().then(setData).catch(() => setData(null));
   }, [client]);
 
-  if (loading) return <p style={{ color: T.textMuted }}>Loading analytics…</p>;
-  if (err) return <p style={{ color: T.red }}>{err}</p>;
-  if (!data) return null;
+  if (!data) return <p style={{ color: T.textMuted }}>{t('web.analytics_loading')}</p>;
 
-  const { riskTrend = [], moodHeatmap = [], kpis = {} } = data;
+  const kpis = data.kpis || {};
   const card = { background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: 16, marginBottom: 16 };
 
-  const riskItems = riskTrend.slice(-14).map((r) => ({
-    label: String(r.date).slice(5),
+  const riskItems = (data.riskTrend || []).slice(-14).map((r) => ({
+    label: new Date(r._id?.date || r._id).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
     count: r.count,
-    avgSeverity: r.avgSeverity,
   }));
-  const moodItems = moodHeatmap.slice(-14).map((m) => ({
-    label: String(m.date).slice(5),
+
+  const moodItems = (data.moodHeatmap || []).slice(0, 14).map((m) => ({
+    label: m._id,
     avgRating: m.avgRating,
-    count: m.count,
   }));
 
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12, marginBottom: 20 }}>
         {[
-          ['Total users', kpis.totalUsers],
-          ['Escalated reports', kpis.escalatedReports],
-          ['Active therapists', kpis.activeTherapists],
-          ['Pending appts', kpis.pendingAppointments],
-        ].map(([label, val]) => (
+          [t('web.analytics_total_users'), kpis.totalUsers],
+          [t('web.analytics_escalated'), kpis.escalatedReports],
+          [t('web.analytics_active_therapists'), kpis.activeTherapists],
+          [t('web.analytics_pending_appts'), kpis.pendingAppointments],
+        ].map(([label, value]) => (
           <div key={label} style={{ ...card, marginBottom: 0, textAlign: 'center' }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: T.accent }}>{val ?? '—'}</div>
-            <div style={{ fontSize: 12, color: T.textMuted, marginTop: 4 }}>{label}</div>
+            <div style={{ fontSize: 11, color: T.textMuted, textTransform: 'uppercase' }}>{label}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>{value ?? '—'}</div>
           </div>
         ))}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
         <div style={card}>
-          <h4 style={{ margin: '0 0 12px', fontSize: 14 }}>Risk reports (14 days)</h4>
-          {riskItems.length === 0 ? (
-            <p style={{ color: T.textMuted, fontSize: 13 }}>No data yet.</p>
-          ) : (
+          <h4 style={{ margin: '0 0 12px' }}>{t('web.analytics_risk_trend')}</h4>
+          {riskItems.length ? (
             <BarChart items={riskItems.map((r) => ({ label: r.label, count: r.count }))} valueKey="count" labelKey="label" color={T.red} T={T} />
+          ) : (
+            <p style={{ color: T.textMuted, fontSize: 13 }}>{t('admin.no_risk_data')}</p>
           )}
         </div>
         <div style={card}>
-          <h4 style={{ margin: '0 0 12px', fontSize: 14 }}>Avg mood rating (14 days)</h4>
-          {moodItems.length === 0 ? (
-            <p style={{ color: T.textMuted, fontSize: 13 }}>No mood entries yet.</p>
-          ) : (
+          <h4 style={{ margin: '0 0 12px' }}>{t('web.analytics_mood_heatmap')}</h4>
+          {moodItems.length ? (
             <BarChart items={moodItems.map((m) => ({ label: m.label, avgRating: m.avgRating }))} valueKey="avgRating" labelKey="label" color={T.accent} T={T} />
+          ) : (
+            <p style={{ color: T.textMuted, fontSize: 13 }}>{t('admin.no_mood_data')}</p>
           )}
         </div>
       </div>

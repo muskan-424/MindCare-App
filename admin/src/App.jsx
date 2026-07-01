@@ -8,6 +8,7 @@ import AppointmentsPanel from './components/AppointmentsPanel';
 import BroadcastPanel from './components/BroadcastPanel';
 import VerifyModal from './components/VerifyModal';
 import ClinicalProfileModal from './components/ClinicalProfileModal';
+import { useTranslation } from './i18n.jsx';
 
 const THEMES = {
   light: {
@@ -27,14 +28,15 @@ const THEMES = {
 };
 
 const TABS = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'analytics', label: 'Analytics' },
-  { id: 'pending', label: 'Pending review' },
-  { id: 'appointments', label: 'Appointments' },
-  { id: 'users', label: 'Users' },
+  { id: 'overview', labelKey: 'admin.overview' },
+  { id: 'analytics', labelKey: 'admin.tab_analytics' },
+  { id: 'pending', labelKey: 'web.tab_pending' },
+  { id: 'appointments', labelKey: 'web.tab_appointments' },
+  { id: 'users', labelKey: 'admin.tab_users' },
 ];
 
 export default function App() {
+  const { t, language, setLanguage, langs } = useTranslation();
   const [isDark, setIsDark] = useState(() => localStorage?.getItem('ADMIN_THEME') === 'dark');
   const [token, setToken] = useState(localStorage?.getItem('ADMIN_TOKEN') || '');
   const [client, setClient] = useState(null);
@@ -69,9 +71,9 @@ export default function App() {
       setError('');
       await refreshDashboard(c);
     } catch (e) {
-      setError(e.response?.data?.error || e.message || 'Failed to load dashboard');
+      setError(e.response?.data?.error || e.message || t('web.failed_load_dashboard'));
     }
-  }, [refreshDashboard]);
+  }, [refreshDashboard, t]);
 
   useEffect(() => {
     if (token) initClient(token);
@@ -97,7 +99,7 @@ export default function App() {
       setFusions(fusionList);
       setMoods(mood);
     } catch (e) {
-      setError(e.response?.data?.error || e.message || 'Failed to load user data');
+      setError(e.response?.data?.error || e.message || t('web.failed_load_user'));
     }
   };
 
@@ -115,7 +117,7 @@ export default function App() {
       const profile = await client.getFullProfile(selected.id);
       setClinicalProfile(profile);
     } catch (e) {
-      setError(e.response?.data?.error || e.message || 'Failed to load profile');
+      setError(e.response?.data?.error || e.message || t('web.failed_load_profile'));
     } finally {
       setProfileLoading(false);
     }
@@ -160,26 +162,40 @@ export default function App() {
     <div style={S.root}>
       <header style={S.header}>
         <div>
-          <h1 style={S.headerTitle}>MindCare Admin</h1>
-          <p style={S.headerSub}>Platform oversight &amp; clinical review</p>
+          <h1 style={S.headerTitle}>{t('web.header_title')}</h1>
+          <p style={S.headerSub}>{t('web.header_sub')}</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => { const n = !isDark; setIsDark(n); localStorage?.setItem('ADMIN_THEME', n ? 'dark' : 'light'); }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <label style={{ fontSize: 13, color: T.headerText, display: 'flex', alignItems: 'center', gap: 6 }}>
+            {t('web.language')}
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              style={{ padding: '4px 8px', borderRadius: 6, border: 'none', fontSize: 13 }}
+            >
+              {langs.map((l) => (
+                <option key={l.code} value={l.code}>{l.label}</option>
+              ))}
+            </select>
+          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }} onClick={() => { const n = !isDark; setIsDark(n); localStorage?.setItem('ADMIN_THEME', n ? 'dark' : 'light'); }}>
           <span>{isDark ? '🌙' : '☀️'}</span>
-          <span style={{ fontSize: 13 }}>{isDark ? 'Dark' : 'Light'}</span>
+          <span style={{ fontSize: 13 }}>{isDark ? t('web.theme_dark') : t('web.theme_light')}</span>
+          </div>
         </div>
       </header>
 
       <div style={S.tokenBar}>
-        <span style={{ fontSize: 13, color: T.textMuted, fontWeight: 500 }}>Admin token:</span>
-        <input type="password" value={token} onChange={(e) => setToken(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveToken()} placeholder="Paste ADMIN_TOKEN…" style={S.tokenInput} />
-        <button type="button" onClick={handleSaveToken} style={S.saveBtn}>Save &amp; Load</button>
+        <span style={{ fontSize: 13, color: T.textMuted, fontWeight: 500 }}>{t('web.admin_token')}</span>
+        <input type="password" value={token} onChange={(e) => setToken(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSaveToken()} placeholder={t('web.token_placeholder')} style={S.tokenInput} />
+        <button type="button" onClick={handleSaveToken} style={S.saveBtn}>{t('web.save_load')}</button>
         {error && <span style={S.errorMsg}>{error}</span>}
       </div>
 
       <nav style={S.tabBar}>
-        {TABS.map((t) => (
-          <button key={t.id} type="button" style={S.tab(tab === t.id)} onClick={() => setTab(t.id)}>
-            {t.label}{t.id === 'pending' ? pendingBadge : ''}
+        {TABS.map((tabItem) => (
+          <button key={tabItem.id} type="button" style={S.tab(tab === tabItem.id)} onClick={() => setTab(tabItem.id)}>
+            {t(tabItem.labelKey)}{tabItem.id === 'pending' ? pendingBadge : ''}
           </button>
         ))}
       </nav>
@@ -187,17 +203,14 @@ export default function App() {
       {tab === 'overview' && (
         <div style={S.mainPanel}>
           <StatsBar stats={stats} pendingTotal={pending?.totalPending} T={T} />
-          <p style={{ ...S.muted, marginBottom: 20 }}>
-            Use <strong>Pending review</strong> for risk verification, emergency contacts, and deletion requests.
-            Open <strong>Appointments</strong> to assign therapists.
-          </p>
+          <p style={{ ...S.muted, marginBottom: 20 }}>{t('web.overview_hint')}</p>
           {client && <BroadcastPanel client={client} T={T} />}
         </div>
       )}
 
       {tab === 'analytics' && (
         <div style={S.mainPanel}>
-          {client ? <AnalyticsPanel client={client} T={T} /> : <p style={S.muted}>Save admin token to load analytics.</p>}
+          {client ? <AnalyticsPanel client={client} T={T} /> : <p style={S.muted}>{t('web.save_token_analytics')}</p>}
         </div>
       )}
 
@@ -206,7 +219,7 @@ export default function App() {
           {client ? (
             <AppointmentsPanel client={client} T={T} onRefresh={() => refreshDashboard(client)} />
           ) : (
-            <p style={S.muted}>Save admin token to manage appointments.</p>
+            <p style={S.muted}>{t('web.save_token_appointments')}</p>
           )}
         </div>
       )}
@@ -226,7 +239,7 @@ export default function App() {
       {tab === 'users' && (
         <div style={S.body}>
           <div style={S.sidebar}>
-            <h2 style={S.sidebarTitle}>Users ({users.length})</h2>
+            <h2 style={S.sidebarTitle}>{t('web.users_sidebar', { count: users.length })}</h2>
             {users.map((u) => (
               <div key={u.id} onClick={() => handleSelectUser(u)} style={S.userCard(selected?.id === u.id)}>
                 <div style={{ fontWeight: 600, fontSize: 14 }}>{u.name}</div>
@@ -236,21 +249,21 @@ export default function App() {
           </div>
           <div style={S.detail}>
             {!selected ? (
-              <p style={S.empty}>Select a user to view assessments, risk reports, and mood history.</p>
+              <p style={S.empty}>{t('web.select_user_hint')}</p>
             ) : (
               <>
                 <h2 style={S.h2}>{selected.name}</h2>
                 <p style={S.muted}>{selected.email}</p>
                 <div style={S.actionRow}>
                   <button type="button" style={S.outlineBtn} onClick={openClinicalProfile} disabled={profileLoading}>
-                    {profileLoading ? 'Loading…' : 'Full clinical profile'}
+                    {profileLoading ? t('web.loading') : t('web.full_clinical_profile')}
                   </button>
                 </div>
 
-                <h3 style={S.h3}>AI Intake Assessments</h3>
-                {fusions.length === 0 ? <p style={S.empty}>No completed AI intake assessments yet.</p> : (
+                <h3 style={S.h3}>{t('web.ai_intake_assessments')}</h3>
+                {fusions.length === 0 ? <p style={S.empty}>{t('web.no_ai_intake')}</p> : (
                   <table style={S.table}>
-                    <thead><tr><th style={S.th}>Date</th><th style={S.th}>Risk</th><th style={S.th}>Score</th><th style={S.th}>Emotions</th></tr></thead>
+                    <thead><tr><th style={S.th}>{t('web.col_date')}</th><th style={S.th}>{t('web.col_risk')}</th><th style={S.th}>{t('web.col_score')}</th><th style={S.th}>{t('web.col_emotions')}</th></tr></thead>
                     <tbody>
                       {fusions.map((f) => (
                         <tr key={f.id}>
@@ -264,22 +277,22 @@ export default function App() {
                   </table>
                 )}
 
-                <h3 style={S.h3}>Risk Reports</h3>
-                {issues.length === 0 ? <p style={S.empty}>No risk reports yet.</p> : (
+                <h3 style={S.h3}>{t('admin.risk_reports_section')}</h3>
+                {issues.length === 0 ? <p style={S.empty}>{t('web.no_risk_reports')}</p> : (
                   <table style={S.table}>
-                    <thead><tr><th style={S.th}>Date</th><th style={S.th}>Category</th><th style={S.th}>Risk</th><th style={S.th}>Status</th><th style={S.th} /></tr></thead>
+                    <thead><tr><th style={S.th}>{t('web.col_date')}</th><th style={S.th}>{t('web.col_category')}</th><th style={S.th}>{t('web.col_risk')}</th><th style={S.th}>{t('web.col_status')}</th><th style={S.th} /></tr></thead>
                     <tbody>
                       {issues.map((r) => (
                         <tr key={r.id}>
                           <td style={S.td}>{new Date(r.createdAt).toLocaleString()}</td>
-                          <td style={S.td}>{r.category === 'ai_intake_assessment' ? 'AI Intake' : r.category.replace(/_/g, ' ')}</td>
+                          <td style={S.td}>{r.category === 'ai_intake_assessment' ? t('web.ai_intake_label') : r.category.replace(/_/g, ' ')}</td>
                           <td style={{ ...S.td, fontWeight: 700, color: RISK_COLORS[r.riskLevel] }}>{r.riskLevel}</td>
                           <td style={S.td}>
-                            <span style={S.badge(r.adminVerified)}>{r.adminVerified ? `Verified · ${r.adminAction}` : 'Pending'}</span>
+                            <span style={S.badge(r.adminVerified)}>{r.adminVerified ? t('web.status_verified', { action: r.adminAction }) : t('web.status_pending')}</span>
                           </td>
                           <td style={S.td}>
                             {!r.adminVerified && (
-                              <button type="button" style={S.verifyBtn} onClick={() => setVerifyTarget(r)}>Verify</button>
+                              <button type="button" style={S.verifyBtn} onClick={() => setVerifyTarget(r)}>{t('web.verify_btn')}</button>
                             )}
                           </td>
                         </tr>
@@ -288,10 +301,10 @@ export default function App() {
                   </table>
                 )}
 
-                <h3 style={S.h3}>Mood History</h3>
-                {moods.length === 0 ? <p style={S.empty}>No mood entries yet.</p> : (
+                <h3 style={S.h3}>{t('admin.mood_history')}</h3>
+                {moods.length === 0 ? <p style={S.empty}>{t('admin.no_mood_entries')}</p> : (
                   <table style={S.table}>
-                    <thead><tr><th style={S.th}>Date</th><th style={S.th}>Rating</th><th style={S.th}>Note</th></tr></thead>
+                    <thead><tr><th style={S.th}>{t('web.col_date')}</th><th style={S.th}>{t('web.col_rating')}</th><th style={S.th}>{t('web.col_note')}</th></tr></thead>
                     <tbody>
                       {moods.map((m) => (
                         <tr key={m.id}>

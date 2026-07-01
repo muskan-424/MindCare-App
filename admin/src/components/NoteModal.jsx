@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
+import { useTranslation } from '../i18n.jsx';
 
 /** Simple modal with optional note field and confirm/cancel. */
 export default function NoteModal({
-  title, description, noteLabel, noteRequired, confirmLabel, confirmDanger, onClose, onConfirm, T,
+  title, description, noteLabel, noteRequired, confirmLabel, confirmDanger, danger, onClose, onConfirm, T,
 }) {
+  const { t } = useTranslation();
+  const isDanger = confirmDanger || danger;
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
 
   const submit = async () => {
     if (noteRequired && !note.trim()) {
-      setErr('A note is required.');
+      setErr(t('web.modal_note_required'));
       return;
     }
     setLoading(true);
@@ -19,7 +22,7 @@ export default function NoteModal({
       await onConfirm(note.trim());
       onClose();
     } catch (e) {
-      setErr(e.response?.data?.error || e.message || 'Action failed');
+      setErr(e.response?.data?.error || e.message || t('web.modal_action_failed'));
     } finally {
       setLoading(false);
     }
@@ -56,14 +59,14 @@ export default function NoteModal({
         )}
         {err && <p style={{ color: T.red, fontSize: 13 }}>{err}</p>}
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button type="button" onClick={onClose} style={btnGhost(T)}>Cancel</button>
+          <button type="button" onClick={onClose} style={btnGhost(T)}>{t('common.cancel')}</button>
           <button
             type="button"
             onClick={submit}
             disabled={loading}
-            style={confirmDanger ? btnDanger(T) : btnPrimary(T)}
+            style={isDanger ? btnDanger(T) : btnPrimary(T)}
           >
-            {loading ? 'Working…' : confirmLabel}
+            {loading ? t('web.modal_saving') : confirmLabel}
           </button>
         </div>
       </div>

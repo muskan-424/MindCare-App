@@ -63,6 +63,7 @@ describe('1. Translations dictionary structure', () => {
     'auth', 'crisis', 'concerns', 'journal', 'chat', 'goals', 'wellness', 'badges',
     'breathing', 'affirmations', 'gratitude', 'grounding', 'blog', 'streak',
     'appointments', 'therapy', 'assessment', 'admin', 'safety', 'emergency', 'institution',
+    'web',
   ];
 
   test('should contain all 16 supported languages', () => {

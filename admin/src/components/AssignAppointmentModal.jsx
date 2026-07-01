@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from '../i18n.jsx';
 
-export default function AssignAppointmentModal({ appointment, client, onClose, onAssigned, T }) {
+export default function AssignAppointmentModal({ appointment, client, onClose, onAssigned, onDone, T }) {
+  const { t } = useTranslation();
   const [therapists, setTherapists] = useState([]);
   const [therapistId, setTherapistId] = useState('');
   const [date, setDate] = useState(appointment.preferredDates?.[0] || '');
@@ -9,6 +11,8 @@ export default function AssignAppointmentModal({ appointment, client, onClose, o
   const [adminNote, setAdminNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
+
+  const finish = onDone || onAssigned;
 
   useEffect(() => {
     client.getTherapists().then(setTherapists).catch(() => setTherapists([]));
@@ -26,17 +30,17 @@ export default function AssignAppointmentModal({ appointment, client, onClose, o
 
   const submit = async () => {
     if (!therapistId || !date || !timeSlot) {
-      setErr('Select therapist, date, and time slot.');
+      setErr(t('web.modal_assign_incomplete'));
       return;
     }
     setLoading(true);
     setErr('');
     try {
       await client.assignAppointment(appointment.id, { therapistId, date, timeSlot, adminNote });
-      onAssigned();
+      finish?.();
       onClose();
     } catch (e) {
-      setErr(e.response?.data?.error || e.message || 'Assign failed');
+      setErr(e.response?.data?.error || e.message || t('web.modal_assign_failed'));
     } finally {
       setLoading(false);
     }
@@ -58,41 +62,41 @@ export default function AssignAppointmentModal({ appointment, client, onClose, o
   return (
     <div style={overlay} onClick={onClose}>
       <div style={sheet} onClick={(e) => e.stopPropagation()}>
-        <h3 style={{ margin: '0 0 8px' }}>Assign therapist</h3>
+        <h3 style={{ margin: '0 0 8px' }}>{t('web.appt_assign')}</h3>
         <p style={{ margin: '0 0 16px', fontSize: 13, color: T.textMuted }}>
-          {appointment.userName} · {appointment.requestedSpeciality || 'therapy'}
+          {appointment.userName} · {appointment.requestedSpeciality || t('web.appt_general')}
         </p>
 
-        <label style={{ fontSize: 13, fontWeight: 600 }}>Therapist</label>
+        <label style={{ fontSize: 13, fontWeight: 600 }}>{t('web.modal_select_therapist')}</label>
         <select value={therapistId} onChange={(e) => setTherapistId(e.target.value)} style={input}>
-          <option value="">Select…</option>
-          {therapists.map((t) => (
-            <option key={t.id} value={t.id}>{t.name} — {t.specialisation}</option>
+          <option value="">{t('web.modal_select', 'Select…')}</option>
+          {therapists.map((th) => (
+            <option key={th.id} value={th.id}>{th.name} — {th.specialisation}</option>
           ))}
         </select>
 
-        <label style={{ fontSize: 13, fontWeight: 600 }}>Date</label>
+        <label style={{ fontSize: 13, fontWeight: 600 }}>{t('web.modal_select_date')}</label>
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={input} />
 
-        <label style={{ fontSize: 13, fontWeight: 600 }}>Time slot</label>
+        <label style={{ fontSize: 13, fontWeight: 600 }}>{t('web.modal_time_slot')}</label>
         <select value={timeSlot} onChange={(e) => setTimeSlot(e.target.value)} style={input}>
-          <option value="">Select…</option>
+          <option value="">{t('web.modal_select', 'Select…')}</option>
           {available.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
         {therapistId && date && available.length === 0 && (
-          <p style={{ fontSize: 12, color: T.textMuted, marginTop: -8 }}>No slots available for this date.</p>
+          <p style={{ fontSize: 12, color: T.textMuted, marginTop: -8 }}>{t('admin.no_slots')}</p>
         )}
 
-        <label style={{ fontSize: 13, fontWeight: 600 }}>Admin note (optional)</label>
+        <label style={{ fontSize: 13, fontWeight: 600 }}>{t('web.modal_note_optional')}</label>
         <textarea value={adminNote} onChange={(e) => setAdminNote(e.target.value)} rows={2} style={{ ...input, resize: 'vertical' }} />
 
         {err && <p style={{ color: T.red, fontSize: 13 }}>{err}</p>}
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button type="button" onClick={onClose} style={{ padding: '8px 16px', border: `1px solid ${T.border}`, borderRadius: 6, background: 'transparent', cursor: 'pointer', color: T.text }}>Cancel</button>
+          <button type="button" onClick={onClose} style={{ padding: '8px 16px', border: `1px solid ${T.border}`, borderRadius: 6, background: 'transparent', cursor: 'pointer', color: T.text }}>{t('common.cancel')}</button>
           <button type="button" onClick={submit} disabled={loading} style={{ padding: '8px 16px', background: T.btn, color: T.btnText, border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}>
-            {loading ? 'Assigning…' : 'Confirm assignment'}
+            {loading ? t('web.modal_assigning') : t('web.modal_confirm_assignment')}
           </button>
         </div>
       </div>

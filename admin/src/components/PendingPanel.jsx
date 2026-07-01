@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { RISK_COLORS } from '../api';
-import VerifyModal from './VerifyModal';
 import NoteModal from './NoteModal';
 import AssignAppointmentModal from './AssignAppointmentModal';
+import VerifyModal from './VerifyModal';
+import { useTranslation } from '../i18n.jsx';
 
-function QueueSection({ title, items, renderItem, empty, T }) {
+function Section({ title, empty, items, renderItem, T }) {
   return (
     <div style={{ marginBottom: 28 }}>
-      <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 10, color: T.text }}>{title}</h3>
+      <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>{title}</h3>
       {items.length === 0 ? (
         <p style={{ fontSize: 13, color: T.textMuted, fontStyle: 'italic' }}>{empty}</p>
       ) : (
@@ -17,59 +17,37 @@ function QueueSection({ title, items, renderItem, empty, T }) {
   );
 }
 
-export default function PendingPanel({ pending, client, onRefresh, onSelectUser, T }) {
+export default function PendingPanel({ pending, client, T, onRefresh, onSelectUser }) {
+  const { t } = useTranslation();
   const [verifyTarget, setVerifyTarget] = useState(null);
+  const [assignTarget, setAssignTarget] = useState(null);
   const [ecAction, setEcAction] = useState(null);
   const [deletionAction, setDeletionAction] = useState(null);
-  const [assignTarget, setAssignTarget] = useState(null);
 
-  if (!pending) {
-    return <p style={{ color: T.textMuted }}>Load admin token to see pending items.</p>;
-  }
-
-  const card = (extra = {}) => ({
-    padding: '12px 14px', borderRadius: 8, border: `1px solid ${T.border}`,
-    background: T.surface, fontSize: 13, ...extra,
-  });
-
-  const handleVerify = async (body) => {
-    await client.verifyIssue(verifyTarget.id, body);
-    onRefresh();
-  };
+  if (!pending) return <p style={{ color: T.textMuted }}>{t('web.loading')}</p>;
 
   return (
-    <>
-      {pending.escalatedCount > 0 && (
-        <div style={{
-          padding: '10px 14px', marginBottom: 16, borderRadius: 8,
-          background: '#fdecea', border: '1px solid #f5c6cb', color: '#c0392b', fontSize: 13,
-        }}>
-          {pending.escalatedCount} escalated report(s) need immediate attention.
-        </div>
-      )}
-
-      <QueueSection
-        title={`Risk reports (${pending.riskReports?.length || 0})`}
+    <div>
+      <Section
+        title={t('web.pending_risk_title')}
+        empty={t('web.pending_risk_empty')}
         items={pending.riskReports || []}
-        empty="No unverified high/critical reports."
         T={T}
         renderItem={(r) => (
-          <div key={r.id} style={{ ...card(), borderLeft: `4px solid ${RISK_COLORS[r.riskLevel]}` }}>
+          <div key={r.id} style={{ padding: 12, borderRadius: 8, border: `1px solid ${T.border}`, background: T.surface }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
               <div>
-                <strong>{r.userName || 'User'}</strong>
-                <span style={{ color: T.textMuted }}> · {r.riskLevel}</span>
-                {r.escalated && <span style={{ color: T.red, fontWeight: 700 }}> · ESCALATED</span>}
-                <div style={{ color: T.textMuted, marginTop: 4 }}>{new Date(r.createdAt).toLocaleString()}</div>
+                <strong>{r.userName || t('web.pending_user_fallback')}</strong>
+                <div style={{ fontSize: 12, color: T.textMuted }}>{r.category} · {r.riskLevel}</div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 {r.userId && (
                   <button type="button" style={btnSmall(T)} onClick={() => onSelectUser({ id: r.userId, name: r.userName, email: r.userEmail })}>
-                    View user
+                    {t('web.pending_view_user')}
                   </button>
                 )}
                 <button type="button" style={btnPrimarySmall(T)} onClick={() => setVerifyTarget(r)}>
-                  Verify
+                  {t('web.verify_btn')}
                 </button>
               </div>
             </div>
@@ -77,60 +55,60 @@ export default function PendingPanel({ pending, client, onRefresh, onSelectUser,
         )}
       />
 
-      <QueueSection
-        title={`Appointment requests (${pending.appointmentRequests?.length || 0})`}
+      <Section
+        title={t('web.pending_appt_title')}
+        empty={t('web.pending_appt_empty')}
         items={pending.appointmentRequests || []}
-        empty="No appointments awaiting admin."
         T={T}
         renderItem={(a) => (
-          <div key={a.id} style={card()}>
+          <div key={a.id} style={{ padding: 12, borderRadius: 8, border: `1px solid ${T.border}`, background: T.surface }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
               <div>
-                <strong>{a.userName}</strong> requested {a.requestedSpeciality || 'therapy'}
-                <div style={{ color: T.textMuted, marginTop: 4 }}>{new Date(a.createdAt).toLocaleString()}</div>
+                <strong>{a.userName}</strong> {t('web.appt_requested', { speciality: a.requestedSpeciality || t('web.appt_general') })}
+                <div style={{ fontSize: 12, color: T.textMuted }}>{a.userEmail}</div>
               </div>
-              <button type="button" style={btnPrimarySmall(T)} onClick={() => setAssignTarget(a)}>Assign</button>
+              <button type="button" style={btnPrimarySmall(T)} onClick={() => setAssignTarget(a)}>{t('web.pending_assign')}</button>
             </div>
           </div>
         )}
       />
 
-      <QueueSection
-        title={`Emergency contacts (${pending.pendingContacts?.length || 0})`}
+      <Section
+        title={t('web.pending_ec_title')}
+        empty={t('web.pending_ec_empty')}
         items={pending.pendingContacts || []}
-        empty="No emergency contacts pending."
         T={T}
         renderItem={(c) => (
-          <div key={c.id} style={card()}>
+          <div key={c.id} style={{ padding: 12, borderRadius: 8, border: `1px solid ${T.border}`, background: T.surface }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
               <div>
-                <strong>{c.userName}</strong> — {c.contactName} ({c.relationship})
-                <div style={{ color: T.textMuted, marginTop: 4 }}>{c.phone}</div>
+                <strong>{c.userName}</strong> · {c.contactName} ({c.relationship})
+                <div style={{ fontSize: 12, color: T.textMuted }}>{c.phone}</div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button type="button" style={btnPrimarySmall(T)} onClick={() => setEcAction({ type: 'verify', contact: c })}>Verify</button>
-                <button type="button" style={btnDangerSmall(T)} onClick={() => setEcAction({ type: 'reject', contact: c })}>Reject</button>
+                <button type="button" style={btnPrimarySmall(T)} onClick={() => setEcAction({ type: 'verify', contact: c })}>{t('web.pending_verify')}</button>
+                <button type="button" style={btnDangerSmall(T)} onClick={() => setEcAction({ type: 'reject', contact: c })}>{t('web.pending_reject')}</button>
               </div>
             </div>
           </div>
         )}
       />
 
-      <QueueSection
-        title={`Deletion requests (${pending.deletionRequests?.length || 0})`}
+      <Section
+        title={t('web.pending_del_title')}
+        empty={t('web.pending_del_empty')}
         items={pending.deletionRequests || []}
-        empty="No pending deletion requests."
         T={T}
         renderItem={(d) => (
-          <div key={d.id} style={card()}>
+          <div key={d.id} style={{ padding: 12, borderRadius: 8, border: `1px solid ${T.border}`, background: T.surface }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
               <div>
-                <strong>{d.userName}</strong> requested account deletion
-                <div style={{ color: T.textMuted, marginTop: 4 }}>{new Date(d.createdAt).toLocaleString()}</div>
+                <strong>{d.userName}</strong>
+                <div style={{ fontSize: 12, color: T.textMuted }}>{d.userEmail}</div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button type="button" style={btnDangerSmall(T)} onClick={() => setDeletionAction({ type: 'approve', request: d })}>Approve wipe</button>
-                <button type="button" style={btnSmall(T)} onClick={() => setDeletionAction({ type: 'reject', request: d })}>Reject</button>
+                <button type="button" style={btnDangerSmall(T)} onClick={() => setDeletionAction({ type: 'approve', request: d })}>{t('web.pending_approve_wipe')}</button>
+                <button type="button" style={btnSmall(T)} onClick={() => setDeletionAction({ type: 'reject', request: d })}>{t('web.pending_reject')}</button>
               </div>
             </div>
           </div>
@@ -138,15 +116,23 @@ export default function PendingPanel({ pending, client, onRefresh, onSelectUser,
       />
 
       {verifyTarget && (
-        <VerifyModal report={verifyTarget} T={T} onClose={() => setVerifyTarget(null)} onConfirm={handleVerify} />
+        <VerifyModal report={verifyTarget} T={T} onClose={() => setVerifyTarget(null)} onConfirm={async (body) => {
+          await client.verifyIssue(verifyTarget.id, body);
+          setVerifyTarget(null);
+          onRefresh();
+        }} />
+      )}
+
+      {assignTarget && (
+        <AssignAppointmentModal appointment={assignTarget} client={client} T={T} onClose={() => setAssignTarget(null)} onDone={() => { setAssignTarget(null); onRefresh(); }} />
       )}
 
       {ecAction?.type === 'verify' && (
         <NoteModal
-          title="Verify emergency contact"
-          description={`Confirm ${ecAction.contact.contactName} for ${ecAction.contact.userName}.`}
-          noteLabel="Admin note (optional)"
-          confirmLabel="Verify contact"
+          title={t('web.modal_verify_ec')}
+          description={`${ecAction.contact.userName} · ${ecAction.contact.contactName}`}
+          noteLabel={t('web.modal_note_optional')}
+          confirmLabel={t('web.modal_confirm_verify_ec')}
           T={T}
           onClose={() => setEcAction(null)}
           onConfirm={(note) => client.verifyEmergencyContact(ecAction.contact.id, { adminNote: note }).then(onRefresh)}
@@ -155,12 +141,11 @@ export default function PendingPanel({ pending, client, onRefresh, onSelectUser,
 
       {ecAction?.type === 'reject' && (
         <NoteModal
-          title="Reject emergency contact"
-          description="User will be notified to update their contact."
-          noteLabel="Reason for rejection"
-          noteRequired
-          confirmLabel="Reject"
-          confirmDanger
+          title={t('web.modal_reject_ec')}
+          description={t('web.modal_reject_ec_desc')}
+          noteLabel={t('web.modal_reason_rejection')}
+          confirmLabel={t('web.modal_confirm_reject')}
+          danger
           T={T}
           onClose={() => setEcAction(null)}
           onConfirm={(note) => client.rejectEmergencyContact(ecAction.contact.id, { rejectionReason: note }).then(onRefresh)}
@@ -169,11 +154,11 @@ export default function PendingPanel({ pending, client, onRefresh, onSelectUser,
 
       {deletionAction?.type === 'approve' && (
         <NoteModal
-          title="Approve account deletion"
-          description={`This permanently deletes ${deletionAction.request.userName}'s account and all associated data. This cannot be undone.`}
-          noteLabel="Audit note (optional)"
-          confirmLabel="Delete all data"
-          confirmDanger
+          title={t('web.modal_approve_deletion')}
+          description={deletionAction.request.userName}
+          noteLabel={t('web.modal_audit_note')}
+          confirmLabel={t('web.modal_confirm_delete')}
+          danger
           T={T}
           onClose={() => setDeletionAction(null)}
           onConfirm={(note) => client.reviewDeletionRequest(deletionAction.request.id, { action: 'approve', adminNote: note }).then(onRefresh)}
@@ -182,32 +167,22 @@ export default function PendingPanel({ pending, client, onRefresh, onSelectUser,
 
       {deletionAction?.type === 'reject' && (
         <NoteModal
-          title="Reject deletion request"
-          noteLabel="Reason (optional)"
-          confirmLabel="Reject request"
+          title={t('web.modal_reject_deletion')}
+          noteLabel={t('web.modal_reason_optional')}
+          confirmLabel={t('web.modal_confirm_reject_req')}
           T={T}
           onClose={() => setDeletionAction(null)}
           onConfirm={(note) => client.reviewDeletionRequest(deletionAction.request.id, { action: 'reject', adminNote: note }).then(onRefresh)}
         />
       )}
-
-      {assignTarget && (
-        <AssignAppointmentModal
-          appointment={assignTarget}
-          client={client}
-          T={T}
-          onClose={() => setAssignTarget(null)}
-          onAssigned={onRefresh}
-        />
-      )}
-    </>
+    </div>
   );
 }
 
 function btnSmall(T) {
   return {
     padding: '6px 12px', fontSize: 12, borderRadius: 6, cursor: 'pointer',
-    border: `1px solid ${T.border}`, background: T.bg, color: T.text,
+    border: `1px solid ${T.border}`, background: T.surface, color: T.text,
   };
 }
 

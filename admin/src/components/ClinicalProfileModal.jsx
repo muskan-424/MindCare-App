@@ -1,7 +1,9 @@
 import React from 'react';
 import { RISK_COLORS } from '../api';
+import { useTranslation } from '../i18n.jsx';
 
 export default function ClinicalProfileModal({ profile, onClose, T }) {
+  const { t } = useTranslation();
   if (!profile) return null;
 
   const overlay = {
@@ -18,6 +20,11 @@ export default function ClinicalProfileModal({ profile, onClose, T }) {
     border: `1px solid ${T.border}`, background: T.bg, fontSize: 13,
   };
 
+  const fusions = profile.fusions || [];
+  const issues = profile.issues || [];
+  const moods = profile.moods || [];
+  const journals = profile.journals || [];
+
   return (
     <div style={overlay} onClick={onClose}>
       <div style={sheet} onClick={(e) => e.stopPropagation()}>
@@ -30,42 +37,42 @@ export default function ClinicalProfileModal({ profile, onClose, T }) {
         </div>
 
         <div style={section}>
-          <strong>AI intake ({profile.fusions?.length || 0})</strong>
-          {(profile.fusions || []).length === 0 && <p style={{ color: T.textMuted, fontSize: 13 }}>None</p>}
-          {(profile.fusions || []).map((f) => (
+          <strong>{t('web.clinical_ai_intake', { count: fusions.length })}</strong>
+          {fusions.length === 0 && <p style={{ color: T.textMuted, fontSize: 13 }}>{t('web.clinical_none')}</p>}
+          {fusions.map((f) => (
             <div key={f.id} style={{ ...card, borderLeft: `3px solid ${RISK_COLORS[f.riskLevel] || T.border}` }}>
               <strong style={{ color: RISK_COLORS[f.riskLevel] }}>{f.riskLevel}</strong>
-              {' · Score '}{(f.riskScore * 100).toFixed(0)}%
+              {' · '}{t('web.clinical_score')} {(f.riskScore * 100).toFixed(0)}%
               {' · '}{new Date(f.createdAt).toLocaleString()}
             </div>
           ))}
         </div>
 
         <div style={section}>
-          <strong>Risk reports ({profile.issues?.length || 0})</strong>
-          {(profile.issues || []).map((i) => (
+          <strong>{t('web.clinical_risk_reports', { count: issues.length })}</strong>
+          {issues.map((i) => (
             <div key={i.id} style={card}>
-              {i.category} · severity {i.severity}/5 · {i.riskLevel}
+              {i.category} · {t('web.clinical_severity')} {i.severity}/5 · {i.riskLevel}
               {' · '}{new Date(i.createdAt).toLocaleDateString()}
             </div>
           ))}
         </div>
 
         <div style={section}>
-          <strong>Recent moods ({profile.moods?.length || 0})</strong>
-          {(profile.moods || []).slice(0, 8).map((m) => (
+          <strong>{t('web.clinical_recent_moods', { count: moods.length })}</strong>
+          {moods.slice(0, 8).map((m) => (
             <div key={m.id} style={card}>
-              Rating {m.rating} · {new Date(m.date).toLocaleDateString()}
+              {t('web.clinical_rating')} {m.rating} · {new Date(m.date).toLocaleDateString()}
               {m.note ? ` · ${m.note}` : ''}
             </div>
           ))}
         </div>
 
         <div style={section}>
-          <strong>Journals ({profile.journals?.length || 0})</strong>
-          {(profile.journals || []).slice(0, 5).map((j) => (
+          <strong>{t('web.clinical_journals', { count: journals.length })}</strong>
+          {journals.slice(0, 5).map((j) => (
             <div key={j.id} style={card}>
-              {j.title || 'Untitled'} · {j.contentPreview}
+              {j.title || t('web.clinical_untitled')} · {j.contentPreview}
             </div>
           ))}
         </div>

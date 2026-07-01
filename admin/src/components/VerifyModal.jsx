@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
 import { ADMIN_ACTIONS } from '../api';
+import { useTranslation } from '../i18n.jsx';
+
+const ACTION_LABEL_KEYS = {
+  none: 'web.action_reviewed',
+  contacted: 'web.action_contacted_user',
+  referred: 'web.action_referred_care',
+  resolved: 'web.action_resolved',
+};
 
 export default function VerifyModal({ report, onClose, onConfirm, T }) {
+  const { t } = useTranslation();
   const [note, setNote] = useState('');
   const [action, setAction] = useState('contacted');
   const [loading, setLoading] = useState(false);
@@ -14,7 +23,7 @@ export default function VerifyModal({ report, onClose, onConfirm, T }) {
       await onConfirm({ adminNote: note, adminAction: action, assignedResources: [] });
       onClose();
     } catch (e) {
-      setErr(e.response?.data?.error || e.message || 'Verify failed');
+      setErr(e.response?.data?.error || e.message || t('web.modal_verify_failed'));
     } finally {
       setLoading(false);
     }
@@ -32,11 +41,11 @@ export default function VerifyModal({ report, onClose, onConfirm, T }) {
   return (
     <div style={overlay} onClick={onClose}>
       <div style={sheet} onClick={(e) => e.stopPropagation()}>
-        <h3 style={{ margin: '0 0 8px', fontSize: 17 }}>Verify risk report</h3>
+        <h3 style={{ margin: '0 0 8px', fontSize: 17 }}>{t('web.modal_verify_report')}</h3>
         <p style={{ margin: '0 0 16px', fontSize: 13, color: T.textMuted }}>
           {report.category} · {report.riskLevel} · {new Date(report.createdAt).toLocaleString()}
         </p>
-        <label style={{ fontSize: 13, fontWeight: 600 }}>Action</label>
+        <label style={{ fontSize: 13, fontWeight: 600 }}>{t('web.modal_action')}</label>
         <select
           value={action}
           onChange={(e) => setAction(e.target.value)}
@@ -46,15 +55,15 @@ export default function VerifyModal({ report, onClose, onConfirm, T }) {
           }}
         >
           {ADMIN_ACTIONS.map((a) => (
-            <option key={a.value} value={a.value}>{a.label}</option>
+            <option key={a.value} value={a.value}>{t(ACTION_LABEL_KEYS[a.value] || a.label)}</option>
           ))}
         </select>
-        <label style={{ fontSize: 13, fontWeight: 600 }}>Admin note</label>
+        <label style={{ fontSize: 13, fontWeight: 600 }}>{t('web.modal_admin_note')}</label>
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
           rows={3}
-          placeholder="Optional clinical note…"
+          placeholder={t('web.modal_note_ph')}
           style={{
             display: 'block', width: '100%', margin: '6px 0 14px', padding: 8,
             borderRadius: 6, border: `1px solid ${T.border}`, background: T.bg, color: T.text,
@@ -63,9 +72,9 @@ export default function VerifyModal({ report, onClose, onConfirm, T }) {
         />
         {err && <p style={{ color: T.red, fontSize: 13 }}>{err}</p>}
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button type="button" onClick={onClose} style={btnSecondary(T)}>Cancel</button>
+          <button type="button" onClick={onClose} style={btnSecondary(T)}>{t('common.cancel')}</button>
           <button type="button" onClick={submit} disabled={loading} style={btnPrimary(T)}>
-            {loading ? 'Saving…' : 'Mark verified'}
+            {loading ? t('web.modal_saving') : t('web.modal_mark_verified')}
           </button>
         </div>
       </div>
