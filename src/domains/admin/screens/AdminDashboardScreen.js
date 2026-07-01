@@ -169,7 +169,8 @@ const PendingTab = () => {
   const [planTarget, setPlanTarget] = useState(null);
   const [planFocus, setPlanFocus] = useState('');
   const [planNote, setPlanNote] = useState('');
-  const [planTasks, setPlanTasks] = useState([{ dayNumber: 1, title: 'Deep Breathing', type: 'breathing', description: 'Take 5 minutes to focus on your breath.' }]);
+  const defaultPlanTasks = () => ([{ dayNumber: 1, title: t('admin.default_plan_task_title'), type: 'breathing', description: t('admin.default_plan_task_desc') }]);
+  const [planTasks, setPlanTasks] = useState(defaultPlanTasks());
   const [planLoading, setPlanLoading] = useState(false);
 
   const [delModal, setDelModal] = useState(false);
@@ -318,9 +319,9 @@ const PendingTab = () => {
     setPlanLoading(true);
     try {
       const grouped = {};
-      planTasks.forEach(t => {
-        if (!grouped[t.dayNumber]) grouped[t.dayNumber] = [];
-        grouped[t.dayNumber].push(t);
+      planTasks.forEach(task => {
+        if (!grouped[task.dayNumber]) grouped[task.dayNumber] = [];
+        grouped[task.dayNumber].push(task);
       });
       const dailyPlans = Object.keys(grouped).map(dayStr => ({
         dayNumber: parseInt(dayStr, 10),
@@ -353,7 +354,7 @@ const PendingTab = () => {
         action,
         adminNote: delNote
       }, H);
-      Alert.alert(action === 'approve' ? t('admin.alert_approved') : t('admin.alert_rejected'), t('admin.deletion_reviewed', { action: action === 'approve' ? 'approved' : 'rejected' }));
+      Alert.alert(action === 'approve' ? t('admin.alert_approved') : t('admin.alert_rejected'), t('admin.deletion_reviewed', { action: action === 'approve' ? t('admin.action_approved_word') : t('admin.action_rejected_word') }));
       setDelModal(false);
       load();
     } catch (e) {
@@ -625,7 +626,7 @@ const PendingTab = () => {
             </View>
             <View style={ss.cardDivider} />
             <View style={ss.metaRow}>
-              <Text style={ss.metaLabel}>Contact</Text>
+              <Text style={ss.metaLabel}>{t('admin.contact_label')}</Text>
               <Text style={ss.metaValue}>{ec.contactName} ({ec.relationship})</Text>
             </View>
             <View style={ss.metaRow}>
@@ -669,11 +670,11 @@ const PendingTab = () => {
             </View>
             <View style={ss.cardDivider} />
             <View style={ss.metaRow}>
-              <Text style={ss.metaLabel}>Goals</Text>
+              <Text style={ss.metaLabel}>{t('admin.goals_label')}</Text>
               <Text style={ss.metaValue}>{(wp.goals || []).join(', ')}</Text>
             </View>
             <View style={ss.metaRow}>
-              <Text style={ss.metaLabel}>Pace</Text>
+              <Text style={ss.metaLabel}>{t('admin.pace_label')}</Text>
               <Text style={ss.metaValue}>{wp.preferredPace}</Text>
             </View>
             {wp.currentStruggles ? (
@@ -688,9 +689,9 @@ const PendingTab = () => {
               style={{ marginTop: 14 }}
               onPress={() => {
                 setPlanTarget(wp);
-                setPlanFocus(`30-Day Plan: ${(wp.goals || [])[0] || 'Wellness'}`);
-                setPlanNote(`Hello ${wp.userName}, I reviewed your goals and created this routine for you.`);
-                setPlanTasks([{ dayNumber: 1, title: 'Deep Breathing', type: 'breathing', description: 'Take 5 minutes to focus on your breath.' }]);
+                setPlanFocus(t('admin.plan_30_day', { goal: (wp.goals || [])[0] || t('admin.default_wellness') }));
+                setPlanNote(t('admin.plan_note_template', { name: wp.userName }));
+                setPlanTasks(defaultPlanTasks());
                 setPlanModal(true);
               }}
             />
@@ -719,7 +720,7 @@ const PendingTab = () => {
             </View>
             <View style={ss.cardDivider} />
             <View style={ss.metaRow}>
-              <Text style={ss.metaLabel}>Reason</Text>
+              <Text style={ss.metaLabel}>{t('admin.reason_label')}</Text>
               <Text style={ss.metaValue}>{del.reason}</Text>
             </View>
             <ActionButton
@@ -740,38 +741,38 @@ const PendingTab = () => {
           <ScrollView contentContainerStyle={ss.modalSheet}>
             <View style={ss.modalHandle} />
             <View style={ss.modalHeaderRow}>
-              <Text style={ss.modalTitle}>Assign Therapist</Text>
+              <Text style={ss.modalTitle}>{t('admin.modal_assign_therapist')}</Text>
               <TouchableOpacity onPress={() => setAssignModal(false)} style={ss.modalCloseBtn}>
                 <MaterialIcons name="close" size={20} color={D.textSecondary} />
               </TouchableOpacity>
             </View>
             {assignTarget && (
               <View style={ss.modalInfoBox}>
-                <Text style={ss.modalInfoText}>For <Text style={{ color: D.textPrimary, fontWeight: '700' }}>{assignTarget.userName}</Text> · needs {assignTarget.requestedSpeciality || 'any specialist'}</Text>
+                <Text style={ss.modalInfoText}>{t('admin.modal_for_user', { name: assignTarget.userName, speciality: assignTarget.requestedSpeciality || t('admin.any_specialist') })}</Text>
               </View>
             )}
 
-            <Text style={ss.modalLabel}>Select Therapist</Text>
+            <Text style={ss.modalLabel}>{t('admin.select_therapist')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
               {therapists
-                .filter(t => !assignTarget?.requestedSpeciality || assignTarget.requestedSpeciality === 'Any' || t.specialisation === assignTarget.requestedSpeciality)
-                .map(t => (
+                .filter(th => !assignTarget?.requestedSpeciality || assignTarget.requestedSpeciality === 'Any' || th.specialisation === assignTarget.requestedSpeciality)
+                .map(th => (
                   <TouchableOpacity
-                    key={t.id}
-                    style={[ss.therapistChip, assignTherapist?.id === t.id && ss.therapistChipActive]}
-                    onPress={() => { setAssignTherapist(t); setAvailableSlots([]); setAssignSlot(''); }}
+                    key={th.id}
+                    style={[ss.therapistChip, assignTherapist?.id === th.id && ss.therapistChipActive]}
+                    onPress={() => { setAssignTherapist(th); setAvailableSlots([]); setAssignSlot(''); }}
                   >
-                    <Text style={[ss.therapistChipName, assignTherapist?.id === t.id && { color: '#fff' }]}>{t.name}</Text>
-                    <Text style={[ss.therapistChipSpec, assignTherapist?.id === t.id && { color: 'rgba(255,255,255,0.7)' }]}>{t.specialisation}</Text>
+                    <Text style={[ss.therapistChipName, assignTherapist?.id === th.id && { color: '#fff' }]}>{th.name}</Text>
+                    <Text style={[ss.therapistChipSpec, assignTherapist?.id === th.id && { color: 'rgba(255,255,255,0.7)' }]}>{th.specialisation}</Text>
                   </TouchableOpacity>
                 ))
               }
             </ScrollView>
 
-            <Text style={ss.modalLabel}>Choose Date</Text>
+            <Text style={ss.modalLabel}>{t('admin.choose_date')}</Text>
             <TextInput
               style={ss.modalInput}
-              placeholder="YYYY-MM-DD"
+              placeholder={t('admin.placeholder_date')}
               value={assignDate}
               onChangeText={setAssignDate}
               placeholderTextColor={D.textMuted}
@@ -781,14 +782,14 @@ const PendingTab = () => {
               {slotsLoading ? <ActivityIndicator color="#fff" size="small" /> : (
                 <>
                   <MaterialIcons name="search" size={16} color="#fff" style={{ marginRight: 6 }} />
-                  <Text style={ss.modalPrimaryBtnText}>Check Available Slots</Text>
+                  <Text style={ss.modalPrimaryBtnText}>{t('admin.check_slots')}</Text>
                 </>
               )}
             </TouchableOpacity>
 
             {availableSlots.length > 0 && (
               <>
-                <Text style={ss.modalLabel}>Pick a Time Slot</Text>
+                <Text style={ss.modalLabel}>{t('admin.pick_time_slot')}</Text>
                 <View style={ss.slotGrid}>
                   {availableSlots.map(s => (
                     <TouchableOpacity
@@ -803,13 +804,13 @@ const PendingTab = () => {
               </>
             )}
             {assignTherapist && assignDate && availableSlots.length === 0 && !slotsLoading && (
-              <Text style={ss.noSlotsText}>No available slots for this date. Try another date.</Text>
+              <Text style={ss.noSlotsText}>{t('admin.no_slots')}</Text>
             )}
 
-            <Text style={ss.modalLabel}>Note for User (optional)</Text>
+            <Text style={ss.modalLabel}>{t('admin.note_for_user')}</Text>
             <TextInput
               style={[ss.modalInput, { minHeight: 70 }]}
-              placeholder="e.g. Please join 5 mins early..."
+              placeholder={t('admin.placeholder_join_early')}
               value={assignNote}
               onChangeText={setAssignNote}
               multiline
@@ -820,12 +821,12 @@ const PendingTab = () => {
               {assignLoading ? <ActivityIndicator color="#fff" size="small" /> : (
                 <>
                   <MaterialIcons name="check-circle" size={16} color="#fff" style={{ marginRight: 6 }} />
-                  <Text style={ss.modalPrimaryBtnText}>Confirm & Assign</Text>
+                  <Text style={ss.modalPrimaryBtnText}>{t('admin.confirm_assign')}</Text>
                 </>
               )}
             </TouchableOpacity>
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setAssignModal(false)}>
-              <Text style={ss.modalCancelText}>Cancel</Text>
+              <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -837,7 +838,7 @@ const PendingTab = () => {
           <ScrollView contentContainerStyle={ss.modalSheet}>
             <View style={ss.modalHandle} />
             <View style={ss.modalHeaderRow}>
-              <Text style={ss.modalTitle}>Review Risk Report</Text>
+              <Text style={ss.modalTitle}>{t('admin.modal_review_report')}</Text>
               <TouchableOpacity onPress={() => setVerifyModal(false)} style={ss.modalCloseBtn}>
                 <MaterialIcons name="close" size={20} color={D.textSecondary} />
               </TouchableOpacity>
@@ -849,25 +850,29 @@ const PendingTab = () => {
               </View>
             )}
 
-            <Text style={ss.modalLabel}>Action Taken</Text>
+            <Text style={ss.modalLabel}>{t('admin.admin_action')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-              {['contacted', 'referred', 'resolved'].map(act => (
+              {[
+                { key: 'contacted', labelKey: 'admin.action_contacted' },
+                { key: 'referred', labelKey: 'admin.action_referred' },
+                { key: 'resolved', labelKey: 'admin.action_resolved' },
+              ].map(act => (
                 <TouchableOpacity
-                  key={act}
-                  style={[ss.segmentChip, verifyAction === act && { backgroundColor: ACTION_COLORS[act], borderColor: ACTION_COLORS[act] }]}
-                  onPress={() => setVerifyAction(act)}
+                  key={act.key}
+                  style={[ss.segmentChip, verifyAction === act.key && { backgroundColor: ACTION_COLORS[act.key], borderColor: ACTION_COLORS[act.key] }]}
+                  onPress={() => setVerifyAction(act.key)}
                 >
-                  <Text style={[ss.segmentChipText, verifyAction === act && { color: '#fff' }]}>
-                    {act.charAt(0).toUpperCase() + act.slice(1)}
+                  <Text style={[ss.segmentChipText, verifyAction === act.key && { color: '#fff' }]}>
+                    {t(act.labelKey)}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={ss.modalLabel}>Attach Resources (optional)</Text>
+            <Text style={ss.modalLabel}>{t('admin.add_resource')}</Text>
             <View style={{ marginBottom: 12 }}>
               {cmsResources.length === 0 ? (
-                <Text style={[ss.emptyStateText, { textAlign: 'left', padding: 0, marginBottom: 8 }]}>No CMS resources — add some in the Resources tab.</Text>
+                <Text style={[ss.emptyStateText, { textAlign: 'left', padding: 0, marginBottom: 8 }]}>{t('admin.no_resources')}</Text>
               ) : cmsResources.map(res => {
                 const isSelected = verifyResources.some(vr => vr.id === res.id);
                 return (
@@ -889,10 +894,10 @@ const PendingTab = () => {
               })}
             </View>
 
-            <Text style={ss.modalLabel}>Admin Note</Text>
+            <Text style={ss.modalLabel}>{t('admin.action_note')}</Text>
             <TextInput
               style={[ss.modalInput, { minHeight: 80 }]}
-              placeholder="Document what action was taken..."
+              placeholder={t('admin.placeholder_action_note')}
               value={verifyNote}
               onChangeText={setVerifyNote}
               multiline
@@ -900,10 +905,10 @@ const PendingTab = () => {
             />
 
             <TouchableOpacity style={ss.modalConfirmBtn} onPress={confirmVerify} disabled={verifyLoading}>
-              {verifyLoading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={ss.modalPrimaryBtnText}>Save & Mark Verified</Text>}
+              {verifyLoading ? <ActivityIndicator color="#fff" size="small" /> : <Text style={ss.modalPrimaryBtnText}>{t('admin.confirm_action')}</Text>}
             </TouchableOpacity>
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setVerifyModal(false)}>
-              <Text style={ss.modalCancelText}>Cancel</Text>
+              <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -915,17 +920,17 @@ const PendingTab = () => {
           <ScrollView contentContainerStyle={ss.modalSheet}>
             <View style={ss.modalHandle} />
             <View style={ss.modalHeaderRow}>
-              <Text style={ss.modalTitle}>Verify Emergency Contact</Text>
+              <Text style={ss.modalTitle}>{t('admin.modal_verify_ec')}</Text>
               <TouchableOpacity onPress={() => setEcModal(false)} style={ss.modalCloseBtn}>
                 <MaterialIcons name="close" size={20} color={D.textSecondary} />
               </TouchableOpacity>
             </View>
             {ecTarget && (
               <View style={ss.modalInfoBox}>
-                <Text style={ss.modalInfoText}>From: <Text style={{ color: D.textPrimary, fontWeight: '700' }}>{ecTarget.userName}</Text></Text>
+                <Text style={ss.modalInfoText}>{ecTarget.userName}</Text>
                 <View style={{ marginTop: 10 }}>
                   <View style={ss.metaRow}>
-                    <Text style={ss.metaLabel}>Contact</Text>
+                    <Text style={ss.metaLabel}>{t('admin.contact_label')}</Text>
                     <Text style={ss.metaValue}>{ecTarget.contactName} ({ecTarget.relationship})</Text>
                   </View>
                   <View style={ss.metaRow}>
@@ -933,17 +938,16 @@ const PendingTab = () => {
                     <Text style={ss.metaText}>{ecTarget.phone}</Text>
                   </View>
                   <View style={ss.metaRow}>
-                    <Text style={ss.metaLabel}>Reach via</Text>
-                    <Text style={ss.metaValue}>{ecTarget.reachVia}</Text>
+                    <Text style={ss.metaLabel}>{ecTarget.reachVia}</Text>
                   </View>
                   {ecTarget.userMessage ? <Text style={[ss.metaText, { fontStyle: 'italic', marginTop: 6 }]}>"{ecTarget.userMessage}"</Text> : null}
                 </View>
               </View>
             )}
-            <Text style={ss.modalLabel}>Admin Note (optional)</Text>
+            <Text style={ss.modalLabel}>{t('admin.verify_note')}</Text>
             <TextInput
               style={[ss.modalInput, { minHeight: 70 }]}
-              placeholder="Any note about this verification..."
+              placeholder={t('admin.placeholder_verify_note')}
               value={ecNote}
               onChangeText={setEcNote}
               multiline
@@ -958,7 +962,7 @@ const PendingTab = () => {
                 {ecLoading ? <ActivityIndicator color="#fff" size="small" /> : (
                   <>
                     <MaterialIcons name="verified" size={15} color="#fff" style={{ marginRight: 5 }} />
-                    <Text style={ss.modalPrimaryBtnText}>Verify</Text>
+                    <Text style={ss.modalPrimaryBtnText}>{t('admin.approve_contact')}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -968,11 +972,11 @@ const PendingTab = () => {
                 disabled={ecLoading}
               >
                 <MaterialIcons name="block" size={15} color="#fff" style={{ marginRight: 5 }} />
-                <Text style={ss.modalPrimaryBtnText}>Reject</Text>
+                <Text style={ss.modalPrimaryBtnText}>{t('admin.reject_contact')}</Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setEcModal(false)}>
-              <Text style={ss.modalCancelText}>Cancel</Text>
+              <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -984,7 +988,7 @@ const PendingTab = () => {
           <ScrollView contentContainerStyle={ss.modalSheet}>
             <View style={ss.modalHandle} />
             <View style={ss.modalHeaderRow}>
-              <Text style={[ss.modalTitle, { color: D.danger }]}>Emergency Call</Text>
+              <Text style={[ss.modalTitle, { color: D.danger }]}>{t('admin.modal_emergency_call')}</Text>
               <TouchableOpacity onPress={() => setCallModal(false)} style={ss.modalCloseBtn}>
                 <MaterialIcons name="close" size={20} color={D.textSecondary} />
               </TouchableOpacity>
@@ -997,40 +1001,41 @@ const PendingTab = () => {
                   <Text style={{ fontSize: 22, fontWeight: '700', color: D.textPrimary, marginTop: 6 }}>{callTarget.phone}</Text>
                   {callTarget.userMessage ? (
                     <View style={{ marginTop: 10, borderTopWidth: 1, borderTopColor: D.borderColor, paddingTop: 8 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: D.danger, textTransform: 'uppercase', marginBottom: 4 }}>User's context note</Text>
                       <Text style={{ fontSize: 13, color: D.textSecondary, fontStyle: 'italic' }}>"{callTarget.userMessage}"</Text>
                     </View>
                   ) : null}
-                  {callTarget.callLogCount > 0 && (
-                    <Text style={{ fontSize: 12, color: D.textMuted, marginTop: 10 }}>Called {callTarget.callLogCount} time(s) before</Text>
-                  )}
                 </View>
                 <TouchableOpacity
                   style={[ss.modalConfirmBtn, { backgroundColor: D.dangerDeep, marginTop: 16 }]}
-                  onPress={() => Linking.openURL(`tel:${callTarget.phone}`).catch(() => Alert.alert('Error', 'Could not open dialer.'))}
+                  onPress={() => Linking.openURL(`tel:${callTarget.phone}`).catch(() => Alert.alert(t('admin.alert_error'), t('admin.dialer_error')))}
                 >
                   <MaterialIcons name="phone" size={16} color="#fff" style={{ marginRight: 6 }} />
-                  <Text style={ss.modalPrimaryBtnText}>Open Phone Dialer</Text>
+                  <Text style={ss.modalPrimaryBtnText}>{t('admin.emergency_call')}</Text>
                 </TouchableOpacity>
 
-                <Text style={ss.modalLabel}>Log Call Outcome</Text>
+                <Text style={ss.modalLabel}>{t('admin.call_outcome')}</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-                  {['reached', 'no_answer', 'voicemail', 'referred'].map(o => (
+                  {[
+                    { key: 'reached', labelKey: 'admin.call_outcome_reached' },
+                    { key: 'no_answer', labelKey: 'admin.call_outcome_no_answer' },
+                    { key: 'voicemail', labelKey: 'admin.call_outcome_voicemail' },
+                    { key: 'referred', labelKey: 'admin.call_outcome_referred' },
+                  ].map(o => (
                     <TouchableOpacity
-                      key={o}
-                      style={[ss.segmentChip, callOutcome === o && { backgroundColor: D.danger, borderColor: D.danger }]}
-                      onPress={() => setCallOutcome(o)}
+                      key={o.key}
+                      style={[ss.segmentChip, callOutcome === o.key && { backgroundColor: D.danger, borderColor: D.danger }]}
+                      onPress={() => setCallOutcome(o.key)}
                     >
-                      <Text style={[ss.segmentChipText, callOutcome === o && { color: '#fff' }]}>
-                        {o.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      <Text style={[ss.segmentChipText, callOutcome === o.key && { color: '#fff' }]}>
+                        {t(o.labelKey)}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
-                <Text style={ss.modalLabel}>Note</Text>
+                <Text style={ss.modalLabel}>{t('admin.call_note')}</Text>
                 <TextInput
                   style={[ss.modalInput, { minHeight: 70 }]}
-                  placeholder="e.g. Spoke with mother, she will visit user..."
+                  placeholder={t('admin.placeholder_call_note')}
                   value={callNote}
                   onChangeText={setCallNote}
                   multiline
@@ -1040,14 +1045,14 @@ const PendingTab = () => {
                   {callLoading ? <ActivityIndicator color="#fff" size="small" /> : (
                     <>
                       <MaterialIcons name="save" size={15} color="#fff" style={{ marginRight: 5 }} />
-                      <Text style={ss.modalPrimaryBtnText}>Save to Audit Trail</Text>
+                      <Text style={ss.modalPrimaryBtnText}>{t('admin.log_call')}</Text>
                     </>
                   )}
                 </TouchableOpacity>
               </>
             )}
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setCallModal(false)}>
-              <Text style={ss.modalCancelText}>Close</Text>
+              <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -1059,7 +1064,7 @@ const PendingTab = () => {
           <ScrollView contentContainerStyle={ss.modalSheet}>
             <View style={ss.modalHandle} />
             <View style={ss.modalHeaderRow}>
-              <Text style={[ss.modalTitle, { color: D.success }]}>Build Wellness Plan</Text>
+              <Text style={[ss.modalTitle, { color: D.success }]}>{t('admin.modal_wellness_plan')}</Text>
               <TouchableOpacity onPress={() => setPlanModal(false)} style={ss.modalCloseBtn}>
                 <MaterialIcons name="close" size={20} color={D.textSecondary} />
               </TouchableOpacity>
@@ -1067,31 +1072,31 @@ const PendingTab = () => {
             {planTarget && (
               <>
                 <View style={ss.modalInfoBox}>
-                  <Text style={ss.modalInfoText}>For <Text style={{ color: D.textPrimary, fontWeight: '700' }}>{planTarget.userName}</Text></Text>
+                  <Text style={ss.modalInfoText}><Text style={{ color: D.textPrimary, fontWeight: '700' }}>{planTarget.userName}</Text></Text>
                 </View>
-                <Text style={ss.modalLabel}>Plan Focus</Text>
+                <Text style={ss.modalLabel}>{t('admin.plan_focus')}</Text>
                 <TextInput style={ss.modalInput} value={planFocus} onChangeText={setPlanFocus} placeholderTextColor={D.textMuted} />
 
-                <Text style={ss.modalLabel}>Personal Note</Text>
+                <Text style={ss.modalLabel}>{t('admin.action_note')}</Text>
                 <TextInput style={[ss.modalInput, { minHeight: 70 }]} value={planNote} onChangeText={setPlanNote} multiline placeholderTextColor={D.textMuted} />
 
-                <Text style={ss.modalLabel}>Tasks</Text>
-                {planTasks.map((t, i) => (
+                <Text style={ss.modalLabel}>{t('admin.plan_tasks')}</Text>
+                {planTasks.map((task, i) => (
                   <View key={i} style={ss.planTaskCard}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                       <View style={ss.dayChip}>
-                        <Text style={ss.dayChipText}>Day {t.dayNumber}</Text>
+                        <Text style={ss.dayChipText}>{t('admin.day_chip', { n: task.dayNumber })}</Text>
                       </View>
                       <TouchableOpacity onPress={() => setPlanTasks(planTasks.filter((_, idx) => idx !== i))}>
                         <MaterialIcons name="delete-outline" size={18} color={D.danger} />
                       </TouchableOpacity>
                     </View>
-                    <TextInput style={[ss.modalInput, { marginBottom: 8 }]} placeholder="Title" value={t.title} onChangeText={(val) => updateTask(i, 'title', val)} placeholderTextColor={D.textMuted} />
+                    <TextInput style={[ss.modalInput, { marginBottom: 8 }]} placeholder={t('admin.task_title')} value={task.title} onChangeText={(val) => updateTask(i, 'title', val)} placeholderTextColor={D.textMuted} />
                     <View style={{ flexDirection: 'row', gap: 8 }}>
-                      <TextInput style={[ss.modalInput, { flex: 1, marginBottom: 8 }]} placeholder="Type (e.g. breathing)" value={t.type} onChangeText={(val) => updateTask(i, 'type', val)} placeholderTextColor={D.textMuted} />
-                      <TextInput style={[ss.modalInput, { flex: 1, marginBottom: 8 }]} placeholder="Day #" keyboardType="numeric" value={String(t.dayNumber)} onChangeText={(val) => updateTask(i, 'dayNumber', parseInt(val || '1', 10))} placeholderTextColor={D.textMuted} />
+                      <TextInput style={[ss.modalInput, { flex: 1, marginBottom: 8 }]} placeholder={t('admin.task_type')} value={task.type} onChangeText={(val) => updateTask(i, 'type', val)} placeholderTextColor={D.textMuted} />
+                      <TextInput style={[ss.modalInput, { flex: 1, marginBottom: 8 }]} placeholder={t('admin.task_day')} keyboardType="numeric" value={String(task.dayNumber)} onChangeText={(val) => updateTask(i, 'dayNumber', parseInt(val || '1', 10))} placeholderTextColor={D.textMuted} />
                     </View>
-                    <TextInput style={[ss.modalInput, { minHeight: 50 }]} placeholder="Description" value={t.description} onChangeText={(val) => updateTask(i, 'description', val)} multiline placeholderTextColor={D.textMuted} />
+                    <TextInput style={[ss.modalInput, { minHeight: 50 }]} placeholder={t('admin.task_description')} value={task.description} onChangeText={(val) => updateTask(i, 'description', val)} multiline placeholderTextColor={D.textMuted} />
                   </View>
                 ))}
                 <TouchableOpacity
@@ -1102,20 +1107,20 @@ const PendingTab = () => {
                   }}
                 >
                   <MaterialIcons name="add" size={16} color={D.primary} style={{ marginRight: 4 }} />
-                  <Text style={ss.addTaskBtnText}>Add Task</Text>
+                  <Text style={ss.addTaskBtnText}>{t('admin.add_task')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[ss.modalConfirmBtn, { backgroundColor: D.success, marginTop: 20 }]} onPress={assignPlan} disabled={planLoading}>
                   {planLoading ? <ActivityIndicator color="#fff" size="small" /> : (
                     <>
                       <MaterialIcons name="send" size={15} color="#fff" style={{ marginRight: 5 }} />
-                      <Text style={ss.modalPrimaryBtnText}>Publish Plan</Text>
+                      <Text style={ss.modalPrimaryBtnText}>{t('admin.send_plan')}</Text>
                     </>
                   )}
                 </TouchableOpacity>
               </>
             )}
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setPlanModal(false)}>
-              <Text style={ss.modalCancelText}>Cancel</Text>
+              <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -1127,7 +1132,7 @@ const PendingTab = () => {
           <ScrollView contentContainerStyle={ss.modalSheet}>
             <View style={ss.modalHandle} />
             <View style={ss.modalHeaderRow}>
-              <Text style={ss.modalTitle}>Review Deletion Request</Text>
+              <Text style={ss.modalTitle}>{t('admin.modal_deletion_review')}</Text>
               <TouchableOpacity onPress={() => setDelModal(false)} style={ss.modalCloseBtn}>
                 <MaterialIcons name="close" size={20} color={D.textSecondary} />
               </TouchableOpacity>
@@ -1135,16 +1140,15 @@ const PendingTab = () => {
             {delTarget && (
               <>
                 <View style={[ss.modalInfoBox, { borderLeftColor: D.danger, borderLeftWidth: 3 }]}>
-                  <Text style={ss.modalInfoText}>User: <Text style={{ color: D.textPrimary, fontWeight: '700' }}>{delTarget.userName}</Text></Text>
+                  <Text style={ss.modalInfoText}><Text style={{ color: D.textPrimary, fontWeight: '700' }}>{delTarget.userName}</Text></Text>
                   <View style={ss.metaRow}>
-                    <Text style={ss.metaLabel}>Reason</Text>
                     <Text style={ss.metaValue}>{delTarget.reason}</Text>
                   </View>
                 </View>
-                <Text style={ss.modalLabel}>Admin Note</Text>
+                <Text style={ss.modalLabel}>{t('admin.deletion_note')}</Text>
                 <TextInput
                   style={[ss.modalInput, { minHeight: 70 }]}
-                  placeholder="Note for audit log..."
+                  placeholder={t('admin.placeholder_audit_note')}
                   value={delNote}
                   onChangeText={setDelNote}
                   multiline
@@ -1159,7 +1163,7 @@ const PendingTab = () => {
                     {delLoading ? <ActivityIndicator color="#fff" size="small" /> : (
                       <>
                         <MaterialIcons name="delete-forever" size={15} color="#fff" style={{ marginRight: 4 }} />
-                        <Text style={ss.modalPrimaryBtnText}>Approve</Text>
+                        <Text style={ss.modalPrimaryBtnText}>{t('admin.approve_deletion')}</Text>
                       </>
                     )}
                   </TouchableOpacity>
@@ -1169,13 +1173,13 @@ const PendingTab = () => {
                     disabled={delLoading}
                   >
                     <MaterialIcons name="cancel" size={15} color={D.textPrimary} style={{ marginRight: 4 }} />
-                    <Text style={[ss.modalPrimaryBtnText, { color: D.textPrimary }]}>Reject</Text>
+                    <Text style={[ss.modalPrimaryBtnText, { color: D.textPrimary }]}>{t('admin.reject_deletion')}</Text>
                   </TouchableOpacity>
                 </View>
               </>
             )}
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setDelModal(false)}>
-              <Text style={ss.modalCancelText}>Cancel</Text>
+              <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -1186,6 +1190,7 @@ const PendingTab = () => {
 
 // ─── Groups Tab ───────────────────────────────────────────────────────────────
 const GroupsTab = () => {
+  const { t } = useTranslation();
   const { D, ss } = useContext(ThemeContext);
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1205,7 +1210,7 @@ const GroupsTab = () => {
       const uRes = await api.get('/api/admin/users', H);
       setUsers(uRes.data || []);
     } catch (e) {
-      Alert.alert('Error', 'Failed to load groups');
+      Alert.alert(t('admin.alert_error'), t('admin.load_groups_failed'));
     }
     setLoading(false);
   }, []);
@@ -1214,7 +1219,7 @@ const GroupsTab = () => {
 
   const handleCreate = async () => {
     if (!form.title || !form.description || !form.scheduledDate) {
-      return Alert.alert('Error', 'Missing required fields.');
+      return Alert.alert(t('admin.alert_error'), t('admin.missing_fields'));
     }
     setSaving(true);
     try {
@@ -1223,7 +1228,7 @@ const GroupsTab = () => {
       setForm({ title: '', description: '', scheduledDate: '', meetingLink: '', maxParticipants: '10' });
       load();
     } catch (e) {
-      Alert.alert('Error', 'Failed to create group session.');
+      Alert.alert(t('admin.alert_error'), t('admin.create_group_failed'));
     }
     setSaving(false);
   };
@@ -1233,33 +1238,41 @@ const GroupsTab = () => {
     try {
       const id = targetGroup._id || targetGroup.id;
       await api.patch(`/api/groups/${id}/assign`, { userId: selectedUser.id }, H);
-      Alert.alert('Success', 'User assigned to group.');
+      Alert.alert(t('common.success'), t('admin.assign_user_success'));
       setAssignModal(false);
       load();
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Failed to assign user.');
+      Alert.alert(t('admin.alert_error'), e.response?.data?.error || t('admin.assign_user_failed'));
     }
   };
 
   if (loading) return (
     <View style={ss.loadingContainer}>
       <ActivityIndicator color={D.primary} size="large" />
-      <Text style={ss.loadingText}>Loading sessions...</Text>
+      <Text style={ss.loadingText}>{t('admin.loading_sessions')}</Text>
     </View>
   );
+
+  const FORM_FIELDS = [
+    { labelKey: 'admin.session_title', key: 'title' },
+    { labelKey: 'admin.description', key: 'description', multiline: true },
+    { labelKey: 'admin.scheduled_date', key: 'scheduledDate' },
+    { labelKey: 'admin.meeting_link', key: 'meetingLink' },
+    { labelKey: 'admin.max_participants', key: 'maxParticipants', numeric: true },
+  ];
 
   return (
     <ScrollView contentContainerStyle={ss.tabScroll} showsVerticalScrollIndicator={false}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Text style={ss.tabPageTitle}>Group Sessions</Text>
+        <Text style={ss.tabPageTitle}>{t('admin.group_sessions_title')}</Text>
         <TouchableOpacity style={ss.createBtn} onPress={() => setCreateModal(true)}>
           <MaterialIcons name="add" size={16} color="#fff" style={{ marginRight: 4 }} />
-          <Text style={ss.createBtnText}>New Session</Text>
+          <Text style={ss.createBtnText}>{t('admin.new_session')}</Text>
         </TouchableOpacity>
       </View>
 
       {groups.length === 0
-        ? <EmptyState icon="group" message="No group sessions found" />
+        ? <EmptyState icon="group" message={t('admin.no_group_sessions')} />
         : groups.map(g => (
           <View key={g._id || g.id} style={[ss.card, { borderLeftColor: D.accentLight }]}>
             <Text style={ss.cardName}>{g.title}</Text>
@@ -1271,10 +1284,10 @@ const GroupsTab = () => {
             </View>
             <View style={ss.metaRow}>
               <MaterialIcons name="group" size={13} color={D.textMuted} style={{ marginRight: 4 }} />
-              <Text style={ss.metaText}>{g.participants?.length || 0} / {g.maxParticipants} participants</Text>
+              <Text style={ss.metaText}>{t('admin.participants_count', { current: g.participants?.length || 0, max: g.maxParticipants })}</Text>
             </View>
             <ActionButton
-              label="Assign User"
+              label={t('admin.assign_user')}
               icon="person-add"
               color={D.accent}
               style={{ marginTop: 14 }}
@@ -1289,28 +1302,22 @@ const GroupsTab = () => {
           <ScrollView contentContainerStyle={ss.modalSheet}>
             <View style={ss.modalHandle} />
             <View style={ss.modalHeaderRow}>
-              <Text style={ss.modalTitle}>Create Group Session</Text>
+              <Text style={ss.modalTitle}>{t('admin.create_group_session')}</Text>
               <TouchableOpacity onPress={() => setCreateModal(false)} style={ss.modalCloseBtn}>
                 <MaterialIcons name="close" size={20} color={D.textSecondary} />
               </TouchableOpacity>
             </View>
-            {[
-              { placeholder: 'Session Title', key: 'title' },
-              { placeholder: 'Description', key: 'description', multiline: true },
-              { placeholder: 'Scheduled Date (YYYY-MM-DDTHH:MM)', key: 'scheduledDate' },
-              { placeholder: 'Meeting Link (URL)', key: 'meetingLink' },
-              { placeholder: 'Max Participants', key: 'maxParticipants', numeric: true },
-            ].map(f => (
+            {FORM_FIELDS.map(f => (
               <View key={f.key}>
-                <Text style={ss.modalLabel}>{f.placeholder}</Text>
+                <Text style={ss.modalLabel}>{t(f.labelKey)}</Text>
                 <TextInput
                   style={[ss.modalInput, f.multiline && { minHeight: 70 }]}
-                  placeholder={f.placeholder}
+                  placeholder={t(f.labelKey)}
                   placeholderTextColor={D.textMuted}
                   keyboardType={f.numeric ? 'numeric' : 'default'}
                   multiline={f.multiline}
                   value={form[f.key]}
-                  onChangeText={t => setForm({ ...form, [f.key]: t })}
+                  onChangeText={val => setForm({ ...form, [f.key]: val })}
                 />
               </View>
             ))}
@@ -1318,12 +1325,12 @@ const GroupsTab = () => {
               {saving ? <ActivityIndicator color="#fff" /> : (
                 <>
                   <MaterialIcons name="add-circle" size={15} color="#fff" style={{ marginRight: 5 }} />
-                  <Text style={ss.modalPrimaryBtnText}>Create Group</Text>
+                  <Text style={ss.modalPrimaryBtnText}>{t('admin.create_group')}</Text>
                 </>
               )}
             </TouchableOpacity>
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setCreateModal(false)}>
-              <Text style={ss.modalCancelText}>Cancel</Text>
+              <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -1335,7 +1342,7 @@ const GroupsTab = () => {
           <ScrollView contentContainerStyle={ss.modalSheet}>
             <View style={ss.modalHandle} />
             <View style={ss.modalHeaderRow}>
-              <Text style={ss.modalTitle}>Assign User to Group</Text>
+              <Text style={ss.modalTitle}>{t('admin.assign_user_to_group')}</Text>
               <TouchableOpacity onPress={() => setAssignModal(false)} style={ss.modalCloseBtn}>
                 <MaterialIcons name="close" size={20} color={D.textSecondary} />
               </TouchableOpacity>
@@ -1345,7 +1352,7 @@ const GroupsTab = () => {
                 <Text style={ss.modalInfoText}>{targetGroup.title}</Text>
               </View>
             )}
-            <Text style={ss.modalLabel}>Select User</Text>
+            <Text style={ss.modalLabel}>{t('admin.select_user')}</Text>
             <ScrollView style={{ maxHeight: 240, marginBottom: 16 }}>
               {users.map(u => (
                 <TouchableOpacity
@@ -1365,10 +1372,10 @@ const GroupsTab = () => {
               ))}
             </ScrollView>
             <TouchableOpacity style={ss.modalConfirmBtn} onPress={handleAssign} disabled={!selectedUser}>
-              <Text style={ss.modalPrimaryBtnText}>Confirm Assignment</Text>
+              <Text style={ss.modalPrimaryBtnText}>{t('admin.confirm_assignment')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setAssignModal(false)}>
-              <Text style={ss.modalCancelText}>Cancel</Text>
+              <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -1379,6 +1386,7 @@ const GroupsTab = () => {
 
 // ─── Therapists Tab ──────────────────────────────────────────────────────────
 const TherapistsTab = () => {
+  const { t } = useTranslation();
   const { D, ss } = useContext(ThemeContext);
   const [therapists, setTherapists] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
@@ -1395,7 +1403,16 @@ const TherapistsTab = () => {
   const [selectedClinician, setSelectedClinician] = useState(null);
   const [linking, setLinking] = useState(false);
 
-  const SPECIALISATIONS = ['Anxiety', 'Depression', 'Trauma', 'Relationships', 'Addiction', 'Child Therapy', 'Career', 'General'];
+  const SPECIALISATIONS = [
+    { key: 'Anxiety', labelKey: 'admin.spec_anxiety' },
+    { key: 'Depression', labelKey: 'admin.spec_depression' },
+    { key: 'Trauma', labelKey: 'admin.spec_trauma' },
+    { key: 'Relationships', labelKey: 'admin.spec_relationships' },
+    { key: 'Addiction', labelKey: 'admin.spec_addiction' },
+    { key: 'Child Therapy', labelKey: 'admin.spec_child_therapy' },
+    { key: 'Career', labelKey: 'admin.spec_career' },
+    { key: 'General', labelKey: 'admin.spec_general' },
+  ];
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1403,7 +1420,7 @@ const TherapistsTab = () => {
       const res = await api.get('/api/therapists');
       setTherapists(res.data || []);
     } catch (e) {
-      Alert.alert('Error', 'Failed to load therapists.');
+      Alert.alert(t('admin.alert_error'), t('admin.load_therapists_failed'));
     }
     setLoading(false);
   }, []);
@@ -1431,7 +1448,7 @@ const TherapistsTab = () => {
       const res = await api.get('/api/admin/users', H);
       setClinicians((res.data || []).filter(u => u.role === 'clinician'));
     } catch (e) {
-      Alert.alert('Error', 'Failed to load clinicians.');
+      Alert.alert(t('admin.alert_error'), t('admin.load_clinicians_failed'));
     }
     setLinking(false);
   };
@@ -1440,172 +1457,172 @@ const TherapistsTab = () => {
     setLinking(true);
     try {
       await api.post(`/api/admin/therapists/${linkTarget.id}/link-user`, { userId: selectedClinician?.id || null }, H);
-      Alert.alert('Success', 'Account link updated.');
+      Alert.alert(t('common.success'), t('admin.link_updated'));
       setLinkModal(false);
       load();
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Failed to link account.');
+      Alert.alert(t('admin.alert_error'), e.response?.data?.error || t('admin.link_failed'));
     }
     setLinking(false);
   };
 
   const save = async () => {
     if (!form.name.trim() || !form.specialisation.trim()) {
-      return Alert.alert('Validation', 'Name and Specialisation are required.');
+      return Alert.alert(t('admin.alert_validation'), t('admin.name_spec_required'));
     }
     setSaving(true);
     try {
       if (editTarget) {
         await api.put(`/api/admin/therapists/${editTarget.id}`, form, H);
-        Alert.alert('Updated', `${form.name} has been updated.`);
+        Alert.alert(t('admin.alert_updated'), t('admin.therapist_updated', { name: form.name }));
       } else {
         await api.post('/api/admin/therapists', form, H);
-        Alert.alert('Added', `${form.name} has been added.`);
+        Alert.alert(t('admin.alert_added'), t('admin.therapist_added', { name: form.name }));
       }
       setModal(false);
       load();
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Could not save therapist.');
+      Alert.alert(t('admin.alert_error'), e.response?.data?.error || t('admin.save_therapist_failed'));
     }
     setSaving(false);
   };
 
-  const toggleActive = async (t) => {
+  const toggleActive = async (therapist) => {
     try {
-      await api.put(`/api/admin/therapists/${t.id}`, { active: !t.active }, H);
+      await api.put(`/api/admin/therapists/${therapist.id}`, { active: !therapist.active }, H);
       load();
     } catch (e) {
-      Alert.alert('Error', 'Could not update status.');
+      Alert.alert(t('admin.alert_error'), t('admin.update_status_failed'));
     }
   };
 
   const confirmDelete = async () => {
     try {
       await api.delete(`/api/admin/therapists/${deleteTarget.id}`, H);
-      Alert.alert('Deleted', `${deleteTarget.name} removed.`);
+      Alert.alert(t('admin.alert_deleted'), t('admin.therapist_removed', { name: deleteTarget.name }));
       setDeleteModal(false);
       load();
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Could not delete therapist.');
+      Alert.alert(t('admin.alert_error'), e.response?.data?.error || t('admin.delete_therapist_failed'));
     }
   };
 
   if (loading) return (
     <View style={ss.loadingContainer}>
       <ActivityIndicator color={D.primary} size="large" />
-      <Text style={ss.loadingText}>Loading therapists...</Text>
+      <Text style={ss.loadingText}>{t('admin.loading_therapists')}</Text>
     </View>
   );
 
   const STATS = [
-    { label: 'All Therapists', value: therapists.length, icon: 'groups', color: D.primaryLight },
-    { label: 'Active', value: therapists.filter(t => t.active !== false).length, icon: 'check-circle', color: D.success },
-    { label: 'Inactive', value: therapists.filter(t => t.active === false).length, icon: 'block', color: D.dangerDeep },
+    { filterKey: 'All Therapists', labelKey: 'admin.stat_all_therapists', value: therapists.length, icon: 'groups', color: D.primaryLight },
+    { filterKey: 'Active', labelKey: 'admin.stat_active', value: therapists.filter(th => th.active !== false).length, icon: 'check-circle', color: D.success },
+    { filterKey: 'Inactive', labelKey: 'admin.stat_inactive', value: therapists.filter(th => th.active === false).length, icon: 'block', color: D.dangerDeep },
   ];
 
   return (
     <ScrollView contentContainerStyle={ss.tabScroll} showsVerticalScrollIndicator={false}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <Text style={ss.tabPageTitle}>Therapist Hub</Text>
+        <Text style={ss.tabPageTitle}>{t('admin.therapist_hub')}</Text>
         <TouchableOpacity style={ss.createBtn} onPress={openAdd}>
           <MaterialIcons name="person-add" size={15} color="#fff" style={{ marginRight: 4 }} />
-          <Text style={ss.createBtnText}>Add Therapist</Text>
+          <Text style={ss.createBtnText}>{t('admin.add_therapist')}</Text>
         </TouchableOpacity>
       </View>
 
       {/* ── Overview Stats Grid ── */}
       <View style={ss.overviewHeader}>
-        <Text style={ss.overviewTitle}>Overview</Text>
+        <Text style={ss.overviewTitle}>{t('admin.overview')}</Text>
       </View>
       <View style={ss.statsGrid}>
         {STATS.map((s, i) => (
           <TouchableOpacity 
             key={i} 
             activeOpacity={0.7}
-            onPress={() => setActiveFilter(activeFilter === s.label || s.label.includes('Total') || s.label.includes('All') ? null : s.label)}
+            onPress={() => setActiveFilter(activeFilter === s.filterKey || s.filterKey.includes('Total') || s.filterKey.includes('All') ? null : s.filterKey)}
             style={[
               ss.statTile, 
               { borderTopColor: s.color },
-              activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
+              activeFilter === s.filterKey && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
             ]}
           >
             <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
               <MaterialIcons name={s.icon} size={18} color={s.color} />
             </View>
             <Text style={ss.statValue}>{s.value}</Text>
-            <Text style={ss.statLabel}>{s.label}</Text>
+            <Text style={ss.statLabel}>{t(s.labelKey)}</Text>
           </TouchableOpacity>
         ))}
       </View>
       <View style={ss.workQueueHeader}>
         <View style={ss.workQueueLine} />
-        <Text style={ss.workQueueLabel}>Filtered Results</Text>
+        <Text style={ss.workQueueLabel}>{t('admin.filtered_results')}</Text>
         <View style={ss.workQueueLine} />
       </View>
 
       {therapists.length === 0
-        ? <EmptyState icon="person-off" message="No therapists registered yet" />
-        : therapists.filter(t => {
+        ? <EmptyState icon="person-off" message={t('admin.no_therapists')} />
+        : therapists.filter(th => {
           if (!activeFilter || activeFilter === 'All Therapists') return true;
-          if (activeFilter === 'Active') return t.active !== false;
-          if (activeFilter === 'Inactive') return t.active === false;
+          if (activeFilter === 'Active') return th.active !== false;
+          if (activeFilter === 'Inactive') return th.active === false;
           return true;
-        }).map(t => (
-          <View key={t.id || t._id} style={[ss.card, { borderLeftColor: t.active !== false ? D.success : D.textMuted }]}>
+        }).map(th => (
+          <View key={th.id || th._id} style={[ss.card, { borderLeftColor: th.active !== false ? D.success : D.textMuted }]}>
             <View style={ss.cardRow}>
-              <View style={[ss.cardAvatarCircle, { backgroundColor: (t.active !== false ? D.success : D.textMuted) + '22' }]}>
-                <MaterialIcons name="psychology" size={18} color={t.active !== false ? D.success : D.textMuted} />
+              <View style={[ss.cardAvatarCircle, { backgroundColor: (th.active !== false ? D.success : D.textMuted) + '22' }]}>
+                <MaterialIcons name="psychology" size={18} color={th.active !== false ? D.success : D.textMuted} />
               </View>
               <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={ss.cardName}>{t.name}</Text>
-                <Text style={ss.cardMeta}>{t.specialisation}</Text>
-                {t.linkedUserEmail && (
+                <Text style={ss.cardName}>{th.name}</Text>
+                <Text style={ss.cardMeta}>{th.specialisation}</Text>
+                {th.linkedUserEmail && (
                   <Text style={[ss.cardMeta, { color: D.accentLight, marginTop: 4 }]}>
-                    <MaterialIcons name="link" size={11} color={D.accentLight} /> Linked: {t.linkedUserEmail}
+                    <MaterialIcons name="link" size={11} color={D.accentLight} /> {t('admin.linked_email', { email: th.linkedUserEmail })}
                   </Text>
                 )}
               </View>
               <PillBadge
-                label={t.active !== false ? 'Active' : 'Inactive'}
-                color={t.active !== false ? D.success : D.textMuted}
+                label={th.active !== false ? t('admin.status_active') : t('admin.status_inactive')}
+                color={th.active !== false ? D.success : D.textMuted}
               />
             </View>
-            {t.timing ? (
+            {th.timing ? (
               <View style={[ss.metaRow, { marginTop: 10 }]}>
                 <MaterialIcons name="schedule" size={13} color={D.textMuted} style={{ marginRight: 4 }} />
-                <Text style={ss.metaText}>{t.timing}</Text>
+                <Text style={ss.metaText}>{th.timing}</Text>
               </View>
             ) : null}
-            {t.about ? (
+            {th.about ? (
               <View style={ss.quoteBox}>
-                <Text style={ss.quoteText}>{t.about}</Text>
+                <Text style={ss.quoteText}>{th.about}</Text>
               </View>
             ) : null}
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
               <TouchableOpacity
                 style={[ss.actionButton, { flex: 1, backgroundColor: D.surfaceElevated, borderWidth: 1, borderColor: D.borderColor }]}
-                onPress={() => openEdit(t)} activeOpacity={0.8}
+                onPress={() => openEdit(th)} activeOpacity={0.8}
               >
                 <MaterialIcons name="edit" size={14} color={D.textPrimary} style={{ marginRight: 5 }} />
-                <Text style={[ss.actionButtonText, { color: D.textPrimary }]}>Edit</Text>
+                <Text style={[ss.actionButtonText, { color: D.textPrimary }]}>{t('admin.edit')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[ss.actionButton, { flex: 1, backgroundColor: D.accent + '22', borderWidth: 1, borderColor: D.accent + '55' }]}
-                onPress={() => openLink(t)} activeOpacity={0.8}
+                onPress={() => openLink(th)} activeOpacity={0.8}
               >
                 <MaterialIcons name="link" size={14} color={D.accent} style={{ marginRight: 5 }} />
-                <Text style={[ss.actionButtonText, { color: D.accent }]}>Link</Text>
+                <Text style={[ss.actionButtonText, { color: D.accent }]}>{t('admin.link')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[ss.actionButton, { flex: 1, backgroundColor: t.active !== false ? D.warning + '22' : D.success + '22', borderWidth: 1, borderColor: t.active !== false ? D.warning + '55' : D.success + '55' }]}
-                onPress={() => toggleActive(t)} activeOpacity={0.8}
+                style={[ss.actionButton, { flex: 1, backgroundColor: th.active !== false ? D.warning + '22' : D.success + '22', borderWidth: 1, borderColor: th.active !== false ? D.warning + '55' : D.success + '55' }]}
+                onPress={() => toggleActive(th)} activeOpacity={0.8}
               >
-                <MaterialIcons name={t.active !== false ? 'pause-circle' : 'play-circle'} size={14} color={t.active !== false ? D.warning : D.success} style={{ marginRight: 5 }} />
-                <Text style={[ss.actionButtonText, { color: t.active !== false ? D.warning : D.success }]}>{t.active !== false ? 'Deactivate' : 'Activate'}</Text>
+                <MaterialIcons name={th.active !== false ? 'pause-circle' : 'play-circle'} size={14} color={th.active !== false ? D.warning : D.success} style={{ marginRight: 5 }} />
+                <Text style={[ss.actionButtonText, { color: th.active !== false ? D.warning : D.success }]}>{th.active !== false ? t('admin.deactivate') : t('admin.activate')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[ss.actionButton, { backgroundColor: D.danger + '22', borderWidth: 1, borderColor: D.danger + '55', paddingHorizontal: 12 }]}
-                onPress={() => { setDeleteTarget(t); setDeleteModal(true); }} activeOpacity={0.8}
+                onPress={() => { setDeleteTarget(th); setDeleteModal(true); }} activeOpacity={0.8}
               >
                 <MaterialIcons name="delete" size={16} color={D.danger} />
               </TouchableOpacity>
@@ -1619,45 +1636,45 @@ const TherapistsTab = () => {
           <ScrollView contentContainerStyle={ss.modalSheet} keyboardShouldPersistTaps="handled">
             <View style={ss.modalHandle} />
             <View style={ss.modalHeaderRow}>
-              <Text style={ss.modalTitle}>{editTarget ? 'Edit Therapist' : 'Add Therapist'}</Text>
+              <Text style={ss.modalTitle}>{editTarget ? t('admin.edit_therapist') : t('admin.add_edit_therapist')}</Text>
               <TouchableOpacity onPress={() => setModal(false)} style={ss.modalCloseBtn}>
                 <MaterialIcons name="close" size={20} color={D.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <Text style={ss.modalLabel}>Full Name *</Text>
-            <TextInput style={ss.modalInput} value={form.name} onChangeText={t => setForm({ ...form, name: t })} placeholder="e.g. Dr. Sarah Khan" placeholderTextColor={D.textMuted} />
+            <Text style={ss.modalLabel}>{t('admin.therapist_name')} *</Text>
+            <TextInput style={ss.modalInput} value={form.name} onChangeText={val => setForm({ ...form, name: val })} placeholder={t('admin.placeholder_therapist_name')} placeholderTextColor={D.textMuted} />
 
-            <Text style={ss.modalLabel}>Specialisation *</Text>
+            <Text style={ss.modalLabel}>{t('admin.specialisation')} *</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
               {SPECIALISATIONS.map(s => (
                 <TouchableOpacity
-                  key={s}
-                  style={[ss.segmentChip, { marginRight: 8 }, form.specialisation === s && { backgroundColor: D.primary, borderColor: D.primary }]}
-                  onPress={() => setForm({ ...form, specialisation: s })}
+                  key={s.key}
+                  style={[ss.segmentChip, { marginRight: 8 }, form.specialisation === s.key && { backgroundColor: D.primary, borderColor: D.primary }]}
+                  onPress={() => setForm({ ...form, specialisation: s.key })}
                 >
-                  <Text style={[ss.segmentChipText, form.specialisation === s && { color: '#fff' }]}>{s}</Text>
+                  <Text style={[ss.segmentChipText, form.specialisation === s.key && { color: '#fff' }]}>{t(s.labelKey)}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
-            <TextInput style={ss.modalInput} value={form.specialisation} onChangeText={t => setForm({ ...form, specialisation: t })} placeholder="Or type custom specialisation" placeholderTextColor={D.textMuted} />
+            <TextInput style={ss.modalInput} value={form.specialisation} onChangeText={val => setForm({ ...form, specialisation: val })} placeholder={t('admin.placeholder_specialisation')} placeholderTextColor={D.textMuted} />
 
-            <Text style={ss.modalLabel}>Availability / Timing</Text>
-            <TextInput style={ss.modalInput} value={form.timing} onChangeText={t => setForm({ ...form, timing: t })} placeholder="e.g. Mon-Fri 9am-5pm" placeholderTextColor={D.textMuted} />
+            <Text style={ss.modalLabel}>{t('admin.timing')}</Text>
+            <TextInput style={ss.modalInput} value={form.timing} onChangeText={val => setForm({ ...form, timing: val })} placeholder={t('admin.placeholder_timing')} placeholderTextColor={D.textMuted} />
 
-            <Text style={ss.modalLabel}>About / Bio</Text>
-            <TextInput style={[ss.modalInput, { minHeight: 80 }]} value={form.about} onChangeText={t => setForm({ ...form, about: t })} placeholder="Brief bio or specialisation notes" placeholderTextColor={D.textMuted} multiline />
+            <Text style={ss.modalLabel}>{t('admin.about')}</Text>
+            <TextInput style={[ss.modalInput, { minHeight: 80 }]} value={form.about} onChangeText={val => setForm({ ...form, about: val })} placeholder={t('admin.placeholder_about')} placeholderTextColor={D.textMuted} multiline />
 
             <TouchableOpacity style={ss.modalConfirmBtn} onPress={save} disabled={saving}>
               {saving ? <ActivityIndicator color="#fff" size="small" /> : (
                 <>
                   <MaterialIcons name={editTarget ? 'save' : 'person-add'} size={16} color="#fff" style={{ marginRight: 6 }} />
-                  <Text style={ss.modalPrimaryBtnText}>{editTarget ? 'Save Changes' : 'Add Therapist'}</Text>
+                  <Text style={ss.modalPrimaryBtnText}>{editTarget ? t('admin.save_changes') : t('admin.save_therapist')}</Text>
                 </>
               )}
             </TouchableOpacity>
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setModal(false)}>
-              <Text style={ss.modalCancelText}>Cancel</Text>
+              <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -1668,15 +1685,15 @@ const TherapistsTab = () => {
         <View style={[ss.modalOverlay, { justifyContent: 'center', padding: 24 }]}>
           <View style={[ss.modalSheet, { borderRadius: 20 }]}>
             <MaterialIcons name="warning" size={32} color={D.danger} style={{ alignSelf: 'center', marginBottom: 12 }} />
-            <Text style={[ss.modalTitle, { textAlign: 'center' }]}>Remove Therapist?</Text>
+            <Text style={[ss.modalTitle, { textAlign: 'center' }]}>{t('admin.delete_therapist_title')}</Text>
             <Text style={[ss.modalInfoText, { textAlign: 'center', marginTop: 8, marginBottom: 20 }]}>
-              {deleteTarget?.name} will be permanently removed from the system.
+              {t('admin.delete_therapist_msg', { name: deleteTarget?.name })}
             </Text>
             <TouchableOpacity style={[ss.modalConfirmBtn, { backgroundColor: D.danger }]} onPress={confirmDelete}>
-              <Text style={ss.modalPrimaryBtnText}>Yes, Remove</Text>
+              <Text style={ss.modalPrimaryBtnText}>{t('common.delete')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setDeleteModal(false)}>
-              <Text style={ss.modalCancelText}>Cancel</Text>
+              <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1687,7 +1704,7 @@ const TherapistsTab = () => {
           <ScrollView contentContainerStyle={ss.modalSheet}>
             <View style={ss.modalHandle} />
             <View style={ss.modalHeaderRow}>
-              <Text style={ss.modalTitle}>Link User Account</Text>
+              <Text style={ss.modalTitle}>{t('admin.link_clinician')}</Text>
               <TouchableOpacity onPress={() => setLinkModal(false)} style={ss.modalCloseBtn}>
                 <MaterialIcons name="close" size={20} color={D.textSecondary} />
               </TouchableOpacity>
@@ -1695,18 +1712,18 @@ const TherapistsTab = () => {
 
             {linkTarget && (
               <View style={ss.modalInfoBox}>
-                <Text style={ss.modalInfoText}>Link <Text style={{ fontWeight: 'bold' }}>{linkTarget.name}</Text> to a clinician account.</Text>
+                <Text style={ss.modalInfoText}>{linkTarget.name}</Text>
               </View>
             )}
 
-            <Text style={ss.modalLabel}>Select Clinician</Text>
+            <Text style={ss.modalLabel}>{t('admin.select_clinician')}</Text>
             {linking && clinicians.length === 0 ? <ActivityIndicator color={D.primary} /> : (
               <ScrollView style={{ maxHeight: 240, marginBottom: 16 }}>
                 <TouchableOpacity
                   style={[ss.userSelectItem, selectedClinician === null && ss.userSelectItemActive]}
                   onPress={() => setSelectedClinician(null)}
                 >
-                  <Text style={[ss.userSelectName, selectedClinician === null && { color: D.textPrimary }]}>No Link (Unlink)</Text>
+                  <Text style={[ss.userSelectName, selectedClinician === null && { color: D.textPrimary }]}>{t('admin.unlink_account')}</Text>
                   {selectedClinician === null && <MaterialIcons name="check-circle" size={18} color={D.primary} />}
                 </TouchableOpacity>
                 {clinicians.map(u => (
@@ -1730,11 +1747,11 @@ const TherapistsTab = () => {
 
             <TouchableOpacity style={ss.modalConfirmBtn} onPress={confirmLink} disabled={linking}>
               {linking ? <ActivityIndicator color="#fff" size="small" /> : (
-                <Text style={ss.modalPrimaryBtnText}>Save Link</Text>
+                <Text style={ss.modalPrimaryBtnText}>{t('admin.confirm_link')}</Text>
               )}
             </TouchableOpacity>
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setLinkModal(false)}>
-              <Text style={ss.modalCancelText}>Cancel</Text>
+              <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -1745,6 +1762,7 @@ const TherapistsTab = () => {
 
 // ─── Resource CMS Tab ─────────────────────────────────────────────────────────
 const ResourcesTab = () => {
+  const { t } = useTranslation();
   const { D, ss } = useContext(ThemeContext);
   const [resources, setResources] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
@@ -1764,7 +1782,7 @@ const ResourcesTab = () => {
       const res = await api.get('/api/admin/resources', H);
       setResources(res.data || []);
     } catch (e) {
-      Alert.alert('Error', 'Failed to load resources.');
+      Alert.alert(t('admin.alert_error'), t('admin.load_resources_failed'));
     }
     setLoading(false);
   }, []);
@@ -1785,21 +1803,21 @@ const ResourcesTab = () => {
 
   const save = async () => {
     if (!form.title.trim() || !form.url.trim()) {
-      return Alert.alert('Validation', 'Title and URL are required.');
+      return Alert.alert(t('admin.alert_validation'), t('admin.title_url_required'));
     }
     setSaving(true);
     try {
       if (editTarget) {
         await api.put(`/api/admin/resources/${editTarget.id}`, form, H);
-        Alert.alert('Updated', 'Resource updated.');
+        Alert.alert(t('admin.alert_updated'), t('admin.resource_updated'));
       } else {
         await api.post('/api/admin/resources', form, H);
-        Alert.alert('Created', 'Resource added to the CMS.');
+        Alert.alert(t('admin.alert_added'), t('admin.resource_created'));
       }
       setModal(false);
       load();
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Could not save resource.');
+      Alert.alert(t('admin.alert_error'), e.response?.data?.error || t('admin.save_resource_failed'));
     }
     setSaving(false);
   };
@@ -1809,20 +1827,20 @@ const ResourcesTab = () => {
       await api.put(`/api/admin/resources/${r.id}`, { active: !r.active }, H);
       load();
     } catch (e) {
-      Alert.alert('Error', 'Could not toggle resource.');
+      Alert.alert(t('admin.alert_error'), t('admin.toggle_resource_failed'));
     }
   };
 
   const deleteResource = (r) => {
-    Alert.alert('Delete Resource', `Remove "${r.title}" from the CMS?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('admin.delete_resource_title'), t('admin.delete_resource_msg', { title: r.title }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Delete', style: 'destructive', onPress: async () => {
+        text: t('common.delete'), style: 'destructive', onPress: async () => {
           try {
             await api.delete(`/api/admin/resources/${r.id}`, H);
             load();
           } catch (e) {
-            Alert.alert('Error', 'Could not delete resource.');
+            Alert.alert(t('admin.alert_error'), t('admin.delete_resource_failed'));
           }
         },
       },
@@ -1832,76 +1850,74 @@ const ResourcesTab = () => {
   if (loading) return (
     <View style={ss.loadingContainer}>
       <ActivityIndicator color={D.primary} size="large" />
-      <Text style={ss.loadingText}>Loading CMS resources...</Text>
+      <Text style={ss.loadingText}>{t('admin.loading_resources')}</Text>
     </View>
   );
 
   const STATS = [
-    { label: 'Total Resources', value: resources.length, icon: 'library-books', color: D.primaryLight },
-    { label: 'Articles', value: resources.filter(r => r.type === 'article').length, icon: 'article', color: D.accent },
-    { label: 'Videos', value: resources.filter(r => r.type === 'video').length, icon: 'play-circle', color: D.danger },
-    { label: 'Exercises', value: resources.filter(r => r.type === 'exercise').length, icon: 'fitness-center', color: D.success },
+    { filterKey: 'total_resources', labelKey: 'admin.stat_total_resources', value: resources.length, icon: 'library-books', color: D.primaryLight },
+    { filterKey: 'articles', labelKey: 'admin.stat_articles', value: resources.filter(r => r.type === 'article').length, icon: 'article', color: D.accent },
+    { filterKey: 'videos', labelKey: 'admin.stat_videos', value: resources.filter(r => r.type === 'video').length, icon: 'play-circle', color: D.danger },
+    { filterKey: 'exercises', labelKey: 'admin.stat_exercises', value: resources.filter(r => r.type === 'exercise').length, icon: 'fitness-center', color: D.success },
   ];
 
   return (
     <ScrollView contentContainerStyle={ss.tabScroll} showsVerticalScrollIndicator={false}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <Text style={ss.tabPageTitle}>Resource CMS</Text>
+        <Text style={ss.tabPageTitle}>{t('admin.resources_cms')}</Text>
         <TouchableOpacity style={ss.createBtn} onPress={openAdd}>
           <MaterialIcons name="add" size={16} color="#fff" style={{ marginRight: 4 }} />
-          <Text style={ss.createBtnText}>New Resource</Text>
+          <Text style={ss.createBtnText}>{t('admin.add_resource')}</Text>
         </TouchableOpacity>
       </View>
 
       {/* ── Overview Stats Grid ── */}
       <View style={ss.overviewHeader}>
-        <Text style={ss.overviewTitle}>Overview</Text>
+        <Text style={ss.overviewTitle}>{t('admin.overview')}</Text>
       </View>
       <View style={ss.statsGrid}>
         {STATS.map((s, i) => (
           <TouchableOpacity 
             key={i} 
             activeOpacity={0.7}
-            onPress={() => setActiveFilter(activeFilter === s.label || s.label.includes('Total') || s.label.includes('All') ? null : s.label)}
+            onPress={() => setActiveFilter(activeFilter === s.filterKey ? null : s.filterKey)}
             style={[
               ss.statTile, 
               { borderTopColor: s.color },
-              activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
+              activeFilter === s.filterKey && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
             ]}
           >
             <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
               <MaterialIcons name={s.icon} size={18} color={s.color} />
             </View>
             <Text style={ss.statValue}>{s.value}</Text>
-            <Text style={ss.statLabel}>{s.label}</Text>
+            <Text style={ss.statLabel}>{t(s.labelKey)}</Text>
           </TouchableOpacity>
         ))}
       </View>
       <View style={ss.workQueueHeader}>
         <View style={ss.workQueueLine} />
-        <Text style={ss.workQueueLabel}>Filtered Results</Text>
+        <Text style={ss.workQueueLabel}>{t('admin.filtered_results')}</Text>
         <View style={ss.workQueueLine} />
       </View>
 
-      <Text style={[ss.cardMeta, { marginBottom: 16 }]}>{resources.length} resource{resources.length !== 1 ? 's' : ''} — these appear in the Verify Risk Report modal</Text>
-
       {/* Type filter legend */}
       <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
-        {TYPES.map(t => (
-          <View key={t} style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <MaterialIcons name={TYPE_ICONS[t]} size={14} color={TYPE_COLORS[t]} />
-            <Text style={[ss.cardMeta, { marginLeft: 4, color: TYPE_COLORS[t], textTransform: 'capitalize' }]}>{t}</Text>
+        {TYPES.map(typeKey => (
+          <View key={typeKey} style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <MaterialIcons name={TYPE_ICONS[typeKey]} size={14} color={TYPE_COLORS[typeKey]} />
+            <Text style={[ss.cardMeta, { marginLeft: 4, color: TYPE_COLORS[typeKey], textTransform: 'capitalize' }]}>{typeKey}</Text>
           </View>
         ))}
       </View>
 
       {resources.length === 0
-        ? <EmptyState icon="library-books" message="No resources yet. Add articles, videos, and exercises." />
+        ? <EmptyState icon="library-books" message={t('admin.no_resources')} />
         : resources.filter(r => {
-          if (!activeFilter || activeFilter === 'Total Resources') return true;
-          if (activeFilter === 'Articles') return r.type === 'article';
-          if (activeFilter === 'Videos') return r.type === 'video';
-          if (activeFilter === 'Exercises') return r.type === 'exercise';
+          if (!activeFilter || activeFilter === 'total_resources') return true;
+          if (activeFilter === 'articles') return r.type === 'article';
+          if (activeFilter === 'videos') return r.type === 'video';
+          if (activeFilter === 'exercises') return r.type === 'exercise';
           return true;
         }).map(r => (
           <View key={r.id} style={[ss.card, { borderLeftColor: TYPE_COLORS[r.type], opacity: r.active === false ? 0.55 : 1 }]}>
@@ -1911,7 +1927,7 @@ const ResourcesTab = () => {
               </View>
               <View style={{ flex: 1, marginLeft: 10 }}>
                 <Text style={ss.cardName} numberOfLines={2}>{r.title}</Text>
-                <Text style={ss.cardMeta}>{r.type.toUpperCase()} · {r.active === false ? 'Hidden' : 'Visible'}</Text>
+                <Text style={ss.cardMeta}>{r.type.toUpperCase()} · {r.active === false ? t('admin.resource_hidden') : t('admin.resource_visible')}</Text>
               </View>
             </View>
             {r.description ? (
@@ -1929,14 +1945,14 @@ const ResourcesTab = () => {
                 onPress={() => openEdit(r)} activeOpacity={0.8}
               >
                 <MaterialIcons name="edit" size={14} color={D.textPrimary} style={{ marginRight: 5 }} />
-                <Text style={[ss.actionButtonText, { color: D.textPrimary }]}>Edit</Text>
+                <Text style={[ss.actionButtonText, { color: D.textPrimary }]}>{t('admin.edit')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[ss.actionButton, { flex: 1, backgroundColor: r.active === false ? D.success + '22' : D.warning + '22', borderWidth: 1, borderColor: r.active === false ? D.success + '55' : D.warning + '55' }]}
                 onPress={() => toggleActive(r)} activeOpacity={0.8}
               >
                 <MaterialIcons name={r.active === false ? 'visibility' : 'visibility-off'} size={14} color={r.active === false ? D.success : D.warning} style={{ marginRight: 5 }} />
-                <Text style={[ss.actionButtonText, { color: r.active === false ? D.success : D.warning }]}>{r.active === false ? 'Show' : 'Hide'}</Text>
+                <Text style={[ss.actionButtonText, { color: r.active === false ? D.success : D.warning }]}>{r.active === false ? t('admin.show_resource') : t('admin.hide_resource')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[ss.actionButton, { backgroundColor: D.danger + '22', borderWidth: 1, borderColor: D.danger + '55' }]}
@@ -1954,45 +1970,45 @@ const ResourcesTab = () => {
           <ScrollView contentContainerStyle={ss.modalSheet} keyboardShouldPersistTaps="handled">
             <View style={ss.modalHandle} />
             <View style={ss.modalHeaderRow}>
-              <Text style={ss.modalTitle}>{editTarget ? 'Edit Resource' : 'Add Resource'}</Text>
+              <Text style={ss.modalTitle}>{editTarget ? t('admin.edit') : t('admin.add_resource')}</Text>
               <TouchableOpacity onPress={() => setModal(false)} style={ss.modalCloseBtn}>
                 <MaterialIcons name="close" size={20} color={D.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <Text style={ss.modalLabel}>Title *</Text>
-            <TextInput style={ss.modalInput} value={form.title} onChangeText={t => setForm({ ...form, title: t })} placeholder="e.g. Managing Severe Anxiety" placeholderTextColor={D.textMuted} />
+            <Text style={ss.modalLabel}>{t('admin.resource_title')} *</Text>
+            <TextInput style={ss.modalInput} value={form.title} onChangeText={val => setForm({ ...form, title: val })} placeholder={t('admin.placeholder_resource_title')} placeholderTextColor={D.textMuted} />
 
-            <Text style={ss.modalLabel}>Type *</Text>
+            <Text style={ss.modalLabel}>{t('admin.resource_type')} *</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-              {TYPES.map(t => (
+              {TYPES.map(typeKey => (
                 <TouchableOpacity
-                  key={t}
-                  style={[ss.segmentChip, form.type === t && { backgroundColor: TYPE_COLORS[t], borderColor: TYPE_COLORS[t] }]}
-                  onPress={() => setForm({ ...form, type: t })}
+                  key={typeKey}
+                  style={[ss.segmentChip, form.type === typeKey && { backgroundColor: TYPE_COLORS[typeKey], borderColor: TYPE_COLORS[typeKey] }]}
+                  onPress={() => setForm({ ...form, type: typeKey })}
                 >
-                  <MaterialIcons name={TYPE_ICONS[t]} size={14} color={form.type === t ? '#fff' : TYPE_COLORS[t]} style={{ marginRight: 4 }} />
-                  <Text style={[ss.segmentChipText, form.type === t && { color: '#fff' }]}>{t.charAt(0).toUpperCase() + t.slice(1)}</Text>
+                  <MaterialIcons name={TYPE_ICONS[typeKey]} size={14} color={form.type === typeKey ? '#fff' : TYPE_COLORS[typeKey]} style={{ marginRight: 4 }} />
+                  <Text style={[ss.segmentChipText, form.type === typeKey && { color: '#fff' }]}>{typeKey.charAt(0).toUpperCase() + typeKey.slice(1)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={ss.modalLabel}>URL *</Text>
-            <TextInput style={ss.modalInput} value={form.url} onChangeText={t => setForm({ ...form, url: t })} placeholder="https://..." placeholderTextColor={D.textMuted} autoCapitalize="none" keyboardType="url" />
+            <Text style={ss.modalLabel}>{t('admin.resource_url')} *</Text>
+            <TextInput style={ss.modalInput} value={form.url} onChangeText={val => setForm({ ...form, url: val })} placeholder={t('admin.placeholder_resource_url')} placeholderTextColor={D.textMuted} autoCapitalize="none" keyboardType="url" />
 
-            <Text style={ss.modalLabel}>Description (optional)</Text>
-            <TextInput style={[ss.modalInput, { minHeight: 70 }]} value={form.description} onChangeText={t => setForm({ ...form, description: t })} placeholder="Brief description of this resource" placeholderTextColor={D.textMuted} multiline />
+            <Text style={ss.modalLabel}>{t('admin.resource_description')}</Text>
+            <TextInput style={[ss.modalInput, { minHeight: 70 }]} value={form.description} onChangeText={val => setForm({ ...form, description: val })} placeholder={t('admin.placeholder_resource_desc')} placeholderTextColor={D.textMuted} multiline />
 
             <TouchableOpacity style={ss.modalConfirmBtn} onPress={save} disabled={saving}>
               {saving ? <ActivityIndicator color="#fff" size="small" /> : (
                 <>
                   <MaterialIcons name="save" size={16} color="#fff" style={{ marginRight: 6 }} />
-                  <Text style={ss.modalPrimaryBtnText}>{editTarget ? 'Save Changes' : 'Add to CMS'}</Text>
+                  <Text style={ss.modalPrimaryBtnText}>{editTarget ? t('admin.save_resource') : t('admin.save_resource')}</Text>
                 </>
               )}
             </TouchableOpacity>
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setModal(false)}>
-              <Text style={ss.modalCancelText}>Cancel</Text>
+              <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -2003,6 +2019,7 @@ const ResourcesTab = () => {
 
 // ─── Audit Trail Tab ──────────────────────────────────────────────────────────
 const AuditTab = () => {
+  const { t } = useTranslation();
   const { D, ss } = useContext(ThemeContext);
   const [logs, setLogs] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
@@ -2012,23 +2029,23 @@ const AuditTab = () => {
   const PAGE = 25;
 
   const ACTION_META = {
-    verify_risk_report:       { icon: 'rate-review',        color: D.warning,   label: 'Verified Risk Report' },
-    assign_appointment:       { icon: 'event-available',    color: D.accent,    label: 'Assigned Appointment' },
-    verify_emergency_contact: { icon: 'verified-user',      color: D.success,   label: 'Verified Emergency Contact' },
-    reject_emergency_contact: { icon: 'cancel',             color: D.danger,    label: 'Rejected Emergency Contact' },
-    assign_wellness_plan:     { icon: 'self-improvement',   color: D.primary,   label: 'Assigned Wellness Plan' },
-    add_therapist:            { icon: 'person-add',         color: D.accent,    label: 'Added Therapist' },
-    update_therapist:         { icon: 'edit',               color: D.textMuted, label: 'Updated Therapist' },
-    delete_therapist:         { icon: 'person-remove',      color: D.danger,    label: 'Removed Therapist' },
-    create_resource:          { icon: 'add-circle',         color: D.primary,   label: 'Created Resource' },
-    update_resource:          { icon: 'edit',               color: D.textMuted, label: 'Updated Resource' },
-    delete_resource:          { icon: 'delete',             color: D.danger,    label: 'Deleted Resource' },
-    change_user_role:         { icon: 'manage-accounts',    color: D.accent,    label: 'Changed User Role' },
-    suspend_user:             { icon: 'lock',               color: D.danger,    label: 'Suspended User' },
-    reinstate_user:           { icon: 'lock-open',          color: D.success,   label: 'Reinstated User' },
-    broadcast_notification:   { icon: 'campaign',           color: D.primary,   label: 'Sent Broadcast' },
-    export_audit_logs:        { icon: 'receipt-long',       color: D.warning,   label: 'Exported Audit Logs' },
-    export_patients:          { icon: 'download',           color: D.warning,   label: 'Exported Patient Data' },
+    verify_risk_report:       { icon: 'rate-review',        color: D.warning,   labelKey: 'admin.audit_verify_risk_report' },
+    assign_appointment:       { icon: 'event-available',    color: D.accent,    labelKey: 'admin.audit_assign_appointment' },
+    verify_emergency_contact: { icon: 'verified-user',      color: D.success,   labelKey: 'admin.audit_verify_emergency_contact' },
+    reject_emergency_contact: { icon: 'cancel',             color: D.danger,    labelKey: 'admin.audit_reject_emergency_contact' },
+    assign_wellness_plan:     { icon: 'self-improvement',   color: D.primary,   labelKey: 'admin.audit_assign_wellness_plan' },
+    add_therapist:            { icon: 'person-add',         color: D.accent,    labelKey: 'admin.audit_add_therapist' },
+    update_therapist:         { icon: 'edit',               color: D.textMuted, labelKey: 'admin.audit_update_therapist' },
+    delete_therapist:         { icon: 'person-remove',      color: D.danger,    labelKey: 'admin.audit_delete_therapist' },
+    create_resource:          { icon: 'add-circle',         color: D.primary,   labelKey: 'admin.audit_create_resource' },
+    update_resource:          { icon: 'edit',               color: D.textMuted, labelKey: 'admin.audit_update_resource' },
+    delete_resource:          { icon: 'delete',             color: D.danger,    labelKey: 'admin.audit_delete_resource' },
+    change_user_role:         { icon: 'manage-accounts',    color: D.accent,    labelKey: 'admin.audit_change_user_role' },
+    suspend_user:             { icon: 'lock',               color: D.danger,    labelKey: 'admin.audit_suspend_user' },
+    reinstate_user:           { icon: 'lock-open',          color: D.success,   labelKey: 'admin.audit_reinstate_user' },
+    broadcast_notification:   { icon: 'campaign',           color: D.primary,   labelKey: 'admin.audit_broadcast' },
+    export_audit_logs:        { icon: 'receipt-long',       color: D.warning,   labelKey: 'admin.audit_export_logs' },
+    export_patients:          { icon: 'download',           color: D.warning,   labelKey: 'admin.audit_export_patients' },
   };
 
   const load = async (skip = 0, append = false) => {
@@ -2039,7 +2056,7 @@ const AuditTab = () => {
       if (append) setLogs(prev => [...prev, ...(res.data.logs || [])]);
       else setLogs(res.data.logs || []);
     } catch (e) {
-      Alert.alert('Error', 'Failed to load audit logs.');
+      Alert.alert(t('admin.alert_error'), t('admin.load_audit_failed'));
     }
     if (skip === 0) setLoading(false); else setLoadingMore(false);
   };
@@ -2049,14 +2066,14 @@ const AuditTab = () => {
   if (loading) return (
     <View style={ss.loadingContainer}>
       <ActivityIndicator color={D.primary} size="large" />
-      <Text style={ss.loadingText}>Loading audit trail...</Text>
+      <Text style={ss.loadingText}>{t('admin.loading_audit')}</Text>
     </View>
   );
 
   const STATS = [
-    { label: 'All Logs', value: logs.length, icon: 'history', color: D.primaryLight },
-    { label: 'Auth Events', value: logs.filter(l => ['login','register'].includes(l.actionType)).length, icon: 'login', color: D.accent },
-    { label: 'Admin Actions', value: logs.filter(l => ['create','delete','update'].includes(l.actionType) || l.performedByModel === 'Admin').length, icon: 'gavel', color: D.danger },
+    { filterKey: 'all_logs', labelKey: 'admin.stat_all_logs', value: logs.length, icon: 'history', color: D.primaryLight },
+    { filterKey: 'auth_events', labelKey: 'admin.stat_auth_events', value: logs.filter(l => ['login','register'].includes(l.actionType)).length, icon: 'login', color: D.accent },
+    { filterKey: 'admin_actions', labelKey: 'admin.stat_admin_actions', value: logs.filter(l => ['create','delete','update'].includes(l.actionType) || l.performedByModel === 'Admin').length, icon: 'gavel', color: D.danger },
   ];
 
   return (
@@ -2065,59 +2082,60 @@ const AuditTab = () => {
       <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <MaterialIcons name="security" size={18} color={D.primary} style={{ marginRight: 8 }} />
-          <Text style={ss.tabPageTitle}>Audit Trail</Text>
+          <Text style={ss.tabPageTitle}>{t('admin.audit_trail')}</Text>
         </View>
-        <Text style={ss.cardMeta}>{total} records</Text>
+        <Text style={ss.cardMeta}>{total}</Text>
       </View>
 
       <View style={{ paddingHorizontal: 16 }}>
         {/* ── Overview Stats Grid ── */}
         <View style={ss.overviewHeader}>
-          <Text style={ss.overviewTitle}>Overview</Text>
+          <Text style={ss.overviewTitle}>{t('admin.overview')}</Text>
         </View>
         <View style={ss.statsGrid}>
           {STATS.map((s, i) => (
             <TouchableOpacity 
               key={i} 
               activeOpacity={0.7}
-              onPress={() => setActiveFilter(activeFilter === s.label || s.label.includes('Total') || s.label.includes('All') ? null : s.label)}
+              onPress={() => setActiveFilter(activeFilter === s.filterKey ? null : s.filterKey)}
               style={[
                 ss.statTile, 
                 { borderTopColor: s.color },
-                activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
+                activeFilter === s.filterKey && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
               ]}
             >
               <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
                 <MaterialIcons name={s.icon} size={18} color={s.color} />
               </View>
               <Text style={ss.statValue}>{s.value}</Text>
-              <Text style={ss.statLabel}>{s.label}</Text>
+              <Text style={ss.statLabel}>{t(s.labelKey)}</Text>
             </TouchableOpacity>
           ))}
         </View>
         <View style={ss.workQueueHeader}>
           <View style={ss.workQueueLine} />
-          <Text style={ss.workQueueLabel}>Filtered Results</Text>
+          <Text style={ss.workQueueLabel}>{t('admin.filtered_results')}</Text>
           <View style={ss.workQueueLine} />
         </View>
       </View>
 
       <FlatList
         data={logs.filter(l => {
-          if (!activeFilter || activeFilter === 'All Logs') return true;
-          if (activeFilter === 'Auth Events') return ['login','register'].includes(l.actionType);
-          if (activeFilter === 'Admin Actions') return ['create','delete','update'].includes(l.actionType) || l.performedByModel === 'Admin';
+          if (!activeFilter || activeFilter === 'all_logs') return true;
+          if (activeFilter === 'auth_events') return ['login','register'].includes(l.actionType);
+          if (activeFilter === 'admin_actions') return ['create','delete','update'].includes(l.actionType) || l.performedByModel === 'Admin';
           return true;
         })}
         keyExtractor={item => item.id}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 30 }}
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={<EmptyState icon="history" message="No audit entries yet. Actions on risk reports, appointments, and therapists will appear here." />}
+        ListEmptyComponent={<EmptyState icon="history" message={t('admin.no_audit')} />}
         onEndReached={() => { if (!loadingMore && logs.length < total) load(logs.length, true); }}
         onEndReachedThreshold={0.4}
         ListFooterComponent={loadingMore ? <ActivityIndicator color={D.primary} style={{ marginVertical: 16 }} /> : null}
         renderItem={({ item, index }) => {
-          const meta = ACTION_META[item.action] || { icon: 'info', color: D.textMuted, label: item.action.replace(/_/g, ' ') };
+          const meta = ACTION_META[item.action] || { icon: 'info', color: D.textMuted, labelKey: null };
+          const actionLabel = meta.labelKey ? t(meta.labelKey) : item.action.replace(/_/g, ' ');
           const isFirst = index === 0;
           return (
             <View style={ss.auditRow}>
@@ -2132,7 +2150,7 @@ const AuditTab = () => {
               {/* Content */}
               <View style={ss.auditContent}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <Text style={[ss.auditAction, { color: meta.color }]}>{meta.label}</Text>
+                  <Text style={[ss.auditAction, { color: meta.color }]}>{actionLabel}</Text>
                   <Text style={ss.auditTime}>{new Date(item.createdAt).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</Text>
                 </View>
                 {item.targetUserName && (
@@ -2162,6 +2180,7 @@ const AuditTab = () => {
 
 // ─── Analytics Tab ────────────────────────────────────────────────────────────
 const AnalyticsTab = () => {
+  const { t } = useTranslation();
   const { D, ss } = useContext(ThemeContext);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({ riskTrend: [], moodHeatmap: [], kpis: {} });
@@ -2174,7 +2193,7 @@ const AnalyticsTab = () => {
         const res = await api.get('/api/admin/analytics', H);
         setData(res.data || { riskTrend: [], moodHeatmap: [], kpis: {} });
       } catch (e) {
-        Alert.alert('Error', 'Failed to load analytics.');
+        Alert.alert(t('admin.alert_error'), t('admin.load_analytics_failed'));
       }
       setLoading(false);
     };
@@ -2187,11 +2206,11 @@ const AnalyticsTab = () => {
       const res = await api.get(`/api/admin/export/${type}`, { ...H, responseType: 'text' });
       const { Share } = require('react-native');
       await Share.share({
-        title: `MindCare ${type} export`,
+        title: t('admin.export_share_title', { type }),
         message: typeof res.data === 'string' ? res.data : JSON.stringify(res.data, null, 2),
       });
     } catch (e) {
-      Alert.alert('Export Failed', e.response?.data?.error || 'Could not export data.');
+      Alert.alert(t('admin.alert_export_failed'), e.response?.data?.error || t('admin.export_failed'));
     }
     setExporting(false);
   };
@@ -2199,16 +2218,16 @@ const AnalyticsTab = () => {
   if (loading) return (
     <View style={ss.loadingContainer}>
       <ActivityIndicator color={D.primary} size="large" />
-      <Text style={ss.loadingText}>Loading analytics...</Text>
+      <Text style={ss.loadingText}>{t('admin.loading_analytics')}</Text>
     </View>
   );
 
   const kpis = data.kpis || {};
   const KPI_CARDS = [
-    { label: 'Total Users',        value: kpis.totalUsers ?? '—',        icon: 'group',          color: D.accent },
-    { label: 'Active Therapists',  value: kpis.activeTherapists ?? '—',  icon: 'psychology',     color: D.primary },
-    { label: 'Escalated Reports',  value: kpis.escalatedReports ?? '—',  icon: 'crisis-alert',   color: D.danger },
-    { label: 'Pending Queue',      value: kpis.pendingAppointments ?? '—', icon: 'pending-actions', color: D.warning },
+    { labelKey: 'admin.kpi_total_users',        value: kpis.totalUsers ?? '—',        icon: 'group',          color: D.accent },
+    { labelKey: 'admin.kpi_active_therapists',  value: kpis.activeTherapists ?? '—',  icon: 'psychology',     color: D.primary },
+    { labelKey: 'admin.kpi_escalated_reports',  value: kpis.escalatedReports ?? '—',  icon: 'crisis-alert',   color: D.danger },
+    { labelKey: 'admin.kpi_pending_queue',      value: kpis.pendingAppointments ?? '—', icon: 'pending-actions', color: D.warning },
   ];
 
   const screenWidth = Dimensions.get('window').width - 32;
@@ -2230,7 +2249,7 @@ const AnalyticsTab = () => {
   return (
     <ScrollView contentContainerStyle={ss.tabScroll} showsVerticalScrollIndicator={false}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Text style={ss.tabPageTitle}>Platform Analytics</Text>
+        <Text style={ss.tabPageTitle}>{t('admin.analytics_title')}</Text>
       </View>
 
       {/* ── KPI Cards ── */}
@@ -2241,7 +2260,7 @@ const AnalyticsTab = () => {
               <MaterialIcons name={k.icon} size={18} color={k.color} />
             </View>
             <Text style={ss.kpiValue}>{k.value}</Text>
-            <Text style={ss.kpiLabel}>{k.label}</Text>
+            <Text style={ss.kpiLabel}>{t(k.labelKey)}</Text>
           </View>
         ))}
       </View>
@@ -2256,7 +2275,7 @@ const AnalyticsTab = () => {
             activeOpacity={0.8}
           >
             <MaterialIcons name="download" size={15} color={D.accent} style={{ marginRight: 6 }} />
-            <Text style={[ss.exportBtnText, { color: D.accent }]}>Export Patients CSV</Text>
+            <Text style={[ss.exportBtnText, { color: D.accent }]}>{t('admin.export_data')}</Text>
           </TouchableOpacity>
         </View>
         <View style={{ flex: 1, marginLeft: 6 }}>
@@ -2267,7 +2286,7 @@ const AnalyticsTab = () => {
             activeOpacity={0.8}
           >
             <MaterialIcons name="receipt-long" size={15} color={D.warning} style={{ marginRight: 6 }} />
-            <Text style={[ss.exportBtnText, { color: D.warning }]}>Export Audit CSV</Text>
+            <Text style={[ss.exportBtnText, { color: D.warning }]}>{t('admin.export_data')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -2277,12 +2296,12 @@ const AnalyticsTab = () => {
       <View style={ss.analyticsCard}>
         <View style={ss.analyticsCardHeader}>
           <MaterialIcons name="trending-up" size={18} color={D.danger} />
-          <Text style={ss.analyticsCardTitle}>System Risk Trend</Text>
-          <Text style={ss.analyticsCardSub}>Last 30 Days</Text>
+          <Text style={ss.analyticsCardTitle}>{t('admin.chart_risk_trend')}</Text>
+          <Text style={ss.analyticsCardSub}>{t('admin.chart_last_30_days')}</Text>
         </View>
         {riskCounts.length > 0 ? (
           <LineChart
-            data={{ labels: riskLabels.length ? riskLabels : ['No Data'], datasets: [{ data: riskCounts.length ? riskCounts : [0] }] }}
+            data={{ labels: riskLabels.length ? riskLabels : [t('admin.chart_no_data')], datasets: [{ data: riskCounts.length ? riskCounts : [0] }] }}
             width={screenWidth - 32}
             height={200}
             fromZero
@@ -2291,7 +2310,7 @@ const AnalyticsTab = () => {
             style={{ borderRadius: 10, marginTop: 10 }}
           />
         ) : (
-          <EmptyState icon="bar-chart" message="No risk reports in the last 30 days" />
+          <EmptyState icon="bar-chart" message={t('admin.no_risk_data')} />
         )}
       </View>
 
@@ -2299,8 +2318,8 @@ const AnalyticsTab = () => {
       <View style={ss.analyticsCard}>
         <View style={ss.analyticsCardHeader}>
           <MaterialIcons name="mood" size={18} color={D.success} />
-          <Text style={ss.analyticsCardTitle}>Global Mood Heatmap</Text>
-          <Text style={ss.analyticsCardSub}>90 days</Text>
+          <Text style={ss.analyticsCardTitle}>{t('admin.chart_mood_heatmap')}</Text>
+          <Text style={ss.analyticsCardSub}>{t('admin.chart_last_90_days')}</Text>
         </View>
         {heatmapValues.length > 0 ? (
           <ContributionGraph
@@ -2313,7 +2332,7 @@ const AnalyticsTab = () => {
             style={{ borderRadius: 10, marginTop: 10 }}
           />
         ) : (
-          <EmptyState icon="wb-sunny" message="No mood data recorded yet" />
+          <EmptyState icon="wb-sunny" message={t('admin.no_mood_data')} />
         )}
       </View>
     </ScrollView>
@@ -2322,6 +2341,7 @@ const AnalyticsTab = () => {
 
 // ─── Notes Tab ────────────────────────────────────────────────────────────────
 const NotesTab = () => {
+  const { t } = useTranslation();
   const { D, ss } = useContext(ThemeContext);
   const navigation = useNavigation();
   const [users, setUsers] = useState([]);
@@ -2334,7 +2354,7 @@ const NotesTab = () => {
       const res = await api.get('/api/admin/users', H);
       setUsers(res.data || []);
     } catch (e) {
-      Alert.alert('Error', 'Failed to load users for notes.');
+      Alert.alert(t('admin.alert_error'), t('admin.load_notes_users_failed'));
     }
     setLoading(false);
   }, []);
@@ -2349,7 +2369,7 @@ const NotesTab = () => {
   if (loading) return (
     <View style={ss.loadingContainer}>
       <ActivityIndicator color={D.primary} size="large" />
-      <Text style={ss.loadingText}>Loading patients...</Text>
+      <Text style={ss.loadingText}>{t('admin.loading_notes')}</Text>
     </View>
   );
 
@@ -2359,7 +2379,7 @@ const NotesTab = () => {
         <MaterialIcons name="search" size={18} color={D.textMuted} style={{ marginRight: 8 }} />
         <TextInput
           style={ss.searchInput}
-          placeholder="Search patient by name or email..."
+          placeholder={t('admin.search_patient')}
           value={search}
           onChangeText={setSearch}
           placeholderTextColor={D.textMuted}
@@ -2390,7 +2410,7 @@ const NotesTab = () => {
             <MaterialIcons name="chevron-right" size={22} color={D.textMuted} />
           </TouchableOpacity>
         )}
-        ListEmptyComponent={<EmptyState icon="person-search" message={search ? 'No patients match your search' : 'No patients found'} />}
+        ListEmptyComponent={<EmptyState icon="person-search" message={search ? t('admin.no_patients_search') : t('admin.no_patients_found')} />}
         ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: D.borderColor }} />}
       />
     </View>
@@ -2399,6 +2419,7 @@ const NotesTab = () => {
 
 // ─── Users Tab ────────────────────────────────────────────────────────────────
 const UsersTab = () => {
+  const { t } = useTranslation();
   const { D, ss } = useContext(ThemeContext);
   const [users, setUsers] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
@@ -2416,9 +2437,9 @@ const UsersTab = () => {
   const [profileLoading, setProfileLoading] = useState(false);
 
   const ROLES = [
-    { key: 'user',        label: 'Standard User',    color: D.textMuted,  icon: 'person' },
-    { key: 'clinician',   label: 'Clinician',         color: D.accent,     icon: 'medical-services' },
-    { key: 'super_admin', label: 'Super Admin',       color: D.warning,    icon: 'admin-panel-settings' },
+    { key: 'user',        labelKey: 'admin.role_standard_user',    color: D.textMuted,  icon: 'person' },
+    { key: 'clinician',   labelKey: 'admin.role_clinician',         color: D.accent,     icon: 'medical-services' },
+    { key: 'super_admin', labelKey: 'admin.role_super_admin',       color: D.warning,    icon: 'admin-panel-settings' },
   ];
 
   const load = useCallback(async () => {
@@ -2427,7 +2448,7 @@ const UsersTab = () => {
       const res = await api.get('/api/admin/users', H);
       setUsers(res.data || []);
     } catch (e) {
-      Alert.alert('Error', 'Failed to load users');
+      Alert.alert(t('admin.alert_error'), t('admin.load_users_failed'));
     }
     setLoadingUsers(false);
   }, []);
@@ -2445,7 +2466,7 @@ const UsersTab = () => {
       setIssues(issuesRes.data || []);
       setMoods(moodsRes.data || []);
     } catch (e) {
-      Alert.alert('Error', 'Failed to load user details');
+      Alert.alert(t('admin.alert_error'), t('admin.load_user_details_failed'));
     }
     setLoadingDetails(false);
   };
@@ -2458,7 +2479,7 @@ const UsersTab = () => {
       if (selected?.id === userId) setSelected(prev => ({ ...prev, role: newRole }));
       setRoleModal(false);
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Failed to change role.');
+      Alert.alert(t('admin.alert_error'), e.response?.data?.error || t('admin.change_role_failed'));
     }
     setRoleLoading(false);
   };
@@ -2471,7 +2492,7 @@ const UsersTab = () => {
       const res = await api.get(`/api/admin/users/${selected.id}/full-profile`, H);
       setFullProfile(res.data);
     } catch (e) {
-      Alert.alert('Error', 'Failed to load full clinical profile.');
+      Alert.alert(t('admin.alert_error'), t('admin.load_profile_failed'));
       setProfileModalVisible(false);
     }
     setProfileLoading(false);
@@ -2480,14 +2501,14 @@ const UsersTab = () => {
   const toggleSuspend = async (user) => {
     const newState = !user.suspended;
     Alert.alert(
-      newState ? 'Suspend Account' : 'Reinstate Account',
+      newState ? t('admin.suspend_account_title') : t('admin.reinstate_account_title'),
       newState
-        ? `Suspend ${user.name}'s account? They will not be able to log in.`
-        : `Reinstate ${user.name}'s account and restore access?`,
+        ? t('admin.suspend_confirm', { name: user.name })
+        : t('admin.reinstate_confirm', { name: user.name }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: newState ? 'Suspend' : 'Reinstate',
+          text: newState ? t('admin.suspend') : t('admin.reinstate'),
           style: newState ? 'destructive' : 'default',
           onPress: async () => {
             setSuspendLoading(true);
@@ -2496,7 +2517,7 @@ const UsersTab = () => {
               setUsers(prev => prev.map(u => u.id === user.id ? { ...u, suspended: newState } : u));
               if (selected?.id === user.id) setSelected(prev => ({ ...prev, suspended: newState }));
             } catch (e) {
-              Alert.alert('Error', 'Failed to update account status.');
+              Alert.alert(t('admin.alert_error'), t('admin.update_status_failed'));
             }
             setSuspendLoading(false);
           },
@@ -2510,15 +2531,15 @@ const UsersTab = () => {
   if (loadingUsers) return (
     <View style={ss.loadingContainer}>
       <ActivityIndicator color={D.primary} size="large" />
-      <Text style={ss.loadingText}>Loading users...</Text>
+      <Text style={ss.loadingText}>{t('admin.loading_users')}</Text>
     </View>
   );
 
   const STATS = [
-    { label: 'Total Accounts', value: users.length, icon: 'people', color: D.primaryLight },
-    { label: 'Patients', value: users.filter(u => u.role === 'user').length, icon: 'person', color: D.accent },
-    { label: 'Clinicians', value: users.filter(u => u.role === 'clinician').length, icon: 'medical-services', color: D.success },
-    { label: 'Suspended', value: users.filter(u => u.suspended).length, icon: 'gavel', color: D.dangerDeep },
+    { filterKey: 'total_accounts', labelKey: 'admin.stat_total_accounts', value: users.length, icon: 'people', color: D.primaryLight },
+    { filterKey: 'patients', labelKey: 'admin.stat_patients', value: users.filter(u => u.role === 'user').length, icon: 'person', color: D.accent },
+    { filterKey: 'clinicians', labelKey: 'admin.stat_clinicians', value: users.filter(u => u.role === 'clinician').length, icon: 'medical-services', color: D.success },
+    { filterKey: 'suspended', labelKey: 'admin.stat_suspended', value: users.filter(u => u.suspended).length, icon: 'gavel', color: D.dangerDeep },
   ];
 
   return (
@@ -2526,10 +2547,10 @@ const UsersTab = () => {
       {/* ── Overview Stats Section ── */}
       <View style={{ padding: 20, backgroundColor: D.surface, borderBottomWidth: 1, borderBottomColor: D.borderColor }}>
         <View style={ss.overviewHeader}>
-          <Text style={ss.overviewTitle}>Overview</Text>
+          <Text style={ss.overviewTitle}>{t('admin.overview')}</Text>
           <View style={ss.overviewBadge}>
             <View style={[ss.overviewBadgeDot, { backgroundColor: D.success }]} />
-            <Text style={[ss.overviewBadgeText, { color: D.success }]}>Live System</Text>
+            <Text style={[ss.overviewBadgeText, { color: D.success }]}>{t('admin.live_system')}</Text>
           </View>
         </View>
         
@@ -2538,11 +2559,11 @@ const UsersTab = () => {
             <TouchableOpacity 
               key={i} 
               activeOpacity={0.7}
-              onPress={() => setActiveFilter(activeFilter === s.label || s.label.includes('Total') || s.label.includes('All') ? null : s.label)}
+              onPress={() => setActiveFilter(activeFilter === s.filterKey ? null : s.filterKey)}
               style={[
                 ss.statTile, 
                 { borderTopColor: s.color },
-                activeFilter === s.label && { backgroundColor: s.color + '1A', transform: [{ scale: 1.02 }] }
+                activeFilter === s.filterKey && { backgroundColor: s.color + '1A', transform: [{ scale: 1.02 }] }
               ]}
             >
               <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
@@ -2550,7 +2571,7 @@ const UsersTab = () => {
               </View>
               <View>
                 <Text style={ss.statValue}>{s.value}</Text>
-                <Text style={ss.statLabel}>{s.label}</Text>
+                <Text style={ss.statLabel}>{t(s.labelKey)}</Text>
               </View>
             </TouchableOpacity>
           ))}
@@ -2560,7 +2581,7 @@ const UsersTab = () => {
       <View style={{ backgroundColor: D.bg, flex: 1, padding: 20 }}>
         <View style={[ss.workQueueHeader, { marginTop: 0, marginBottom: 20 }]}>
           <View style={ss.workQueueLine} />
-          <Text style={ss.workQueueLabel}>Filtered Results</Text>
+          <Text style={ss.workQueueLabel}>{t('admin.filtered_results')}</Text>
           <View style={ss.workQueueLine} />
         </View>
 
@@ -2568,13 +2589,13 @@ const UsersTab = () => {
         {/* User List Panel (Full Width if No User Selected) */}
         {!selected ? (
           <View style={[ss.userListPanel, { width: '100%', borderRightWidth: 0 }]}>
-            <Text style={ss.userListTitle}>Users ({users.length})</Text>
+            <Text style={ss.userListTitle}>{t('admin.users_count', { count: users.length })}</Text>
             <FlatList
               data={users.filter(u => {
-                if (!activeFilter || activeFilter === 'Total Accounts') return true;
-                if (activeFilter === 'Patients') return u.role === 'user';
-                if (activeFilter === 'Clinicians') return u.role === 'clinician';
-                if (activeFilter === 'Suspended') return !!u.suspended;
+                if (!activeFilter || activeFilter === 'total_accounts') return true;
+                if (activeFilter === 'patients') return u.role === 'user';
+                if (activeFilter === 'clinicians') return u.role === 'clinician';
+                if (activeFilter === 'suspended') return !!u.suspended;
                 return true;
               })}
               keyExtractor={item => item.id}
@@ -2592,7 +2613,7 @@ const UsersTab = () => {
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
                       {item.suspended && (
                         <View style={[ss.miniTag, { backgroundColor: D.danger + '22', borderColor: D.danger + '55', marginRight: 4 }]}>
-                          <Text style={[ss.miniTagText, { color: D.danger }]}>SUSPENDED</Text>
+                          <Text style={[ss.miniTagText, { color: D.danger }]}>{t('admin.status_suspended_badge')}</Text>
                         </View>
                       )}
                       <View style={[ss.miniTag, { backgroundColor: roleInfo(item.role).color + '22', borderColor: roleInfo(item.role).color + '44' }]}>
@@ -2612,7 +2633,7 @@ const UsersTab = () => {
               {/* Back Button */}
               <TouchableOpacity onPress={() => setSelected(null)} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
                 <MaterialIcons name="arrow-back" size={18} color={D.textSecondary} style={{ marginRight: 6 }} />
-                <Text style={{ fontSize: 13, fontWeight: '700', color: D.textSecondary }}>Back to users list</Text>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: D.textSecondary }}>{t('admin.back_to_users')}</Text>
               </TouchableOpacity>
 
               {/* User Header */}
@@ -2626,11 +2647,11 @@ const UsersTab = () => {
                   <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
                     <View style={[ss.miniTag, { backgroundColor: roleInfo(selected.role).color + '22', borderColor: roleInfo(selected.role).color + '55' }]}>
                       <MaterialIcons name={roleInfo(selected.role).icon} size={10} color={roleInfo(selected.role).color} style={{ marginRight: 3 }} />
-                      <Text style={[ss.miniTagText, { color: roleInfo(selected.role).color }]}>{selected.role || 'user'}</Text>
+                      <Text style={[ss.miniTagText, { color: roleInfo(selected.role).color }]}>{t(roleInfo(selected.role).labelKey)}</Text>
                     </View>
                     {selected.suspended && (
                       <View style={[ss.miniTag, { backgroundColor: D.danger + '22', borderColor: D.danger + '55' }]}>
-                        <Text style={[ss.miniTagText, { color: D.danger }]}>SUSPENDED</Text>
+                        <Text style={[ss.miniTagText, { color: D.danger }]}>{t('admin.status_suspended_badge')}</Text>
                       </View>
                     )}
                   </View>
@@ -2645,7 +2666,7 @@ const UsersTab = () => {
                   activeOpacity={0.8}
                 >
                   <MaterialIcons name="manage-accounts" size={14} color={D.accent} style={{ marginRight: 5 }} />
-                  <Text style={[ss.actionButtonText, { color: D.accent }]}>Change Role</Text>
+                  <Text style={[ss.actionButtonText, { color: D.accent }]}>{t('admin.change_role')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[ss.actionButton, { flex: 1, backgroundColor: selected.suspended ? D.success + '22' : D.danger + '22', borderWidth: 1, borderColor: selected.suspended ? D.success + '55' : D.danger + '55' }]}
@@ -2655,7 +2676,7 @@ const UsersTab = () => {
                 >
                   <MaterialIcons name={selected.suspended ? 'lock-open' : 'lock'} size={14} color={selected.suspended ? D.success : D.danger} style={{ marginRight: 5 }} />
                   <Text style={[ss.actionButtonText, { color: selected.suspended ? D.success : D.danger }]}>
-                    {selected.suspended ? 'Reinstate' : 'Suspend'}
+                    {selected.suspended ? t('admin.reinstate') : t('admin.suspend')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -2666,32 +2687,32 @@ const UsersTab = () => {
                 activeOpacity={0.8}
               >
                 <MaterialIcons name="analytics" size={14} color="#fff" style={{ marginRight: 5 }} />
-                <Text style={[ss.actionButtonText, { color: '#fff' }]}>View Full Clinical Profile</Text>
+                <Text style={[ss.actionButtonText, { color: '#fff' }]}>{t('admin.view_full_profile')}</Text>
               </TouchableOpacity>
 
-              <Text style={ss.detailSectionLabel}>AI Assessments</Text>
+              <Text style={ss.detailSectionLabel}>{t('admin.ai_assessments')}</Text>
               {loadingDetails ? <ActivityIndicator color={D.primary} style={{ marginTop: 8 }} /> :
-                issues.length === 0 ? <Text style={ss.emptyStateText}>No assessments yet.</Text> :
+                issues.length === 0 ? <Text style={ss.emptyStateText}>{t('admin.no_assessments')}</Text> :
                   issues.map(r => (
                     <View key={r.id} style={[ss.detailCard, r.riskLevel && { borderLeftWidth: 3, borderLeftColor: RISK_COLORS[r.riskLevel] }]}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                         <Text style={ss.detailCardDate}>{new Date(r.createdAt).toLocaleString()}</Text>
-                        {r.adminVerified && <Text style={{ fontSize: 10, color: D.success, fontWeight: '700' }}>VERIFIED</Text>}
+                        {r.adminVerified && <Text style={{ fontSize: 10, color: D.success, fontWeight: '700' }}>{t('admin.status_verified_badge')}</Text>}
                       </View>
-                      <Text style={ss.detailCardMeta}>Category: <Text style={{ color: D.primaryLight }}>{r.category}</Text> · Risk: <Text style={{ color: RISK_COLORS[r.riskLevel] }}>{r.riskLevel}</Text></Text>
-                      {r.adminNote ? <Text style={[ss.detailCardMeta, { color: D.primary, marginTop: 4 }]}>Note: {r.adminNote}</Text> : null}
+                      <Text style={ss.detailCardMeta}>{t('admin.category_risk_line', { category: r.category, risk: r.riskLevel })}</Text>
+                      {r.adminNote ? <Text style={[ss.detailCardMeta, { color: D.primary, marginTop: 4 }]}>{t('admin.note_prefix', { note: r.adminNote })}</Text> : null}
                     </View>
                   ))
               }
 
-              <Text style={ss.detailSectionLabel}>Mood History</Text>
+              <Text style={ss.detailSectionLabel}>{t('admin.mood_history')}</Text>
               {loadingDetails ? <ActivityIndicator color={D.primary} style={{ marginTop: 8 }} /> :
-                moods.length === 0 ? <Text style={ss.emptyStateText}>No mood entries yet.</Text> :
+                moods.length === 0 ? <Text style={ss.emptyStateText}>{t('admin.no_mood_entries')}</Text> :
                   moods.map(m => (
                     <View key={m.id} style={ss.detailCard}>
                       <Text style={ss.detailCardDate}>{new Date(m.date).toLocaleDateString()}</Text>
-                      <Text style={ss.detailCardMeta}>Rating: <Text style={{ color: D.primaryLight }}>{m.rating}</Text></Text>
-                      {m.note ? <Text style={ss.detailCardMeta}>Note: {m.note}</Text> : null}
+                      <Text style={ss.detailCardMeta}>{t('admin.rating_label', { rating: m.rating })}</Text>
+                      {m.note ? <Text style={ss.detailCardMeta}>{t('admin.note_prefix', { note: m.note })}</Text> : null}
                     </View>
                   ))
               }
@@ -2706,14 +2727,14 @@ const UsersTab = () => {
         <View style={ss.modalSheet}>
             <View style={ss.modalHandle} />
             <View style={ss.modalHeaderRow}>
-              <Text style={ss.modalTitle}>Change Role</Text>
+              <Text style={ss.modalTitle}>{t('admin.change_role')}</Text>
               <TouchableOpacity onPress={() => setRoleModal(false)} style={ss.modalCloseBtn}>
                 <MaterialIcons name="close" size={20} color={D.textSecondary} />
               </TouchableOpacity>
             </View>
             {roleTarget && (
               <View style={ss.modalInfoBox}>
-                <Text style={ss.modalInfoText}>Changing role for <Text style={{ color: D.textPrimary, fontWeight: '700' }}>{roleTarget.name}</Text></Text>
+                <Text style={ss.modalInfoText}>{t('admin.changing_role_for', { name: roleTarget.name })}</Text>
               </View>
             )}
             {ROLES.map(r => (
@@ -2728,14 +2749,14 @@ const UsersTab = () => {
                   <MaterialIcons name={r.icon} size={18} color={r.color} />
                 </View>
                 <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={[ss.roleName, { color: roleTarget?.role === r.key ? r.color : D.textPrimary }]}>{r.label}</Text>
+                  <Text style={[ss.roleName, { color: roleTarget?.role === r.key ? r.color : D.textPrimary }]}>{t(r.labelKey)}</Text>
                 </View>
                 {roleTarget?.role === r.key && <MaterialIcons name="check-circle" size={18} color={r.color} />}
               </TouchableOpacity>
             ))}
             {roleLoading && <ActivityIndicator color={D.primary} style={{ marginTop: 12 }} />}
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setRoleModal(false)}>
-              <Text style={ss.modalCancelText}>Cancel</Text>
+              <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -2746,7 +2767,7 @@ const UsersTab = () => {
         <View style={ss.modalOverlay}>
           <View style={ss.modalSheet}>
             <View style={ss.modalHeaderRow}>
-              <Text style={ss.modalTitle}>Full Clinical Profile</Text>
+              <Text style={ss.modalTitle}>{t('admin.clinical_profile')}</Text>
               <TouchableOpacity onPress={() => setProfileModalVisible(false)} style={ss.modalCloseBtn}>
                 <MaterialIcons name="close" size={20} color={D.textSecondary} />
               </TouchableOpacity>
@@ -2756,37 +2777,37 @@ const UsersTab = () => {
             ) : fullProfile ? (
               <ScrollView style={{ maxHeight: '85%' }} showsVerticalScrollIndicator={false}>
                 <View style={{ marginBottom: 25 }}>
-                  <Text style={ss.detailSectionLabel}>AI Assessments</Text>
-                  {fullProfile.fusions?.length === 0 && <Text style={ss.emptyStateText}>No AI assessments found.</Text>}
+                  <Text style={ss.detailSectionLabel}>{t('admin.ai_assessments')}</Text>
+                  {fullProfile.fusions?.length === 0 && <Text style={ss.emptyStateText}>{t('admin.no_ai_assessments')}</Text>}
                   {fullProfile.fusions?.map(f => (
                     <View key={f.id} style={ss.detailCard}>
-                      <Text style={[ss.detailCardDate, { color: D.textPrimary, fontWeight: 'bold' }]}>Risk Level: {f.riskLevel}</Text>
-                      <Text style={ss.detailCardMeta}>Score: {(f.riskScore * 100).toFixed(0)}%</Text>
-                      <Text style={ss.detailCardMeta}>Markers: {(f.aiMarkers || []).join(', ')}</Text>
+                      <Text style={[ss.detailCardDate, { color: D.textPrimary, fontWeight: 'bold' }]}>{t('admin.risk_level_label', { level: f.riskLevel })}</Text>
+                      <Text style={ss.detailCardMeta}>{t('admin.score_label', { score: (f.riskScore * 100).toFixed(0) })}</Text>
+                      <Text style={ss.detailCardMeta}>{t('admin.markers_label', { markers: (f.aiMarkers || []).join(', ') })}</Text>
                       <Text style={[ss.detailCardDate, { marginTop: 4 }]}>{new Date(f.createdAt).toLocaleDateString()}</Text>
                     </View>
                   ))}
                 </View>
 
                 <View style={{ marginBottom: 25 }}>
-                  <Text style={ss.detailSectionLabel}>Risk Reports</Text>
-                  {fullProfile.issues?.length === 0 && <Text style={ss.emptyStateText}>No risk reports found.</Text>}
+                  <Text style={ss.detailSectionLabel}>{t('admin.risk_reports_section')}</Text>
+                  {fullProfile.issues?.length === 0 && <Text style={ss.emptyStateText}>{t('admin.no_risk_reports')}</Text>}
                   {fullProfile.issues?.map(i => (
                     <View key={i.id} style={ss.detailCard}>
-                      <Text style={[ss.detailCardDate, { color: D.textPrimary, fontWeight: 'bold' }]}>{i.category} (Severity: {i.severity}/5)</Text>
-                      <Text style={ss.detailCardMeta}>Risk: {i.riskLevel}</Text>
+                      <Text style={[ss.detailCardDate, { color: D.textPrimary, fontWeight: 'bold' }]}>{t('admin.severity_risk_line', { category: i.category, severity: i.severity })}</Text>
+                      <Text style={ss.detailCardMeta}>{t('admin.risk_colon', { level: i.riskLevel })}</Text>
                       <Text style={[ss.detailCardDate, { marginTop: 4 }]}>{new Date(i.createdAt).toLocaleDateString()}</Text>
                     </View>
                   ))}
                 </View>
 
                 <View style={{ marginBottom: 25 }}>
-                  <Text style={ss.detailSectionLabel}>Recent Moods</Text>
-                  {fullProfile.moods?.length === 0 && <Text style={ss.emptyStateText}>No moods logged.</Text>}
+                  <Text style={ss.detailSectionLabel}>{t('admin.recent_moods')}</Text>
+                  {fullProfile.moods?.length === 0 && <Text style={ss.emptyStateText}>{t('admin.no_moods_logged')}</Text>}
                   {fullProfile.moods?.slice(0, 5).map(m => (
                     <View key={m.id} style={ss.detailCard}>
-                      <Text style={[ss.detailCardDate, { color: D.textPrimary, fontWeight: 'bold' }]}>Rating: {m.rating}/10</Text>
-                      {m.note ? <Text style={ss.detailCardMeta}>Note: {m.note}</Text> : null}
+                      <Text style={[ss.detailCardDate, { color: D.textPrimary, fontWeight: 'bold' }]}>{t('admin.rating_of_10', { rating: m.rating })}</Text>
+                      {m.note ? <Text style={ss.detailCardMeta}>{t('admin.note_prefix', { note: m.note })}</Text> : null}
                       <Text style={[ss.detailCardDate, { marginTop: 4 }]}>{new Date(m.date).toLocaleDateString()}</Text>
                     </View>
                   ))}
@@ -2803,6 +2824,7 @@ const UsersTab = () => {
 
 // ─── Notifications Hub Tab ────────────────────────────────────────────────────
 const NotificationsTab = () => {
+  const { t } = useTranslation();
   const { D, ss } = useContext(ThemeContext);
   const [notifications, setNotifications] = useState([]);
   const [activeFilter, setActiveFilter] = useState(null);
@@ -2813,8 +2835,8 @@ const NotificationsTab = () => {
   const [sending, setSending] = useState(false);
 
   const AUDIENCES = [
-    { key: 'all_users',  label: 'All Users',      icon: 'group',     color: D.accent },
-    { key: 'therapists', label: 'All Therapists', icon: 'psychology', color: D.primary },
+    { key: 'all_users',  labelKey: 'admin.audience_all',  icon: 'group',     color: D.accent },
+    { key: 'therapists', labelKey: 'admin.audience_therapists', icon: 'psychology', color: D.primary },
   ];
 
   const load = useCallback(async () => {
@@ -2824,7 +2846,7 @@ const NotificationsTab = () => {
       setNotifications(res.data.notifications || []);
       setTotal(res.data.total || 0);
     } catch (e) {
-      Alert.alert('Error', 'Failed to load notifications.');
+      Alert.alert(t('admin.alert_error'), t('admin.load_notifications_failed'));
     }
     setLoading(false);
   }, []);
@@ -2833,20 +2855,20 @@ const NotificationsTab = () => {
 
   const sendBroadcast = async () => {
     if (!form.title.trim() || !form.body.trim()) {
-      return Alert.alert('Validation', 'Title and message body are required.');
+      return Alert.alert(t('admin.alert_validation'), t('admin.broadcast_required'));
     }
     setSending(true);
     try {
       const res = await api.post('/api/admin/notifications/broadcast', form, H);
       Alert.alert(
-        '✅ Broadcast Sent',
-        `Delivered to ${res.data.recipientCount} recipient(s).`
+        t('common.success'),
+        t('admin.broadcast_sent', { count: res.data.recipientCount })
       );
       setComposeModal(false);
       setForm({ title: '', body: '', audience: 'all_users' });
       load();
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Failed to send broadcast.');
+      Alert.alert(t('admin.alert_error'), e.response?.data?.error || t('admin.broadcast_failed'));
     }
     setSending(false);
   };
@@ -2854,16 +2876,16 @@ const NotificationsTab = () => {
   if (loading) return (
     <View style={ss.loadingContainer}>
       <ActivityIndicator color={D.primary} size="large" />
-      <Text style={ss.loadingText}>Loading notifications...</Text>
+      <Text style={ss.loadingText}>{t('admin.loading_broadcasts')}</Text>
     </View>
   );
 
   const audienceInfo = (key) => AUDIENCES.find(a => a.key === key) || AUDIENCES[0];
 
   const STATS = [
-    { label: 'Total Broadcasts', value: notifications.filter(n => n.active !== false).length, icon: 'campaign', color: D.primaryLight },
-    { label: 'To All Users', value: notifications.filter(n => n.audience === 'all_users').length, icon: 'people', color: D.accent },
-    { label: 'To Therapists', value: notifications.filter(n => n.audience === 'therapists').length, icon: 'medical-services', color: D.success },
+    { filterKey: 'total_broadcasts', labelKey: 'admin.stat_total_broadcasts', value: notifications.filter(n => n.active !== false).length, icon: 'campaign', color: D.primaryLight },
+    { filterKey: 'all_users', labelKey: 'admin.stat_to_all_users', value: notifications.filter(n => n.audience === 'all_users').length, icon: 'people', color: D.accent },
+    { filterKey: 'therapists', labelKey: 'admin.stat_to_therapists', value: notifications.filter(n => n.audience === 'therapists').length, icon: 'medical-services', color: D.success },
   ];
 
   return (
@@ -2872,60 +2894,62 @@ const NotificationsTab = () => {
       <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <MaterialIcons name="campaign" size={20} color={D.primary} style={{ marginRight: 8 }} />
-          <Text style={ss.tabPageTitle}>Notifications Hub</Text>
+          <Text style={ss.tabPageTitle}>{t('admin.broadcasts_title')}</Text>
         </View>
         <TouchableOpacity style={ss.createBtn} onPress={() => setComposeModal(true)} activeOpacity={0.8}>
           <MaterialIcons name="send" size={14} color="#fff" style={{ marginRight: 4 }} />
-          <Text style={ss.createBtnText}>New Broadcast</Text>
+          <Text style={ss.createBtnText}>{t('admin.new_broadcast')}</Text>
         </TouchableOpacity>
       </View>
 
       <View style={{ paddingHorizontal: 16 }}>
         {/* ── Overview Stats Grid ── */}
         <View style={ss.overviewHeader}>
-          <Text style={ss.overviewTitle}>Overview</Text>
+          <Text style={ss.overviewTitle}>{t('admin.overview')}</Text>
         </View>
         <View style={ss.statsGrid}>
           {STATS.map((s, i) => (
             <TouchableOpacity 
               key={i} 
               activeOpacity={0.7}
-              onPress={() => setActiveFilter(activeFilter === s.label || s.label.includes('Total') || s.label.includes('All') ? null : s.label)}
+              onPress={() => setActiveFilter(activeFilter === s.filterKey ? null : s.filterKey)}
               style={[
                 ss.statTile, 
                 { borderTopColor: s.color },
-                activeFilter === s.label && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
+                activeFilter === s.filterKey && { backgroundColor: s.color + '22', transform: [{ scale: 1.02 }] }
               ]}
             >
               <View style={[ss.statIconWrap, { backgroundColor: s.color + '1A' }]}>
                 <MaterialIcons name={s.icon} size={18} color={s.color} />
               </View>
               <Text style={ss.statValue}>{s.value}</Text>
-              <Text style={ss.statLabel}>{s.label}</Text>
+              <Text style={ss.statLabel}>{t(s.labelKey)}</Text>
             </TouchableOpacity>
           ))}
         </View>
         <View style={ss.workQueueHeader}>
           <View style={ss.workQueueLine} />
-          <Text style={ss.workQueueLabel}>Filtered Results</Text>
+          <Text style={ss.workQueueLabel}>{t('admin.filtered_results')}</Text>
           <View style={ss.workQueueLine} />
         </View>
       </View>
 
-      <Text style={[ss.cardMeta, { paddingHorizontal: 16, marginBottom: 8 }]}>{total} broadcast{total !== 1 ? 's' : ''} sent</Text>
+      <Text style={[ss.cardMeta, { paddingHorizontal: 16, marginBottom: 8 }]}>
+        {total === 1 ? t('admin.broadcasts_sent_one', { count: total }) : t('admin.broadcasts_sent_other', { count: total })}
+      </Text>
       
       <FlatList
         data={notifications.filter(n => {
-          if (!activeFilter || activeFilter === 'Total Broadcasts') return true;
-          if (activeFilter === 'To All Users') return n.audience === 'all_users';
-          if (activeFilter === 'To Therapists') return n.audience === 'therapists';
+          if (!activeFilter || activeFilter === 'total_broadcasts') return true;
+          if (activeFilter === 'all_users') return n.audience === 'all_users';
+          if (activeFilter === 'therapists') return n.audience === 'therapists';
           return true;
         })}
         keyExtractor={item => item.id}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 30 }}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <EmptyState icon="notifications-none" message="No broadcasts sent yet. Use New Broadcast to reach users or therapists." />
+          <EmptyState icon="notifications-none" message={t('admin.no_broadcasts')} />
         }
         renderItem={({ item }) => {
           const aud = audienceInfo(item.audience);
@@ -2938,14 +2962,14 @@ const NotificationsTab = () => {
                 </View>
                 <View style={[ss.miniTag, { backgroundColor: aud.color + '22', borderColor: aud.color + '44', marginLeft: 8, alignSelf: 'flex-start' }]}>
                   <MaterialIcons name={aud.icon} size={10} color={aud.color} style={{ marginRight: 3 }} />
-                  <Text style={[ss.miniTagText, { color: aud.color }]}>{aud.label}</Text>
+                  <Text style={[ss.miniTagText, { color: aud.color }]}>{t(aud.labelKey)}</Text>
                 </View>
               </View>
               <View style={[ss.cardDivider, { marginVertical: 10 }]} />
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <MaterialIcons name="people" size={13} color={D.textMuted} style={{ marginRight: 4 }} />
-                  <Text style={ss.cardMeta}>{item.recipientCount} recipients</Text>
+                  <Text style={ss.cardMeta}>{t('admin.recipients_count', { count: item.recipientCount })}</Text>
                 </View>
                 <Text style={ss.cardMeta}>{new Date(item.createdAt).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</Text>
               </View>
@@ -2960,13 +2984,13 @@ const NotificationsTab = () => {
           <ScrollView contentContainerStyle={ss.modalSheet} keyboardShouldPersistTaps="handled">
             <View style={ss.modalHandle} />
             <View style={ss.modalHeaderRow}>
-              <Text style={ss.modalTitle}>New Broadcast</Text>
+              <Text style={ss.modalTitle}>{t('admin.compose_broadcast')}</Text>
               <TouchableOpacity onPress={() => setComposeModal(false)} style={ss.modalCloseBtn}>
                 <MaterialIcons name="close" size={20} color={D.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <Text style={ss.modalLabel}>Audience</Text>
+            <Text style={ss.modalLabel}>{t('admin.audience')}</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
               {AUDIENCES.map(a => (
                 <TouchableOpacity
@@ -2975,26 +2999,26 @@ const NotificationsTab = () => {
                   onPress={() => setForm({ ...form, audience: a.key })}
                 >
                   <MaterialIcons name={a.icon} size={14} color={form.audience === a.key ? '#fff' : a.color} style={{ marginRight: 5 }} />
-                  <Text style={[ss.segmentChipText, form.audience === a.key && { color: '#fff' }]}>{a.label}</Text>
+                  <Text style={[ss.segmentChipText, form.audience === a.key && { color: '#fff' }]}>{t(a.labelKey)}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={ss.modalLabel}>Subject / Title *</Text>
+            <Text style={ss.modalLabel}>{t('admin.broadcast_title')} *</Text>
             <TextInput
               style={ss.modalInput}
               value={form.title}
-              onChangeText={t => setForm({ ...form, title: t })}
-              placeholder="e.g. System Maintenance Notice"
+              onChangeText={val => setForm({ ...form, title: val })}
+              placeholder={t('admin.placeholder_broadcast_title')}
               placeholderTextColor={D.textMuted}
             />
 
-            <Text style={ss.modalLabel}>Message Body *</Text>
+            <Text style={ss.modalLabel}>{t('admin.broadcast_body')} *</Text>
             <TextInput
               style={[ss.modalInput, { minHeight: 100 }]}
               value={form.body}
-              onChangeText={t => setForm({ ...form, body: t })}
-              placeholder="Write your broadcast message here..."
+              onChangeText={val => setForm({ ...form, body: val })}
+              placeholder={t('admin.placeholder_broadcast_body')}
               placeholderTextColor={D.textMuted}
               multiline
             />
@@ -3003,12 +3027,12 @@ const NotificationsTab = () => {
               {sending ? <ActivityIndicator color="#fff" size="small" /> : (
                 <>
                   <MaterialIcons name="send" size={16} color="#fff" style={{ marginRight: 6 }} />
-                  <Text style={ss.modalPrimaryBtnText}>Send Broadcast</Text>
+                  <Text style={ss.modalPrimaryBtnText}>{t('admin.send_broadcast')}</Text>
                 </>
               )}
             </TouchableOpacity>
             <TouchableOpacity style={ss.modalCancelBtn} onPress={() => setComposeModal(false)}>
-              <Text style={ss.modalCancelText}>Cancel</Text>
+              <Text style={ss.modalCancelText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -3162,7 +3186,7 @@ const AdminDashboardScreen = () => {
                 style={ss.modalInput}
                 value={profilePic}
                 onChangeText={setProfilePic}
-                placeholder="e.g. https://domain.com/photo.png"
+                placeholder={t('admin.placeholder_photo_url')}
                 placeholderTextColor={D.textMuted}
                 autoCapitalize="none"
               />
@@ -3172,17 +3196,17 @@ const AdminDashboardScreen = () => {
                 style={ss.modalInput}
                 value={profileName}
                 onChangeText={setProfileName}
-                placeholder="Your name"
+                placeholder={t('admin.placeholder_display_name')}
                 placeholderTextColor={D.textMuted}
               />
 
 
-              <Text style={ss.modalLabel}>Email</Text>
+              <Text style={ss.modalLabel}>{t('admin.email_label')}</Text>
               <TextInput
                 style={ss.modalInput}
                 value={profileEmail}
                 onChangeText={setProfileEmail}
-                placeholder="admin@mindcare.com"
+                placeholder={t('admin.placeholder_admin_email')}
                 placeholderTextColor={D.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -3200,7 +3224,7 @@ const AdminDashboardScreen = () => {
                   style={[ss.modalInput, { flex: 1 }]}
                   value={profilePassword}
                   onChangeText={setProfilePassword}
-                  placeholder="Leave blank to keep current"
+                  placeholder={t('admin.placeholder_keep_password')}
                   placeholderTextColor={D.textMuted}
                   secureTextEntry={!profileShowPw}
                   autoCapitalize="none"
@@ -3222,7 +3246,7 @@ const AdminDashboardScreen = () => {
                 style={ss.modalInput}
                 value={profileConfirm}
                 onChangeText={setProfileConfirm}
-                placeholder="Re-enter new password"
+                placeholder={t('admin.placeholder_confirm_password')}
                 placeholderTextColor={D.textMuted}
                 secureTextEntry={!profileShowPw}
                 autoCapitalize="none"
