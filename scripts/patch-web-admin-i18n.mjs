@@ -177,3 +177,7 @@ const header = fs.readFileSync(outPath, 'utf8').split('const translations')[0];
 const body = LANGS.map((lang) => `  ${lang}: {\n${serializeSection(translations[lang], 2)}\n  },`).join('\n\n');
 fs.writeFileSync(outPath, `${header}const translations = {\n${body}\n};\n\nexport default translations;\n`);
 console.log(`patched web.* keys (${Object.keys(WEB).length}) across ${LANGS.length} languages`);
+
+import { spawnSync } from 'child_process';
+const sync = spawnSync('node', ['admin/scripts/sync-translations.mjs'], { stdio: 'inherit', cwd: path.join(__dirname, '..') });
+if (sync.status !== 0) process.exit(sync.status ?? 1);
