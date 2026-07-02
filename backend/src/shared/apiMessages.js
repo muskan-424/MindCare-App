@@ -47,10 +47,43 @@ const WELLNESS_MESSAGES = {
   },
 };
 
+const EMERGENCY_MESSAGES = {
+  en: {
+    submitted: 'Emergency contact submitted. An admin will verify it shortly.',
+    fetch_failed: 'Failed to fetch emergency contact',
+    submit_failed: 'Failed to submit emergency contact',
+    delete_failed: 'Failed to delete emergency contact',
+  },
+  hi: {
+    submitted: 'आपातकालीन संपर्क जमा हो गया। एडमिन शीघ्र सत्यापित करेगा।',
+    fetch_failed: 'आपातकालीन संपर्क लोड करने में विफल',
+    submit_failed: 'आपातकालीन संपर्क जमा करने में विफल',
+    delete_failed: 'आपातकालीन संपर्क हटाने में विफल',
+  },
+  pa: {
+    submitted: 'ਐਮਰਜੈਂਸੀ ਸੰਪਰਕ ਜਮਾ ਹੋ ਗਿਆ। ਐਡਮਿਨ ਜਲਦੀ ਪੁਸ਼ਟੀ ਕਰੇਗਾ।',
+    fetch_failed: 'ਐਮਰਜੈਂਸੀ ਸੰਪਰਕ ਲੋਡ ਕਰਨ ਵਿੱਚ ਅਸਫਲ',
+    submit_failed: 'ਐਮਰਜੈਂਸੀ ਸੰਪਰਕ ਜਮਾ ਕਰਨ ਵਿੱਚ ਅਸਫਲ',
+    delete_failed: 'ਐਮਰਜੈਂਸੀ ਸੰਪਰਕ ਮਿਟਾਉਣ ਵਿੱਚ ਅਸਫਲ',
+  },
+  mr: {
+    submitted: 'आपत्कालीन संपर्क सबमिट झाला. अॅडमिन लवकर पडताळणी करेल.',
+    fetch_failed: 'आपत्कालीन संपर्क लोड करण्यात अयशस्वी',
+    submit_failed: 'आपत्कालीन संपर्क सबमिट करण्यात अयशस्वी',
+    delete_failed: 'आपत्कालीन संपर्क हटवण्यात अयशस्वी',
+  },
+};
+
 function wellnessMessage(key, language) {
   const lang = normalizeLanguage(language);
   const pack = WELLNESS_MESSAGES[lang] || WELLNESS_MESSAGES.en;
   return pack[key] || WELLNESS_MESSAGES.en[key] || key;
 }
 
-module.exports = { wellnessMessage };
+function emergencyMessage(key, language) {
+  const lang = normalizeLanguage(language);
+  const pack = EMERGENCY_MESSAGES[lang] || EMERGENCY_MESSAGES.en;
+  return pack[key] || EMERGENCY_MESSAGES.en[key] || key;
+}
+
+module.exports = { wellnessMessage, emergencyMessage };

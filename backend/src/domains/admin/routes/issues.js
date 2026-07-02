@@ -5,6 +5,7 @@ const IssueReport = require('../models/IssueReport');
 const { auth } = require('../../../../middleware/auth');
 const { getIssueFallbackRecommendations } = require('../../../shared/dynamicFallbacks');
 const { aiLanguageInstruction } = require('../../../shared/locale');
+const { localizeBurnoutAlert } = require('../../../shared/localizeContent');
 
 const CATEGORIES = [
   'academic_stress',
@@ -143,7 +144,7 @@ router.get('/burnout-alert', auth, async (req, res) => {
       createdAt: { $gte: twoDaysAgo }
     }).sort({ createdAt: -1 }).lean();
     
-    res.json(shapeBurnoutAlertResponse(alert));
+    res.json(await localizeBurnoutAlert(shapeBurnoutAlertResponse(alert), req.language));
   } catch (err) {
     console.error('Burnout check error:', err.message);
     res.status(500).json({ active: false });

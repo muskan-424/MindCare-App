@@ -73,6 +73,7 @@ const FitnessScreen = () => {
               <FitnessCategoryCard
                 img_uri={categories[data].icon}
                 category={data}
+                label={categories[data].label || data}
               />
             </View>
           ))}

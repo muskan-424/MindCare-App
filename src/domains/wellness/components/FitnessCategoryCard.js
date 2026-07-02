@@ -6,8 +6,9 @@ import {
 import ImageOverlay from 'react-native-image-overlay';
 import {useNavigation} from '@react-navigation/native';
 
-const FitnessCategoryCard = ({img_uri, category}) => {
+const FitnessCategoryCard = ({img_uri, category, label}) => {
   const navigation = useNavigation();
+  const displayLabel = label || category;
 
   return (
     <TouchableOpacity
@@ -17,7 +18,7 @@ const FitnessCategoryCard = ({img_uri, category}) => {
       <ImageOverlay
         overlayAlpha={0.35}
         source={{uri: img_uri.toString()}}
-        title={category}
+        title={displayLabel}
         titleStyle={styles.category}
       />
     </TouchableOpacity>

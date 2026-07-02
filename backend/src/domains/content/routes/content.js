@@ -4,6 +4,7 @@ const ytSearch = require('yt-search');
 
 const { auth } = require('../../../../middleware/auth');
 const AssessmentFusionResult = require('../../assessment/models/AssessmentFusionResult');
+const { localizeYoutubeVideos } = require('../../../shared/localizeContent');
 
 // Map of predefined safe categories to aggressive YouTube search strings
 const SAFETY_MAPPINGS = {
@@ -55,7 +56,7 @@ router.get('/search', auth, async (req, res) => {
             views: v.views
         }));
 
-        res.json(videos);
+        res.json(await localizeYoutubeVideos(videos, req.language));
     } catch (err) {
         console.error('Content Search Error:', err.message);
         res.status(500).send('Server Error retrieving safe content');
