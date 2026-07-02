@@ -9,6 +9,7 @@ const { config } = require('../../../../config/env');
 const { shapeAuthResponse, shapeBroadcastNotifications } = require('../../../shared/responseShapers');
 const Notification = require('../../admin/models/Notification');
 const { localizeNotifications } = require('../../../shared/notificationLocalization');
+const { normalizeLanguage } = require('../../../shared/locale');
 
 // @route   POST /api/user
 // @desc    Register a new user
@@ -59,6 +60,7 @@ router.post(
         phone_no: phone_no || '',
         bio: '',
         concerns: [],
+        ...(normalizeLanguage(req.language) !== 'en' ? { language: normalizeLanguage(req.language) } : {}),
       });
       await profile.save();
 

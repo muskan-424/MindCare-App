@@ -31,6 +31,7 @@ export const register = ({
   try {
     const res = await api.post('/api/user', body, config);
     dispatch({ type: REGISTER_SUCCESS, payload: res.data, meta: { from: 'signup' } });
+    await syncLanguageFromAuthResponse(dispatch, getState, res.data.profile);
   } catch (err) {
     const lang = getState().auth.language || 'en';
     const raw = err.response?.data?.errors?.[0]?.msg || err.message || 'Registration failed. Server may be unreachable.';
@@ -50,8 +51,7 @@ export const login = ({ email, password }) => async (dispatch, getState) => {
   try {
     const res = await api.post('/api/auth', body, config);
     dispatch({ type: REGISTER_SUCCESS, payload: res.data, meta: { from: 'login' } });
-
-    //dispatch(fetchQuoteOfTheDay());
+    await syncLanguageFromAuthResponse(dispatch, getState, res.data.profile);
   } catch (err) {
     const lang = getState().auth.language || 'en';
     const raw = err.response?.data?.errors?.[0]?.msg || err.message || 'Login failed. Server may be unreachable.';
@@ -67,13 +67,37 @@ export const logout = () => dispatch => {
 
 /**
  * setLanguage — persists the selected language code and updates Redux state.
+ * Syncs to server when the user is logged in.
  * @param {string} lang - ISO 639-1 language code, e.g. 'hi', 'pa', 'mr'
  */
-export const setLanguage = (lang) => async dispatch => {
+export const setLanguage = (lang) => async (dispatch, getState) => {
   try {
     await AsyncStorage.setItem('MindCare_language', lang);
   } catch (_) {
     // Ignore storage errors — state change still happens
   }
   dispatch({ type: SET_LANGUAGE, payload: lang });
+
+  const token = getState().auth?.token;
+  if (token) {
+    try {
+      await api.patch('/api/profile/language', { language: lang });
+    } catch (_) {
+      // Offline or unauthenticated — local preference still applies
+    }
+  }
 };
+
+async function syncLanguageFromAuthResponse(dispatch, getState, profile) {
+  const serverLang = profile?.language;
+  const clientLang = getState().auth.language || 'en';
+  if (serverLang) {
+    await dispatch(setLanguage(serverLang));
+  } else if (clientLang) {
+    try {
+      await api.patch('/api/profile/language', { language: clientLang });
+    } catch (_) {
+      // Ignore — preference remains local
+    }
+  }
+}

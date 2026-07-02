@@ -8,6 +8,7 @@ const Profile = require('../models/Profile');
 const { config } = require('../../../../config/env');
 const audit = require('../../admin/services/auditService');
 const { shapeAuthResponse } = require('../../../shared/responseShapers');
+const { normalizeLanguage } = require('../../../shared/locale');
 
 const ADMIN_EMAILS = config.adminEmails;
 
