@@ -125,7 +125,20 @@ function getFusionRecommendations(riskLevel, language) {
   return pack[riskLevel] || pack.LOW;
 }
 
+const BURNOUT_RECOMMENDATIONS = {
+  en: ['Take rest immediately.', 'Speak to a professional.', 'Try a short breathing exercise in the app.'],
+  hi: ['तुरंत आराम करें।', 'किसी पेशेवर से बात करें।', 'ऐप में एक छोटा श्वास अभ्यास करें।'],
+  pa: ['ਤੁਰੰਤ ਆਰਾਮ ਕਰੋ।', 'ਕਿਸੇ ਪੇਸ਼ੇਵਰ ਨਾਲ ਗੱਲ ਕਰੋ।', 'ਐਪ ਵਿੱਚ ਇੱਕ ਛੋਟਾ ਸਾਹ ਅਭਿਆਸ ਕਰੋ।'],
+  mr: ['तात्काळ विश्रांती घ्या.', 'तज्ञाशी बोला.', 'अॅपमध्ये एक छोटा श्वास व्यायाम करा.'],
+};
+
+function getBurnoutRecommendations(language) {
+  const lang = normalizeLanguage(language);
+  return BURNOUT_RECOMMENDATIONS[lang] || BURNOUT_RECOMMENDATIONS.en;
+}
+
 module.exports = {
   getIssueFallbackRecommendations,
   getFusionRecommendations,
+  getBurnoutRecommendations,
 };

@@ -1,6 +1,7 @@
 const axios = require('axios');
 const Profile = require('../../identity/models/Profile');
 const IssueReport = require('../../admin/models/IssueReport');
+const { getBurnoutRecommendations } = require('../../../shared/dynamicFallbacks');
 
 /**
  * Service to predict short-term burnout likelihood using the custom Python ML pipeline.
@@ -56,7 +57,7 @@ async function evaluateBurnoutRisk(userId) {
           sentimentScore: -0.8,
           riskLevel: 'HIGH',
           emotionTags: ['burnout', 'exhaustion'],
-          recommendations: ['Take rest immediately.', 'Speak to a professional.'],
+          recommendations: getBurnoutRecommendations('en'),
           safetyTriggered: true,
           adminVerified: false
         });

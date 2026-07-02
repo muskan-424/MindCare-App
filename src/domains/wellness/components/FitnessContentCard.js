@@ -12,9 +12,10 @@ function getVideoIdFromThumbnail(uri) {
   return match ? match[1] : null;
 }
 
-const FitnessContentCard = ({img_uri, category}) => {
+const FitnessContentCard = ({img_uri, category, label}) => {
   const navigation = useNavigation();
   const videoId = getVideoIdFromThumbnail(img_uri);
+  const displayLabel = label || category;
 
   return (
     <TouchableOpacity
@@ -29,7 +30,7 @@ const FitnessContentCard = ({img_uri, category}) => {
         containerStyle={styles.img}
         overlayAlpha={0.35}
         source={{uri: img_uri.toString()}}
-        title={category}
+        title={displayLabel}
         titleStyle={styles.category}
       />
     </TouchableOpacity>

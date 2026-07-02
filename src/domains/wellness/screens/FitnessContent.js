@@ -97,12 +97,18 @@ const FitnessContent = ({route}) => {
 
     fetchData();
   }, [category, subcategory]);
-  const _renderItem = (data) => (
-    <FitnessContentCard
-      img_uri={content[data]}
-      category={data}
-    />
-  );
+  const _renderItem = (data) => {
+    const entry = content[data];
+    const imageUrl = typeof entry === 'string' ? entry : entry?.imageUrl;
+    const label = typeof entry === 'object' ? entry?.label : null;
+    return (
+      <FitnessContentCard
+        img_uri={imageUrl}
+        category={data}
+        label={label || data}
+      />
+    );
+  };
   return (
     <View style={styles.container}>
       {isLoading ? (

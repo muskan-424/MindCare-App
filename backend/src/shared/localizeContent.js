@@ -108,6 +108,107 @@ async function localizeTherapistCategories(categories, language) {
   return categories.map((c, i) => ({ ...c, name: translated[i] || c.name }));
 }
 
+/** Translate display labels while keeping English map keys for routing. */
+async function localizeFitnessNameMap(map, language) {
+  const lang = normalizeLanguage(language);
+  if (lang === 'en' || !map) return map;
+
+  const keys = Object.keys(map);
+  const labels = keys.map((k) => map[k]?.label || k);
+  const translated = await batchTranslateStrings(labels, lang);
+  const out = { ...map };
+  keys.forEach((k, i) => {
+    out[k] = { ...out[k], label: translated[i] || k };
+  });
+  return out;
+}
+
+async function localizeFitnessContentMap(map, language) {
+  const lang = normalizeLanguage(language);
+  if (lang === 'en' || !map) return map;
+
+  const keys = Object.keys(map);
+  const labels = keys.map((k) => {
+    const entry = map[k];
+    if (entry && typeof entry === 'object') return entry.label || k;
+    return k;
+  });
+  const translated = await batchTranslateStrings(labels, lang);
+  const out = { ...map };
+  keys.forEach((k, i) => {
+    const entry = out[k];
+    if (entry && typeof entry === 'object') {
+      out[k] = { ...entry, label: translated[i] || k };
+    }
+  });
+  return out;
+}
+
+async function localizeBurnoutAlert(response, language) {
+  const lang = normalizeLanguage(language);
+  if (!response?.active || !response.alert || lang === 'en') return response;
+
+  const { alert } = response;
+  const strings = [
+    alert.description || '',
+    ...(alert.recommendations || []),
+  ].filter(Boolean);
+  if (!strings.length) return response;
+
+  const translated = await batchTranslateStrings(strings, lang);
+  const [description, ...recommendations] = translated;
+  return {
+    ...response,
+    alert: {
+      ...alert,
+      description: description || alert.description,
+      recommendations: recommendations.length ? recommendations : alert.recommendations,
+      message: recommendations[0] || description || alert.message,
+    },
+  };
+}
+
+async function localizeYoutubeVideos(videos, language) {
+  const lang = normalizeLanguage(language);
+  if (lang === 'en' || !videos?.length) return videos;
+
+  const titles = videos.map((v) => v.title || '');
+  const translated = await batchTranslateStrings(titles, lang);
+  return videos.map((v, i) => ({ ...v, title: translated[i] || v.title }));
+}
+
+async function localizeFitnessPlan(plan, language) {
+  const lang = normalizeLanguage(language);
+  if (lang === 'en' || !plan) return plan;
+
+  const strings = [plan.summary || ''];
+  (plan.weeklySchedule || []).forEach((day) => {
+    strings.push(day.focus || '');
+    (day.exercises || []).forEach((ex) => {
+      strings.push(ex.name || '');
+      strings.push(ex.description || '');
+    });
+  });
+
+  const translated = await batchTranslateStrings(strings, lang);
+  let idx = 0;
+  const next = () => translated[idx++] || '';
+  const localized = {
+    ...plan,
+    summary: next() || plan.summary,
+    weeklySchedule: (plan.weeklySchedule || []).map((day) => ({
+      ...day,
+      focus: next() || day.focus,
+      exercises: (day.exercises || []).map((ex) => ({
+        ...ex,
+        name: next() || ex.name,
+        description: next() || ex.description,
+      })),
+    })),
+  };
+  return localized;
+}
+
 module.exports = {
   localizeBlogFeed,
   localizeWellnessPlanResponse,
@@ -117,4 +218,9 @@ module.exports = {
   localizeGroupSession,
   localizeGroupSessions,
   localizeTherapistCategories,
+  localizeFitnessNameMap,
+  localizeFitnessContentMap,
+  localizeBurnoutAlert,
+  localizeYoutubeVideos,
+  localizeFitnessPlan,
 };

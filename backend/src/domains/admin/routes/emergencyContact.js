@@ -3,6 +3,7 @@ const router = express.Router();
 const EmergencyContact = require('../models/EmergencyContact');
 const { auth } = require('../../../../middleware/auth');
 const { shapeEmergencyContactSubmit, shapeEmergencyContactUserView } = require('../../../shared/responseShapers');
+const { emergencyMessage } = require('../../../shared/apiMessages');
 
 // POST /api/emergency-contact — user submits/updates their emergency contact
 router.post('/', auth, async (req, res) => {
@@ -42,10 +43,13 @@ router.post('/', auth, async (req, res) => {
       { upsert: true, new: true }
     );
 
-    res.status(201).json(shapeEmergencyContactSubmit(contact.toObject()));
+    res.status(201).json({
+      ...shapeEmergencyContactSubmit(contact.toObject()),
+      message: emergencyMessage('submitted', req.language),
+    });
   } catch (err) {
     console.error('Emergency contact submit error:', err.message);
-    res.status(500).json({ error: 'Failed to save emergency contact' });
+    res.status(500).json({ error: emergencyMessage('submit_failed', req.language) });
   }
 });
 
@@ -56,7 +60,7 @@ router.get('/', auth, async (req, res) => {
     res.json(shapeEmergencyContactUserView(contact));
   } catch (err) {
     console.error('Get emergency contact error:', err.message);
-    res.status(500).json({ error: 'Failed to get emergency contact' });
+    res.status(500).json({ error: emergencyMessage('fetch_failed', req.language) });
   }
 });
 
@@ -67,7 +71,7 @@ router.delete('/', auth, async (req, res) => {
     res.json({ success: true, message: 'Emergency contact removed.' });
   } catch (err) {
     console.error('Delete emergency contact error:', err.message);
-    res.status(500).json({ error: 'Failed to remove emergency contact' });
+    res.status(500).json({ error: emergencyMessage('delete_failed', req.language) });
   }
 });
 

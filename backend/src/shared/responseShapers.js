@@ -744,13 +744,17 @@ function shapeIssueReportCreated(report, safetyTriggered) {
 function shapeBurnoutAlertResponse(alert) {
   if (!alert) return { active: false, alert: null };
   const plain = shapeId(alert);
+  const recommendations = plain.recommendations || [];
+  const description = plain.description || recommendations[0] || '';
   return {
     active: true,
     alert: {
       id: plain.id || String(plain._id),
       category: plain.category,
       riskLevel: plain.riskLevel,
-      recommendations: plain.recommendations || [],
+      description,
+      recommendations,
+      message: recommendations[0] || description,
       createdAt: plain.createdAt,
     },
   };
@@ -1032,7 +1036,7 @@ function shapeFitnessNameMap(items, nameField = 'name') {
   (items || []).forEach((item) => {
     const plain = stripInternal(toPlain(item));
     const key = plain[nameField];
-    if (key) out[key] = { icon: plain.icon || '' };
+    if (key) out[key] = { icon: plain.icon || '', label: key };
   });
   return out;
 }
@@ -1041,7 +1045,13 @@ function shapeFitnessContentMap(items) {
   const out = {};
   (items || []).forEach((item) => {
     const plain = stripInternal(toPlain(item));
-    if (plain.title) out[plain.title] = plain.imageUrl || '';
+    if (plain.title) {
+      out[plain.title] = {
+        imageUrl: plain.imageUrl || '',
+        label: plain.title,
+        videoId: plain.videoId || null,
+      };
+    }
   });
   return out;
 }
