@@ -71,6 +71,12 @@ describe('Dynamic content fallback recommendations', () => {
   test('unknown language falls back to English recommendations', () => {
     expect(getFusionRecommendations('MEDIUM', 'es')).toEqual(getFusionRecommendations('MEDIUM', 'en'));
   });
+
+  test('Bengali issue fallbacks are localized', () => {
+    const bn = getIssueFallbackRecommendations('bn');
+    const en = getIssueFallbackRecommendations('en');
+    expect(bn).not.toEqual(en);
+  });
 });
 
 describe('API wellness messages', () => {
@@ -121,6 +127,14 @@ describe('Emergency API messages', () => {
 
   test('returns Hindi emergency submitted message', () => {
     expect(emergencyMessage('submitted', 'hi')).toContain('आपातकालीन');
+  });
+});
+
+describe('Profile language preference', () => {
+  test('normalizeLanguage accepts all supported profile codes', () => {
+    SUPPORTED_LANGUAGES.forEach((lang) => {
+      expect(normalizeLanguage(lang)).toBe(lang);
+    });
   });
 });
 

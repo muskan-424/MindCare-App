@@ -56,6 +56,13 @@ const ProfileSchema = new mongoose.Schema(
     activityLevel: { type: Number, default: 3 },
     socialInteraction: { type: Number, default: 3 },
     profilePic: { type: String, default: '' },
+    language: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      enum: ['en', 'hi', 'pa', 'mr', 'bn', 'te', 'ta', 'gu', 'kn', 'ml', 'es', 'fr', 'de', 'pt', 'ar', 'zh', null],
+      default: null,
+    },
   },
   { timestamps: true }
 
