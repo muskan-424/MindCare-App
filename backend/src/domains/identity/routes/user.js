@@ -7,6 +7,8 @@ const User = require('../models/User');
 const Profile = require('../models/Profile');
 const { config } = require('../../../../config/env');
 const { shapeAuthResponse, shapeBroadcastNotifications } = require('../../../shared/responseShapers');
+const Notification = require('../../admin/models/Notification');
+const { localizeNotifications } = require('../../../shared/notificationLocalization');
 
 // @route   POST /api/user
 // @desc    Register a new user
@@ -105,16 +107,16 @@ router.post(
 // GET /api/user/notifications — fetch admin broadcasts for users
 router.get('/notifications', async (req, res) => {
   try {
-    const Notification = require('../../admin/models/Notification');
-    // Fetch notifications broadcast to all_users or specifically for therapists
     const notifications = await Notification.find({
-      audience: { $in: ['all_users', 'therapists'] }
+      audience: { $in: ['all_users', 'therapists'] },
     })
-    .sort({ createdAt: -1 })
-    .limit(30)
-    .lean();
+      .sort({ createdAt: -1 })
+      .limit(30)
+      .lean();
 
-    res.json(shapeBroadcastNotifications(notifications));
+    const shaped = shapeBroadcastNotifications(notifications);
+    const localized = await localizeNotifications(shaped, req.language);
+    res.json(localized);
   } catch (err) {
     console.error('Fetch notifications error:', err.message);
     res.status(500).json({ error: 'Failed to fetch notifications' });

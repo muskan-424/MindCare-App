@@ -14,6 +14,7 @@ const AdminAuditLog = require('../models/AdminAuditLog');
 const Resource = require('../../content/models/Resource');
 const Therapist = require('../../therapy/models/Therapist');
 const Notification = require('../models/Notification');
+const { scheduleNotificationTranslations } = require('../../../shared/notificationLocalization');
 const AssessmentFusionResult = require('../../assessment/models/AssessmentFusionResult');
 const {
   shapeAdminUserListing,
@@ -1043,6 +1044,8 @@ router.post('/notifications/broadcast', adminAuth, async (req, res) => {
       sentBy: req.headers['x-admin-id'] || 'admin',
       recipientCount,
     });
+
+    scheduleNotificationTranslations(notification._id, notification.title, notification.body);
 
     await logAdminAction('broadcast_notification', req.headers['x-admin-id'] || 'admin', null, {
       notificationId: String(notification._id),

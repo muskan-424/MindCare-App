@@ -3,6 +3,7 @@ const router = express.Router();
 const GroupSession = require('../models/GroupSession');
 const { auth } = require('../../../../middleware/auth');
 const { shapeGroupSession, shapeGroupSessions } = require('../../../shared/responseShapers');
+const { localizeGroupSession, localizeGroupSessions } = require('../../../shared/localizeContent');
 
 // Note: Admin authentication middleware (you'd typically import this)
 function adminAuth(req, res, next) {
@@ -146,7 +147,7 @@ router.get('/my-groups', auth, async (req, res) => {
       scheduledDate: { $gte: past24h }
     }).sort({ scheduledDate: 1 }).lean();
 
-    res.json(shapeGroupSessions(assignedGroups));
+    res.json(await localizeGroupSessions(shapeGroupSessions(assignedGroups), req.language));
   } catch (err) {
     console.error('Fetch my groups error:', err.message);
     res.status(500).json({ error: 'Failed to fetch assigned groups' });
@@ -163,7 +164,8 @@ router.get('/', auth, async (req, res) => {
       scheduledDate: { $gte: now }
     }).sort({ scheduledDate: 1 }).lean();
 
-    res.json(shapeGroupSessions(sessions));
+    const shaped = shapeGroupSessions(sessions);
+    res.json(await localizeGroupSessions(shaped, req.language));
   } catch (err) {
     console.error('Fetch group sessions error:', err.message);
     res.status(500).json({ error: 'Failed to fetch group sessions' });
@@ -192,7 +194,10 @@ router.post('/:id/join', auth, async (req, res) => {
     group.participants.push(req.user.id);
     await group.save();
 
-    res.json({ message: 'Joined group session successfully', session: shapeGroupSession(group.toObject()) });
+    res.json({
+      message: 'Joined group session successfully',
+      session: await localizeGroupSession(shapeGroupSession(group.toObject()), req.language),
+    });
   } catch (err) {
     console.error('Join group session error:', err.message);
     res.status(500).json({ error: 'Failed to join group session' });

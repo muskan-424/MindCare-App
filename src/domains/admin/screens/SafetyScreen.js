@@ -16,8 +16,10 @@ const SafetyScreen = ({ navigation, route }) => {
   const helplines = routeHelplines && routeHelplines.length > 0
     ? routeHelplines.map((line, i) => ({
         name: line.name,
+        nameKey: line.nameKey,
         number: line.number,
         note: line.note,
+        noteKey: line.noteKey,
         key: `route-${i}`,
       }))
     : DEFAULT_HELPLINES.map((line, i) => ({ ...line, key: `default-${i}` }));

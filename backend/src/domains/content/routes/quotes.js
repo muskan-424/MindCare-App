@@ -3,6 +3,21 @@ const router = express.Router();
 const Quote = require('../models/Quote');
 const { client } = require('../../../../config/redis');
 const { shapeQuote } = require('../../../shared/responseShapers');
+const { translateText } = require('../../community/services/tinkChatService');
+const { normalizeLanguage } = require('../../../shared/locale');
+
+async function localizeQuote(quoteData, language) {
+  const lang = normalizeLanguage(language);
+  if (lang === 'en' || !quoteData?.quote) return quoteData;
+
+  const [quote, author] = await Promise.all([
+    translateText({ text: quoteData.quote, targetLanguage: lang }),
+    quoteData.author
+      ? translateText({ text: quoteData.author, targetLanguage: lang })
+      : Promise.resolve(quoteData.author),
+  ]);
+  return { ...quoteData, quote, author };
+}
 
 // Safe Redis helpers — gracefully no-op when Redis is not connected locally
 async function safeRedisGet(key) {
@@ -28,14 +43,15 @@ async function safeRedisSet(key, ttl, value) {
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    // 1. Check Redis Cache first (skipped gracefully when Redis is not connected)
-    const cachedQuote = await safeRedisGet('quote_of_the_day');
+    const language = req.language || 'en';
+    const cacheKey = `quote_of_the_day_${language}`;
+
+    const cachedQuote = await safeRedisGet(cacheKey);
     if (cachedQuote) {
       console.log('Serving quote from Redis cache');
       return res.json(JSON.parse(cachedQuote));
     }
 
-    // 2. If not in cache, fetch from MongoDB
     const count = await Quote.countDocuments();
     if (count === 0) {
       return res.json(shapeQuote({}));
@@ -43,10 +59,12 @@ router.get('/', async (req, res) => {
     const random = Math.floor(Math.random() * count);
     const quoteDoc = await Quote.findOne().skip(random);
 
-    const responseData = shapeQuote({ quote: quoteDoc.quote, author: quoteDoc.author });
+    const responseData = await localizeQuote(
+      shapeQuote({ quote: quoteDoc.quote, author: quoteDoc.author }),
+      language,
+    );
 
-    // 3. Save to Redis Cache (expire in 1 hour) — skipped when Redis is offline
-    await safeRedisSet('quote_of_the_day', 3600, JSON.stringify(responseData));
+    await safeRedisSet(cacheKey, 3600, JSON.stringify(responseData));
 
     res.json(responseData);
   } catch (err) {

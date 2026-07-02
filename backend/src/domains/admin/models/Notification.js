@@ -25,6 +25,15 @@ const NotificationSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    /** Cached translations keyed by locale code (e.g. hi.title, hi.body). */
+    translations: {
+      type: Map,
+      of: {
+        title: { type: String, trim: true },
+        body: { type: String, trim: true },
+      },
+      default: () => new Map(),
+    },
   },
   { timestamps: true }
 );

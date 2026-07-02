@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const connectDB = require('./config/db');
 const { validateEnv, getEnvStatus } = require('./config/env');
 const { requestLogger } = require('./middleware/requestLogger');
+const { localeMiddleware } = require('./middleware/locale');
 const { apiLimiter, authLimiter } = require('./middleware/rateLimiters');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 const { metricsMiddleware } = require('./middleware/metrics');
@@ -30,6 +31,7 @@ app.use('/api/user', authLimiter);
 // ─── Middleware ──────────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
+app.use(localeMiddleware);
 app.use(requestLogger);
 app.use(metricsMiddleware);
 

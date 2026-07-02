@@ -5,36 +5,13 @@ function toRiskLevel(score) {
   return 'LOW';
 }
 
-function buildRecommendations(level) {
-  if (level === 'CRITICAL') {
-    return [
-      'Open emergency support resources immediately.',
-      'Use grounding exercise and connect to a trusted person now.',
-      'Start a live conversation with Tink or a counselor.',
-    ];
-  }
-  if (level === 'HIGH') {
-    return [
-      'Start a guided breathing or grounding exercise now.',
-      'Schedule a therapist session within 24-48 hours.',
-      'Reduce cognitive load and use short check-ins today.',
-    ];
-  }
-  if (level === 'MEDIUM') {
-    return [
-      'Complete a 10-minute mindfulness routine.',
-      'Journal key stress triggers from today.',
-      'Check in again later to track recovery trend.',
-    ];
-  }
-  return [
-    'Keep a light self-care rhythm and short check-ins.',
-    'Continue healthy routines and sleep hygiene.',
-    'Track mood consistency over the week.',
-  ];
+const { getFusionRecommendations } = require('../../../shared/dynamicFallbacks');
+
+function buildRecommendations(level, language = 'en') {
+  return getFusionRecommendations(level, language);
 }
 
-function fuseAssessment(featureVector) {
+function fuseAssessment(featureVector, language = 'en') {
   const text = featureVector?.text || {};
   const voice = featureVector?.voice || {};
   const vision = featureVector?.vision || {};
@@ -78,7 +55,7 @@ function fuseAssessment(featureVector) {
   if (liveVsTrendGap > 0.50) contradictionFlags.push('live_signal_vs_trend_mismatch');
 
   const riskLevel = toRiskLevel(riskScore);
-  const recommendations = buildRecommendations(riskLevel);
+  const recommendations = buildRecommendations(riskLevel, language);
 
   return {
     riskScore,

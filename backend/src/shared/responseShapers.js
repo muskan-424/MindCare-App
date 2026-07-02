@@ -719,9 +719,9 @@ function shapeBroadcastNotifications(notifications) {
 }
 
 const CRISIS_HELPLINES = [
-  { name: 'Vandrevala Foundation', number: '1860-2662-345' },
-  { name: 'iCall', number: '9152987821' },
-  { name: 'Crisis Text Line', number: 'Text HOME to 741741' },
+  { nameKey: 'crisis.vandrevala', noteKey: 'crisis.vandrevala_note', number: '1860-2662-345' },
+  { nameKey: 'crisis.icall', noteKey: 'crisis.icall_note', number: '9152987821' },
+  { nameKey: 'crisis.crisis_text_line', noteKey: 'crisis.crisis_text_line_note', number: 'Text HOME to 741741' },
 ];
 
 function shapeIssueReportCreated(report, safetyTriggered) {
