@@ -8,7 +8,7 @@ const { assessTextPayload } = require('../services/ai/textAssessmentService');
 const { assessVoicePayload } = require('../services/ai/voiceAssessmentService');
 const { assessVisionPayload } = require('../services/ai/visionAssessmentService');
 const { fuseAssessment } = require('../services/ai/fusionAssessmentService');
-const { getSessionQuestions } = require('../services/ai/questionPolicyService');
+const { getLocalizedSessionQuestions } = require('../services/ai/questionPolicyService');
 const { assessMoodTrend } = require('../services/ai/moodTrendService');
 const {
   shapeAssessmentSessionStart,
@@ -48,9 +48,11 @@ router.post('/session/start', async (req, res) => {
 
     await AssessmentFeatureVector.create({ session: session._id, user: userId });
 
+    const questions = await getLocalizedSessionQuestions(req.language);
+
     res.status(201).json(shapeAssessmentSessionStart({
       session: session.toObject(),
-      questions: getSessionQuestions(),
+      questions,
     }));
   } catch (err) {
     console.error('AI Intake session start error:', err);
@@ -165,7 +167,7 @@ router.post('/session/:sessionId/fusion/run', async (req, res) => {
     await fv.save();
 
     // 2. Run the Quad-Modal Fusion
-    const fusion = fuseAssessment(fv.toObject());
+    const fusion = fuseAssessment(fv.toObject(), req.language);
 
     const result = await AssessmentFusionResult.findOneAndUpdate(
       { session: session._id },

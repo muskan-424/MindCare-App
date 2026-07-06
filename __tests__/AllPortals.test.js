@@ -112,6 +112,7 @@ const makeStore = ({ role = 'user', name = 'Test User' } = {}) => {
   const initialState = {
     auth: {
       token: 'mock-token-abc',
+      language: 'en',
       user: { _id: 'user-001', name, role, specialisation: 'Anxiety' },
       profile: { name, gender: 'female', profilePic: null },
       welcomeMessage: null,
@@ -131,7 +132,6 @@ const mockNav = () => ({
 // ─── Shared setup ─────────────────────────────────────────────────────────────
 beforeEach(() => {
   jest.clearAllMocks();
-  jest.useFakeTimers();
 
   // Default API responses used across all portals
   mockApiGet.mockImplementation((url) => {
@@ -326,7 +326,7 @@ describe('Portal 2 — Therapist Portal (TherapistHomeScreen)', () => {
     });
     const json = JSON.stringify(tree.toJSON());
     // Greeting: "Good morning/afternoon/evening, Dr. Smith"
-    expect(json).toMatch(/Good (morning|afternoon|evening)/);
+    expect(json).toMatch(/Good (Morning|Afternoon|Evening)/i);
   });
 
   it('shows Operations Hub section', async () => {

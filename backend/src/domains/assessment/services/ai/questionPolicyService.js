@@ -1,3 +1,6 @@
+const { batchTranslateStrings } = require('../../../../shared/batchTranslate');
+const { normalizeLanguage } = require('../../../../shared/locale');
+
 const BASE_QUESTIONS = {
   text: [
     'What has felt most emotionally difficult for you this week?',
@@ -19,7 +22,7 @@ const BASE_QUESTIONS = {
     'Describe how supported you feel in your current academic or work environment.',
     'What is an underlying worry you haven\'t spoken out loud recently?',
     'How is your sleep quality affecting your emotional stability during the day?',
-    'Did you feel a lack of motivation to complete everyday tasks today? Describe your feelings toward them.'
+    'Did you feel a lack of motivation to complete everyday tasks today? Describe your feelings toward them.',
   ],
   voice: [
     'In your own words, how would you describe your current emotional state?',
@@ -28,16 +31,13 @@ const BASE_QUESTIONS = {
   ],
 };
 
-// Utility to grab N random items from an array
 function getRandomSubset(arr, n) {
   const shuffled = arr.slice().sort(() => 0.5 - Math.random());
   return shuffled.slice(0, n);
 }
 
 function getSessionQuestions(textCount = 8) {
-  // Pull exactly `textCount` (default 8) random text questions each time this is called
   const selectedTextPrompts = getRandomSubset(BASE_QUESTIONS.text, textCount);
-
   return {
     textPrompts: selectedTextPrompts,
     voicePrompts: BASE_QUESTIONS.voice,
@@ -45,4 +45,21 @@ function getSessionQuestions(textCount = 8) {
   };
 }
 
-module.exports = { getSessionQuestions };
+async function getLocalizedSessionQuestions(language, textCount = 8) {
+  const base = getSessionQuestions(textCount);
+  const lang = normalizeLanguage(language);
+  if (lang === 'en') return base;
+
+  const combined = [...base.textPrompts, ...base.voicePrompts];
+  const translated = await batchTranslateStrings(combined, lang);
+  const textPrompts = translated.slice(0, base.textPrompts.length);
+  const voicePrompts = translated.slice(base.textPrompts.length);
+
+  return {
+    textPrompts,
+    voicePrompts,
+    policyVersion: `${base.policyVersion}-${lang}`,
+  };
+}
+
+module.exports = { getSessionQuestions, getLocalizedSessionQuestions };

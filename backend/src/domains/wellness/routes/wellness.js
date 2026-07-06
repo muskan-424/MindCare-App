@@ -3,6 +3,8 @@ const router = express.Router();
 const WellnessPlan = require('../models/WellnessPlan');
 const { auth } = require('../../../../middleware/auth');
 const { shapeWellnessPlanResponse, shapeWellnessPlan } = require('../../../shared/responseShapers');
+const { localizeWellnessPlanResponse } = require('../../../shared/localizeContent');
+const { wellnessMessage } = require('../../../shared/apiMessages');
 
 // GET /api/wellness
 // Retrieve the user's active (or awaiting) wellness plan
@@ -11,10 +13,12 @@ router.get('/', auth, async (req, res) => {
     const plan = await WellnessPlan.findOne({ user: req.user.id })
       .sort({ createdAt: -1 })
       .lean();
-    res.json(shapeWellnessPlanResponse(plan));
+    const shaped = shapeWellnessPlanResponse(plan);
+    const localized = await localizeWellnessPlanResponse(shaped, req.language);
+    res.json(localized);
   } catch (err) {
     console.error('Get wellness plan error:', err.message);
-    res.status(500).json({ error: 'Failed to retrieve wellness plan' });
+    res.status(500).json({ error: wellnessMessage('retrieve_failed', req.language) });
   }
 });
 
@@ -25,7 +29,7 @@ router.post('/request', auth, async (req, res) => {
     const { goals, currentStruggles, preferredPace } = req.body;
     
     if (!goals || !goals.length) {
-      return res.status(400).json({ error: 'Please specify at least one goal.' });
+      return res.status(400).json({ error: wellnessMessage('goals_required', req.language) });
     }
 
     // Upsert any existing 'awaiting_admin' or uncompleted plan to prevent spam
@@ -35,18 +39,19 @@ router.post('/request', auth, async (req, res) => {
     });
 
     if (activePlan && activePlan.status === 'active') {
-      return res.status(400).json({ error: 'You already have an active wellness plan.' });
+      return res.status(400).json({ error: wellnessMessage('active_plan_exists', req.language) });
     }
 
     if (activePlan && activePlan.status === 'awaiting_admin') {
-      // Update their pending request
       activePlan.goals = goals;
       activePlan.currentStruggles = currentStruggles;
       activePlan.preferredPace = preferredPace;
       await activePlan.save();
+      const shaped = shapeWellnessPlan(activePlan.toObject());
+      const localized = await localizeWellnessPlanResponse({ exists: true, ...shaped }, req.language);
       return res.status(200).json({
-        message: 'Wellness request updated. Admin is reviewing.',
-        plan: shapeWellnessPlan(activePlan.toObject()),
+        message: wellnessMessage('request_updated', req.language),
+        plan: localized,
       });
     }
 
@@ -60,13 +65,16 @@ router.post('/request', auth, async (req, res) => {
     });
     await plan.save();
 
+    const shaped = shapeWellnessPlan(plan.toObject());
+    const localized = await localizeWellnessPlanResponse({ exists: true, ...shaped }, req.language);
+
     res.status(201).json({
-      message: 'Wellness request submitted successfully.',
-      plan: shapeWellnessPlan(plan.toObject()),
+      message: wellnessMessage('request_submitted', req.language),
+      plan: localized,
     });
   } catch (err) {
     console.error('Submit wellness request error:', err.message);
-    res.status(500).json({ error: 'Failed to submit wellness request' });
+    res.status(500).json({ error: wellnessMessage('submit_failed', req.language) });
   }
 });
 
@@ -78,7 +86,7 @@ router.patch('/task/:dayId/:taskId/complete', auth, async (req, res) => {
     const { completed } = req.body;
 
     const plan = await WellnessPlan.findOne({ user: req.user.id, status: 'active' });
-    if (!plan) return res.status(404).json({ error: 'No active plan found.' });
+    if (!plan) return res.status(404).json({ error: wellnessMessage('no_active_plan', req.language) });
 
     let found = false;
     for (const d of plan.dailyPlans) {
@@ -95,7 +103,7 @@ router.patch('/task/:dayId/:taskId/complete', auth, async (req, res) => {
       if (found) break;
     }
 
-    if (!found) return res.status(404).json({ error: 'Task not found in this plan.' });
+    if (!found) return res.status(404).json({ error: wellnessMessage('task_not_found', req.language) });
 
     // Recalculate progress
     let done = 0;
@@ -105,14 +113,16 @@ router.patch('/task/:dayId/:taskId/complete', auth, async (req, res) => {
     plan.totalTasksCompleted = done;
 
     await plan.save();
+    const shaped = shapeWellnessPlan(plan.toObject());
+    const localized = await localizeWellnessPlanResponse({ exists: true, ...shaped }, req.language);
     res.json({
       success: true,
       totalTasksCompleted: done,
-      plan: shapeWellnessPlan(plan.toObject()),
+      plan: localized,
     });
   } catch (err) {
     console.error('Toggle task complete error:', err.message);
-    res.status(500).json({ error: 'Failed to update task' });
+    res.status(500).json({ error: wellnessMessage('task_update_failed', req.language) });
   }
 });
 

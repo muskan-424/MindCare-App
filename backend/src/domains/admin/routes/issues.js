@@ -3,6 +3,8 @@ const router = express.Router();
 const { ChatGoogleGenerativeAI } = require('@langchain/google-genai');
 const IssueReport = require('../models/IssueReport');
 const { auth } = require('../../../../middleware/auth');
+const { getIssueFallbackRecommendations } = require('../../../shared/dynamicFallbacks');
+const { aiLanguageInstruction } = require('../../../shared/locale');
 const { shapeIssueReportCreated, shapeBurnoutAlertResponse } = require('../../../shared/responseShapers');
 
 const CATEGORIES = [
@@ -40,7 +42,7 @@ function keywordRisk(text) {
   return { riskLevel: 'LOW', sentimentScore: 0 };
 }
 
-async function analyzeWithAI(category, severity, description, moodTag) {
+async function analyzeWithAI(category, severity, description, moodTag, language = 'en') {
   const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'missing_api_key_placeholder') return null;
 
@@ -51,6 +53,7 @@ async function analyzeWithAI(category, severity, description, moodTag) {
       apiKey,
     });
     const prompt = `You are a mental health triage assistant. Analyze this report and respond with ONLY valid JSON, no markdown.
+${aiLanguageInstruction(language)}
 
 Input:
 - Category: ${category}
@@ -93,17 +96,14 @@ router.post('/report', auth, async (req, res) => {
     }
     const sev = Math.max(1, Math.min(5, Number(severity)));
     const keyword = keywordRisk(description || '');
-    let analysis = await analyzeWithAI(category, sev, description || '', moodTag || '');
+    const language = req.language || 'en';
+    let analysis = await analyzeWithAI(category, sev, description || '', moodTag || '', language);
     if (!analysis) {
       analysis = {
         sentimentScore: keyword.sentimentScore,
         riskLevel: keyword.riskLevel,
         emotionTags: ['stress'],
-        recommendations: [
-          'Try a short breathing exercise in the app.',
-          'Write a few lines in your journal.',
-          'Reach out to someone you trust.',
-        ],
+        recommendations: getIssueFallbackRecommendations(language),
       };
     }
     if (keyword.riskLevel === 'CRITICAL') {

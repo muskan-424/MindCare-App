@@ -14,9 +14,13 @@ api.interceptors.request.use(
     try {
       const store = require('../redux/store').default;
       const token = store.getState()?.auth?.token;
+      const language = store.getState()?.auth?.language;
+      config.headers = config.headers || {};
       if (token) {
-        config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;
+      }
+      if (language) {
+        config.headers['Accept-Language'] = language;
       }
     } catch (e) { /* ignore store errors */ }
 

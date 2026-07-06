@@ -11,6 +11,7 @@ const {
   shapeTherapistNotes,
   shapeClinicalPatientProfile,
 } = require('../../../shared/responseShapers');
+const { localizeTherapists, localizeTherapist, localizeTherapistCategories } = require('../../../shared/localizeContent');
 
 // Seed data used only if the database is empty.
 const SEED_THERAPISTS = [
@@ -80,7 +81,7 @@ async function ensureSeeded() {
 }
 
 // GET /api/therapists
-router.get('/', async (_req, res) => {
+router.get('/', async (req, res) => {
   try {
     const User = require('../../identity/models/User');
     const clinicians = await User.find({ role: { $in: ['clinician', 'therapist'] } }).lean();
@@ -118,7 +119,8 @@ router.get('/', async (_req, res) => {
       }
     });
 
-    res.json(results.sort((a, b) => a.name.localeCompare(b.name)));
+    const sorted = results.sort((a, b) => a.name.localeCompare(b.name));
+    res.json(await localizeTherapists(sorted, req.language));
   } catch (err) {
     console.error('Error fetching therapists:', err.message);
     res.status(500).json({ error: 'Failed to load therapists' });
@@ -146,7 +148,7 @@ router.get('/me', auth, async (req, res) => {
 
     if (!t) return res.status(404).json({ error: 'Therapist profile not found' });
 
-    res.json(shapeTherapistProfile(t));
+    res.json(await localizeTherapist(shapeTherapistProfile(t), req.language));
   } catch (err) {
     console.error('Error fetching therapist self:', err.message);
     res.status(500).json({ error: 'Failed to load therapist profile' });
@@ -179,10 +181,10 @@ router.put('/me', auth, async (req, res) => {
 
 
 // GET /api/therapists/categories — browse-by-type categories (live from backend, fallback to seed)
-router.get('/categories', async (_req, res) => {
+router.get('/categories', async (req, res) => {
   try {
     const categories = SEED_THERAPIST_CATEGORIES.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    res.json(categories);
+    res.json(await localizeTherapistCategories(categories, req.language));
   } catch (err) {
     console.error('Error fetching therapist categories:', err.message);
     res.status(500).json(SEED_THERAPIST_CATEGORIES);

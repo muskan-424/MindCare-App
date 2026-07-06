@@ -4,14 +4,16 @@ const { body, validationResult } = require('express-validator');
 const JournalEntry = require('../models/JournalEntry');
 const { auth } = require('../../../../middleware/auth');
 const { shapeJournalEntry, shapeJournalEntries } = require('../../../shared/responseShapers');
+const { aiLanguageInstruction } = require('../../../shared/locale');
 
-async function analyzeJournalSentiment(content) {
+async function analyzeJournalSentiment(content, language = 'en') {
   const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'missing_api_key_placeholder') return null;
 
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     const prompt = `Analyze this journal entry and reply with ONLY valid JSON, no markdown.
+${aiLanguageInstruction(language)}
 
 Journal: "${content.slice(0, 800)}"
 
@@ -75,11 +77,12 @@ router.post(
     try {
       const { content } = req.body;
       const userId = req.user.id;
+      const language = req.language || 'en';
 
       // Run AI analysis in parallel with saving
       const [entry, aiResult] = await Promise.all([
         new JournalEntry({ user: userId, content: content.trim() }).save(),
-        analyzeJournalSentiment(content.trim()),
+        analyzeJournalSentiment(content.trim(), language),
       ]);
 
       // If AI result arrived, persist it

@@ -16,7 +16,6 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
 import { Provider } from 'react-redux';
-import { createStore } from 'redux';
 
 // ─── Global mocks ─────────────────────────────────────────────────────────────
 jest.mock('react-native-vector-icons/Ionicons', () => 'IonIcon');
@@ -92,17 +91,10 @@ jest.mock('../src/utils/tinkChat', () => ({
   translateMessage: jest.fn((args) => Promise.resolve(args.text)),
 }));
 
+import makeTestStore from './helpers/makeTestStore';
+
 // ─── Redux store factory ──────────────────────────────────────────────────────
-const makeStore = ({ role = 'user', name = 'Test User' } = {}) => {
-  const initialState = {
-    auth: {
-      isLogin: true,
-      token: 'mock-token-xyz',
-      user: { _id: 'user-001', name, role, specialisation: 'Anxiety' },
-    },
-  };
-  return createStore((state = initialState) => state);
-};
+const makeStore = makeTestStore;
 
 // Mock navigation
 const mockNavigation = {
@@ -182,12 +174,15 @@ describe('3. Signup Screen Working', () => {
 
 describe('4. Forgot Password Screen Working', () => {
   const ForgotPasswordScreen = require('../src/domains/identity/screens/ForgotPasswordScreen').default;
+  const store = makeStore();
 
   it('renders input box and instructions', () => {
     let tree;
     renderer.act(() => {
       tree = renderer.create(
-        <ForgotPasswordScreen navigation={mockNavigation} />
+        <Provider store={store}>
+          <ForgotPasswordScreen navigation={mockNavigation} />
+        </Provider>
       );
     });
     const json = JSON.stringify(tree.toJSON());
@@ -233,6 +228,7 @@ describe('5. Mood Tracker Screen Working', () => {
 
 describe('6. Goal Tracker Screen Working', () => {
   const GoalTrackingScreen = require('../src/domains/wellness/screens/GoalTrackingScreen').default;
+  const store = makeStore();
 
   beforeEach(() => {
     mockApiGet.mockImplementation((url) => {
@@ -259,15 +255,18 @@ describe('6. Goal Tracker Screen Working', () => {
     let tree;
     await renderer.act(async () => {
       tree = renderer.create(
-        <GoalTrackingScreen navigation={mockNavigation} />
+        <Provider store={store}>
+          <GoalTrackingScreen navigation={mockNavigation} />
+        </Provider>
       );
+      await Promise.resolve();
     });
     const json = JSON.stringify(tree.toJSON());
     expect(json).toContain('Goal Tracker');
     expect(json).toContain('Daily Meditation');
     expect(json).toContain('Progress');
     expect(json).toContain('50%');
-  });
+  }, 15000);
 });
 
 describe('7. Chat With Tink Screen Working', () => {
@@ -297,11 +296,12 @@ describe('7. Chat With Tink Screen Working', () => {
     expect(json).toContain('Muskan');
     expect(json).toContain('Tink');
     expect(json).toContain('Message Tink');
-  });
+  }, 15000);
 });
 
 describe('8. Badges Screen Working', () => {
   const BadgesScreen = require('../src/domains/wellness/screens/BadgesScreen').default;
+  const store = makeStore();
 
   beforeEach(() => {
     mockApiGet.mockImplementation((url) => {
@@ -333,7 +333,9 @@ describe('8. Badges Screen Working', () => {
     let tree;
     await renderer.act(async () => {
       tree = renderer.create(
-        <BadgesScreen navigation={mockNavigation} />
+        <Provider store={store}>
+          <BadgesScreen navigation={mockNavigation} />
+        </Provider>
       );
     });
     const json = JSON.stringify(tree.toJSON());

@@ -3,6 +3,7 @@ const router = express.Router();
 const IssueReport = require('../../admin/models/IssueReport');
 const { auth } = require('../../../../middleware/auth');
 const { shapeAssignedResource } = require('../../../shared/responseShapers');
+const { localizeAssignedResources } = require('../../../shared/localizeContent');
 
 // GET /api/resources/assigned
 // Retrieve all curated resources assigned to the user directly from their verified risk reports
@@ -25,7 +26,8 @@ router.get('/assigned', auth, async (req, res) => {
       });
     });
 
-    res.json({ success: true, resources: allResources });
+    const localized = await localizeAssignedResources(allResources, req.language);
+    res.json({ success: true, resources: localized });
   } catch (err) {
     console.error('Fetch assigned resources error:', err.message);
     res.status(500).json({ error: 'Failed to fetch assigned resources' });

@@ -15,15 +15,15 @@ import { formatDate } from '../../../utils/locale';
 const RATING_LABELS = { 1: 'Terrible', 2: 'Very Low', 3: 'Low', 4: 'Below Okay', 5: 'Okay', 6: 'Decent', 7: 'Good', 8: 'Great', 9: 'Very Good', 10: 'Excellent' };
 const RATING_COLORS = { low: '#E57373', mid: '#FFB74D', high: '#81C784' };
 
-const BADGE_META = {
-  first_checkin:   { label: 'First Step',       icon: 'star-face',          color: '#F59E0B', desc: 'Logged your first mood check-in' },
-  week_warrior:    { label: 'Week Warrior',      icon: 'fire',               color: '#EF4444', desc: 'Maintained a 7-day streak' },
-  fortnight_focus: { label: 'Fortnight Focus',   icon: 'calendar-check',     color: '#8B5CF6', desc: 'Maintained a 14-day streak' },
-  monthly_master:  { label: 'Monthly Master',    icon: 'crown',              color: '#10B981', desc: 'Maintained a 30-day streak' },
-  mood_explorer:   { label: 'Mood Explorer',     icon: 'compass',            color: '#3B82F6', desc: 'Logged 10 mood check-ins' },
-  consistent_50:   { label: 'Consistent Mind',   icon: 'brain',              color: '#EC4899', desc: 'Logged 50 mood check-ins' },
-  centurion:       { label: 'Centurion',         icon: 'shield-star',        color: '#F97316', desc: 'Logged 100 mood check-ins' },
-};
+const ALL_BADGE_KEYS = [
+  { key: 'first_checkin',   labelKey: 'badges.first_checkin_label',       icon: 'star-face',          color: '#F59E0B', descKey: 'badges.first_checkin_desc' },
+  { key: 'week_warrior',    labelKey: 'badges.week_warrior_label',        icon: 'fire',               color: '#EF4444', descKey: 'badges.week_warrior_desc' },
+  { key: 'fortnight_focus', labelKey: 'badges.fortnight_focus_label',     icon: 'calendar-check',     color: '#8B5CF6', descKey: 'badges.fortnight_focus_desc' },
+  { key: 'monthly_master',  labelKey: 'badges.monthly_master_label',      icon: 'crown',              color: '#10B981', descKey: 'badges.monthly_master_desc' },
+  { key: 'mood_explorer',   labelKey: 'badges.mood_explorer_label',       icon: 'compass',            color: '#3B82F6', descKey: 'badges.mood_explorer_desc' },
+  { key: 'consistent_50',   labelKey: 'badges.consistent_50_label',       icon: 'brain',              color: '#EC4899', descKey: 'badges.consistent_50_desc' },
+  { key: 'centurion',       labelKey: 'badges.centurion_label',           icon: 'shield-star',        color: '#F97316', descKey: 'badges.centurion_desc' },
+];
 
 const MoodTrackerScreen = ({ auth, navigation }) => {
   const { t, language } = useTranslation();
@@ -78,9 +78,13 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
       setSaved(true);
       setNote('');
       if (res.data && res.data.newBadge) {
-        const meta = BADGE_META[res.data.newBadge];
+        const meta = ALL_BADGE_KEYS.find((b) => b.key === res.data.newBadge);
         if (meta) {
-          setEarnedBadgeMeta(meta);
+          setEarnedBadgeMeta({
+            ...meta,
+            label: t(meta.labelKey),
+            desc: t(meta.descKey),
+          });
         }
       }
     } catch (e) {

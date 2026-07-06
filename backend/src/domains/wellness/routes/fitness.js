@@ -6,6 +6,7 @@ const {
   shapeFitnessContentMap,
   shapeFitnessPlan,
 } = require('../../../shared/responseShapers');
+const { aiLanguageInstruction } = require('../../../shared/locale');
 const FitnessCategory = require('../models/FitnessCategory');
 const FitnessSubcategory = require('../models/FitnessSubcategory');
 const FitnessContentItem = require('../models/FitnessContentItem');
@@ -94,6 +95,7 @@ router.post('/plan', async (req, res) => {
     });
 
     const prompt = `You are a friendly fitness and wellness coach for a mental health app. The user wants a personalized weekly routine.
+${aiLanguageInstruction(req.language || 'en')}
 
 User preferences:
 - Goal: ${goal}

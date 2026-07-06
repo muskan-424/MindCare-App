@@ -5,8 +5,11 @@
  * Falls back to English if a key is missing in the selected language.
  */
 
+import { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import translations from '../localization/translations';
+
+const FALLBACK_DICT = translations['en'];
 
 /**
  * Resolves a dot-separated path against an object.
@@ -28,19 +31,9 @@ function resolve(path, obj) {
 export default function useTranslation() {
   const language = useSelector(state => state.auth.language) || 'en';
 
-  const langDict = translations[language] || translations['en'];
-  const fallbackDict = translations['en'];
+  const langDict = translations[language] || FALLBACK_DICT;
 
-  /**
-   * t(key, paramsOrFallback)
-   * @param {string} key - dot-separated key e.g. 'home.greeting_morning'
-   * @param {string|Record<string, string|number>} [paramsOrFallback]
-   *   - optional interpolation map, e.g. { name: 'Rahul' } replaces {name}
-   *   - or a fallback string if key not found
-   * @param {string} [fallback] - explicit fallback when second arg is params
-   * @returns {string}
-   */
-  function t(key, paramsOrFallback, fallback) {
+  const t = useCallback((key, paramsOrFallback, fallback) => {
     let params = null;
     let explicitFallback = fallback;
 
@@ -52,7 +45,7 @@ export default function useTranslation() {
       }
     }
 
-    const raw = resolve(key, langDict) ?? resolve(key, fallbackDict);
+    const raw = resolve(key, langDict) ?? resolve(key, FALLBACK_DICT);
     if (raw != null && typeof raw === 'string') {
       if (!params) return raw;
       return raw.replace(/\{(\w+)\}/g, (_, name) => {
@@ -61,7 +54,7 @@ export default function useTranslation() {
       });
     }
     return explicitFallback !== undefined ? explicitFallback : key;
-  }
+  }, [langDict]);
 
   return { t, language };
 }
