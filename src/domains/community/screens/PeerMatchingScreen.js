@@ -50,12 +50,12 @@ const PeerMatchingScreen = ({ navigation }) => {
       }
     } catch (e) {
       console.error(e);
-      Alert.alert('Error', 'Failed to load community data.');
+      Alert.alert(t('common.error'), t('peer.error_load'));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -77,7 +77,7 @@ const PeerMatchingScreen = ({ navigation }) => {
           setPeers([]);
       }
     } catch (e) {
-      Alert.alert('Error', 'Failed to update preferences.');
+      Alert.alert(t('common.error'), t('peer.error_update'));
     }
     setLoading(false);
   };
@@ -85,10 +85,10 @@ const PeerMatchingScreen = ({ navigation }) => {
   const handleConnect = async (userId) => {
     try {
       await api.post(`/api/peers/connect/${userId}`);
-      Alert.alert('Request Sent', 'We will notify you if they accept!');
+      Alert.alert(t('peer.request_sent_title'), t('peer.request_sent_msg'));
       loadData();
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Failed to send request.');
+      Alert.alert(t('common.error'), e.response?.data?.error || t('peer.error_send'));
     }
   };
 
@@ -97,7 +97,7 @@ const PeerMatchingScreen = ({ navigation }) => {
       await api.patch(`/api/peers/requests/${requestId}`, { status });
       loadData();
     } catch (e) {
-      Alert.alert('Error', 'Failed to process request.');
+      Alert.alert(t('common.error'), t('peer.error_process'));
     }
   };
 
@@ -123,8 +123,8 @@ const PeerMatchingScreen = ({ navigation }) => {
       <View style={styles.optInCard}>
         <View style={styles.optInRow}>
           <View style={styles.optInInfo}>
-            <Text style={styles.optInTitle}>Enable Community Discovery</Text>
-            <Text style={styles.optInSub}>Allow others with similar concerns to find and connect with you.</Text>
+            <Text style={styles.optInTitle}>{t('peer.opt_in_title')}</Text>
+            <Text style={styles.optInSub}>{t('peer.opt_in_sub')}</Text>
           </View>
           <Switch
             value={isEnabled}
@@ -137,10 +137,10 @@ const PeerMatchingScreen = ({ navigation }) => {
       {!isEnabled ? (
         <ScrollView contentContainerStyle={styles.emptyContainer}>
           <MaterialCommunityIcons name="account-group-outline" size={100} color={colors.gray3} />
-          <Text style={styles.emptyTitle}>Join the Community</Text>
-          <Text style={styles.emptyDesc}>Enable discovery to find peers who understand your journey and share similar mental health goals.</Text>
+          <Text style={styles.emptyTitle}>{t('peer.join_title')}</Text>
+          <Text style={styles.emptyDesc}>{t('peer.join_desc')}</Text>
           <TouchableOpacity style={styles.enableBtn} onPress={() => toggleMatching(true)}>
-            <Text style={styles.enableBtnText}>Enable Now</Text>
+            <Text style={styles.enableBtnText}>{t('peer.enable_now')}</Text>
           </TouchableOpacity>
         </ScrollView>
       ) : (
@@ -154,7 +154,7 @@ const PeerMatchingScreen = ({ navigation }) => {
                 onPress={() => setActiveTab(tab)}
               >
                 <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {t(`peer.tab_${tab}`)}
                   {tab === 'requests' && requests.incoming.length > 0 && ` (${requests.incoming.length})`}
                 </Text>
               </TouchableOpacity>
@@ -170,7 +170,7 @@ const PeerMatchingScreen = ({ navigation }) => {
                 {suggestions.length === 0 ? (
                   <View style={styles.emptyState}>
                     <AntDesign name="search1" size={50} color={colors.gray} />
-                    <Text style={styles.emptyStateText}>No new suggestions right now. Check back later!</Text>
+                    <Text style={styles.emptyStateText}>{t('peer.no_suggestions')}</Text>
                   </View>
                 ) : (
                   suggestions.map(s => {
@@ -198,7 +198,7 @@ const PeerMatchingScreen = ({ navigation }) => {
                             </View>
                           </View>
                         </View>
-                        <Text style={styles.peerBio} numberOfLines={2}>{s.peerBio || "No bio provided."}</Text>
+                        <Text style={styles.peerBio} numberOfLines={2}>{s.peerBio || t('peer.no_bio')}</Text>
                         <TouchableOpacity style={styles.connectBtn} onPress={() => handleConnect(s.userId)}>
                           <Text style={styles.connectBtnText}>{t('peer.connect')}</Text>
                         </TouchableOpacity>
@@ -211,34 +211,34 @@ const PeerMatchingScreen = ({ navigation }) => {
 
             {activeTab === 'requests' && (
               <>
-                <Text style={styles.sectionTitle}>Incoming Requests</Text>
+                <Text style={styles.sectionTitle}>{t('peer.incoming_requests')}</Text>
                 {requests.incoming.length === 0 ? (
-                  <Text style={styles.emptySub}>No pending requests.</Text>
+                  <Text style={styles.emptySub}>{t('peer.no_pending')}</Text>
                 ) : (
                   requests.incoming.map(r => (
                     <View key={r.requestId} style={styles.requestCard}>
-                      <Text style={styles.reqName}>{r.userName} wants to connect</Text>
-                      <Text style={styles.reqSub}>Shares: {r.sharedConcerns.join(', ')}</Text>
+                      <Text style={styles.reqName}>{t('peer.wants_connect', { name: r.userName })}</Text>
+                      <Text style={styles.reqSub}>{t('peer.shares_label', { concerns: r.sharedConcerns.join(', ') })}</Text>
                       <View style={styles.reqActions}>
                         <TouchableOpacity style={[styles.reqBtn, styles.acceptBtn]} onPress={() => handleRequestAction(r.requestId, 'accepted')}>
-                          <Text style={styles.reqBtnText}>Accept</Text>
+                          <Text style={styles.reqBtnText}>{t('peer.accept')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={[styles.reqBtn, styles.declineBtn]} onPress={() => handleRequestAction(r.requestId, 'declined')}>
-                          <Text style={[styles.reqBtnText, { color: '#F4511E' }]}>Decline</Text>
+                          <Text style={[styles.reqBtnText, { color: '#F4511E' }]}>{t('peer.decline')}</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
                   ))
                 )}
 
-                <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Sent Requests</Text>
+                <Text style={[styles.sectionTitle, { marginTop: 20 }]}>{t('peer.sent_requests')}</Text>
                 {requests.outgoing.length === 0 ? (
-                  <Text style={styles.emptySub}>No active outgoing requests.</Text>
+                  <Text style={styles.emptySub}>{t('peer.no_outgoing')}</Text>
                 ) : (
                   requests.outgoing.map(o => (
                     <View key={o.requestId} style={styles.requestCard}>
-                      <Text style={styles.reqName}>Pending: {o.userName}</Text>
-                      <Text style={styles.reqSub}>Waiting for them to respond...</Text>
+                      <Text style={styles.reqName}>{t('peer.pending_label', { name: o.userName })}</Text>
+                      <Text style={styles.reqSub}>{t('peer.waiting_response')}</Text>
                     </View>
                   ))
                 )}
@@ -250,7 +250,7 @@ const PeerMatchingScreen = ({ navigation }) => {
                 {peers.length === 0 ? (
                   <View style={styles.emptyState}>
                     <MaterialCommunityIcons name="human-handsup" size={60} color={colors.gray} />
-                    <Text style={styles.emptyStateText}>You haven't connected with anyone yet.</Text>
+                    <Text style={styles.emptyStateText}>{t('peer.no_peers_connected')}</Text>
                   </View>
                 ) : (
                   peers.map(p => (
@@ -261,7 +261,7 @@ const PeerMatchingScreen = ({ navigation }) => {
                         </View>
                         <View style={styles.peerInfo}>
                           <Text style={styles.peerName}>{p.userName}</Text>
-                          <Text style={styles.peerSub}>Connected since {new Date(p.connectedAt).toLocaleDateString()}</Text>
+                          <Text style={styles.peerSub}>{t('peer.connected_since', { date: new Date(p.connectedAt).toLocaleDateString() })}</Text>
                         </View>
                         <TouchableOpacity style={styles.chatBtn}>
                           <MaterialCommunityIcons name="chat-outline" size={24} color={colors.primary} />

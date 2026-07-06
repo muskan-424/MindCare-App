@@ -4,6 +4,7 @@ const Profile = require('../models/Profile');
 const DeletionRequest = require('../models/DeletionRequest');
 const { auth } = require('../../../../middleware/auth');
 const { shapeProfile, shapeDeletionRequest } = require('../../../shared/responseShapers');
+const { normalizeLanguage, SUPPORTED_LANGUAGES } = require('../../../shared/locale');
 
 // @route   POST /api/profile/add-concerns
 // @desc    Update user concerns
@@ -106,6 +107,33 @@ router.get('/me', auth, async (req, res) => {
   } catch (err) {
     console.error('Get profile error:', err.message);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// @route   PATCH /api/profile/language
+// @desc    Persist the user's preferred app language
+// @access  Private
+router.patch('/language', auth, async (req, res) => {
+  try {
+    const language = normalizeLanguage(req.body?.language);
+    if (!SUPPORTED_LANGUAGES.includes(language)) {
+      return res.status(400).json({ error: 'Unsupported language code' });
+    }
+
+    const profile = await Profile.findOneAndUpdate(
+      { userId: req.user.id },
+      { $set: { language } },
+      { new: true },
+    );
+
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    res.json({ success: true, language: profile.language, profile: shapeProfile(profile) });
+  } catch (err) {
+    console.error('Update language error:', err.message);
+    res.status(500).json({ error: 'Failed to update language preference' });
   }
 });
 

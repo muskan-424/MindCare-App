@@ -34,8 +34,16 @@ const FALLBACK_CATEGORIES = [
   { id: '4', name: 'Social Worker', icon: 'https://cdn-icons-png.flaticon.com/512/3179/3179068.png' },
 ];
 
+const CATEGORY_LABEL_KEYS = {
+  Psychologist: 'auth.roles.psychologist',
+  Psychiatrist: 'auth.roles.psychiatrist',
+  Counsellor: 'auth.roles.counsellor',
+  'Social Worker': 'auth.roles.social_worker',
+};
+
 const TherapistHomeScreen = (props) => {
   const { t } = useTranslation();
+  const localizeRole = (role) => (role && CATEGORY_LABEL_KEYS[role] ? t(CATEGORY_LABEL_KEYS[role]) : role);
   const [query, setQuery] = useState('');
   const [therapists, setTherapists] = useState(localData);
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
@@ -128,7 +136,7 @@ const TherapistHomeScreen = (props) => {
       }
       activeOpacity={0.8}>
       <Image source={{ uri: item.icon }} style={styles.catIcon} />
-      <Text style={styles.catName}>{item.name}</Text>
+      <Text style={styles.catName}>{t(CATEGORY_LABEL_KEYS[item.name], item.name)}</Text>
     </TrackedTouchable>
   );
 
@@ -155,7 +163,7 @@ const TherapistHomeScreen = (props) => {
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
                       <View style={[styles.livePulse, { backgroundColor: '#4ADE80' }]} />
                       <Text style={styles.heroSub}>
-                        {props.auth.user?.specialisation ? `${props.auth.user.specialisation} • ` : ''}{t('therapy.home_active_session')}
+                        {props.auth.user?.specialisation ? `${localizeRole(props.auth.user.specialisation)} • ` : ''}{t('therapy.home_active_session')}
                       </Text>
                     </View>
                 </View>
@@ -285,7 +293,7 @@ const TherapistHomeScreen = (props) => {
                                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                     <View>
                                         <Text style={styles.openReqName}>{req.user?.name}</Text>
-                                        <Text style={styles.openReqSpec}>{req.requestedSpeciality || t('therapy.home_general_session')}</Text>
+                                        <Text style={styles.openReqSpec}>{req.requestedSpeciality ? localizeRole(req.requestedSpeciality) : t('therapy.home_general_session')}</Text>
                                     </View>
                                     <View style={styles.openReqBadge}>
                                         <Text style={styles.openReqBadgeText}>{t('therapy.home_open')}</Text>
@@ -337,7 +345,7 @@ const TherapistHomeScreen = (props) => {
                             </View>
                             <View style={{ marginLeft: 15, flex: 1 }}>
                                 <Text style={styles.patientName}>{apt.user?.name}</Text>
-                                <Text style={styles.patientSub}>{apt.requestedSpeciality || t('therapy.home_general_session')}</Text>
+                                <Text style={styles.patientSub}>{apt.requestedSpeciality ? localizeRole(apt.requestedSpeciality) : t('therapy.home_general_session')}</Text>
                             </View>
                             <View style={styles.statusBadge}>
                                 <Text style={styles.statusText}>{apt.status}</Text>

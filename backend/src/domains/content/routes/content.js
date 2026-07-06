@@ -4,15 +4,10 @@ const ytSearch = require('yt-search');
 
 const { auth } = require('../../../../middleware/auth');
 const AssessmentFusionResult = require('../../assessment/models/AssessmentFusionResult');
+const { localizeYoutubeVideos } = require('../../../shared/localizeContent');
+const { getYoutubeSearchQuery } = require('../../../shared/youtubeSearchQueries');
 
-// Map of predefined safe categories to aggressive YouTube search strings
-const SAFETY_MAPPINGS = {
-    'meditation': 'guided meditation calm sleep anxiety 10 minute',
-    'motivation': 'motivational speech self improvement mental health',
-    'sleep': 'sleep stories rain sounds deep sleep relaxation',
-    'relaxing_music': 'peaceful piano deep focus lo-fi ambient relaxation',
-    'therapy': 'therapy advice psychologists mental health tips coping strategies'
-};
+const SAFETY_CATEGORIES = ['meditation', 'motivation', 'sleep', 'relaxing_music', 'therapy'];
 
 // @route   GET /api/content/search
 // @desc    Get safe, moderated YouTube content by category
@@ -20,9 +15,9 @@ const SAFETY_MAPPINGS = {
 router.get('/search', auth, async (req, res) => {
     const category = req.query.category;
 
-    if (!category || (!SAFETY_MAPPINGS[category] && category !== 'recommended')) {
+    if (!category || (!SAFETY_CATEGORIES.includes(category) && category !== 'recommended')) {
         return res.status(400).json({
-            errors: [{ msg: 'Invalid category. Must be one of: recommended, ' + Object.keys(SAFETY_MAPPINGS).join(', ') }]
+            errors: [{ msg: 'Invalid category. Must be one of: recommended, ' + SAFETY_CATEGORIES.join(', ') }]
         });
     }
 
@@ -31,16 +26,15 @@ router.get('/search', auth, async (req, res) => {
         if (category === 'recommended') {
             const fusion = await AssessmentFusionResult.findOne({ user: req.user.id }).sort({ createdAt: -1 });
             if (fusion) {
-                const keywords = [ fusion.riskLevel ];
+                const keywords = [fusion.riskLevel];
                 if (fusion.primaryEmotions?.length) keywords.push(fusion.primaryEmotions[0]);
                 if (fusion.aiMarkers?.length) keywords.push(fusion.aiMarkers[0]);
-                
-                safeQuery = `mental health coping strategies ${keywords.join(' ')} relaxation safe`;
+                safeQuery = getYoutubeSearchQuery('recommended', req.language, keywords);
             } else {
-                safeQuery = SAFETY_MAPPINGS['meditation']; // fallback to meditation
+                safeQuery = getYoutubeSearchQuery('meditation', req.language);
             }
         } else {
-            safeQuery = SAFETY_MAPPINGS[category];
+            safeQuery = getYoutubeSearchQuery(category, req.language);
         }
 
         const results = await ytSearch(safeQuery);
@@ -55,7 +49,7 @@ router.get('/search', auth, async (req, res) => {
             views: v.views
         }));
 
-        res.json(videos);
+        res.json(await localizeYoutubeVideos(videos, req.language));
     } catch (err) {
         console.error('Content Search Error:', err.message);
         res.status(500).send('Server Error retrieving safe content');

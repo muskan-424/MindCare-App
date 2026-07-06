@@ -7,6 +7,11 @@ const {
   shapeFitnessPlan,
 } = require('../../../shared/responseShapers');
 const { aiLanguageInstruction } = require('../../../shared/locale');
+const {
+  localizeFitnessNameMap,
+  localizeFitnessContentMap,
+  localizeFitnessPlan,
+} = require('../../../shared/localizeContent');
 const FitnessCategory = require('../models/FitnessCategory');
 const FitnessSubcategory = require('../models/FitnessSubcategory');
 const FitnessContentItem = require('../models/FitnessContentItem');
@@ -62,7 +67,8 @@ router.get('/categories', async (req, res) => {
   try {
     await ensureFitnessSeeded();
     const categories = await FitnessCategory.find({}).sort({ order: 1 }).lean();
-    res.json(shapeFitnessNameMap(categories));
+    const shaped = shapeFitnessNameMap(categories);
+    res.json(await localizeFitnessNameMap(shaped, req.language));
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
@@ -84,7 +90,9 @@ router.post('/plan', async (req, res) => {
 
   const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'missing_api_key_placeholder') {
-    return res.status(200).json(shapeFitnessPlan(getFallbackPlan({ goal, durationMinutes, daysPerWeek, preferredTypes })));
+    const fallback = getFallbackPlan({ goal, durationMinutes, daysPerWeek, preferredTypes });
+    const shaped = shapeFitnessPlan(fallback);
+    return res.status(200).json(await localizeFitnessPlan(shaped, req.language));
   }
 
   try {
@@ -137,12 +145,15 @@ Include exactly ${daysPerWeek} days in weeklySchedule. Each day should have 1-4 
       const plan = JSON.parse(jsonMatch[0]);
       if (!plan.weeklySchedule) plan.weeklySchedule = [];
       if (!plan.summary) plan.summary = 'Your personalized routine is ready. Stick to it for best results!';
-      return res.json(shapeFitnessPlan(plan));
+      const shaped = shapeFitnessPlan(plan);
+      return res.json(await localizeFitnessPlan(shaped, req.language));
     }
   } catch (err) {
     console.warn('Fitness plan AI error:', err.message);
   }
-  res.json(shapeFitnessPlan(getFallbackPlan({ goal, durationMinutes, daysPerWeek, preferredTypes })));
+  const fallback = getFallbackPlan({ goal, durationMinutes, daysPerWeek, preferredTypes });
+  const shaped = shapeFitnessPlan(fallback);
+  res.json(await localizeFitnessPlan(shaped, req.language));
 });
 
 function getFallbackPlan({ goal, durationMinutes, daysPerWeek, preferredTypes }) {
@@ -171,7 +182,7 @@ router.get('/:category', async (req, res) => {
     if (category === 'plan' || category === 'categories') return res.status(404).json({ msg: 'Not found' });
     await ensureFitnessSeeded();
     const subs = await FitnessSubcategory.find({ categoryName: category }).sort({ order: 1 }).lean();
-    const data = shapeFitnessNameMap(subs);
+    const data = await localizeFitnessNameMap(shapeFitnessNameMap(subs), req.language);
     if (Object.keys(data).length === 0) return res.status(404).json({ msg: 'Category not found' });
     res.json(data);
   } catch (err) {
@@ -189,7 +200,7 @@ router.get('/:category/:subcategory/getContent', async (req, res) => {
     const subcategory = decodeURIComponent(req.params.subcategory);
     await ensureFitnessSeeded();
     const items = await FitnessContentItem.find({ categoryName: category, subcategoryName: subcategory }).lean();
-    const data = shapeFitnessContentMap(items);
+    const data = await localizeFitnessContentMap(shapeFitnessContentMap(items), req.language);
     if (Object.keys(data).length === 0) return res.status(404).json({ msg: 'Content not found' });
     res.json(data);
   } catch (err) {

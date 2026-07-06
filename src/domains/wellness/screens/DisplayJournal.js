@@ -5,24 +5,26 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors } from '../../../constants/theme';
 import api from '../../../utils/apiClient';
+import useTranslation from '../../../utils/i18n';
 
 const RISK_COLORS = { LOW: '#81C784', MEDIUM: '#FFB74D', HIGH: '#E57373', CRITICAL: '#C62828' };
 const EMOTION_ICONS = { joy: '😊', sadness: '😔', anxiety: '😰', anger: '😠', hope: '🌟', confusion: '😕', loneliness: '🥺', gratitude: '💚', stress: '😤', calm: '😌' };
 
 const DisplayJournal = ({ route, navigation }) => {
+  const { t } = useTranslation();
   const { data, onDelete } = route.params;
 
   const handleDelete = () => {
-    Alert.alert('Delete Entry', 'Are you sure you want to delete this journal entry?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('journal.delete_title'), t('journal.delete_confirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Delete', style: 'destructive', onPress: async () => {
+        text: t('common.delete'), style: 'destructive', onPress: async () => {
           try {
             await api.delete(`/api/journals/${data.id}`);
             if (onDelete) onDelete(data.id);
             navigation.goBack();
           } catch (e) {
-            Alert.alert('Error', 'Could not delete this entry.');
+            Alert.alert(t('common.error'), t('journal.error_delete'));
           }
         },
       },
@@ -47,14 +49,13 @@ const DisplayJournal = ({ route, navigation }) => {
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.content}>{data.content}</Text>
 
-        {/* AI Analysis section */}
         {(data.aiInsight || data.emotionTags?.length > 0 || data.riskLevel) ? (
           <View style={styles.aiCard}>
-            <Text style={styles.aiCardTitle}>🤖 Tink's Insight</Text>
+            <Text style={styles.aiCardTitle}>{t('journal.ai_insight')}</Text>
             {data.aiInsight ? <Text style={styles.aiInsight}>"{data.aiInsight}"</Text> : null}
             {data.riskLevel && data.riskLevel !== 'LOW' ? (
               <View style={[styles.riskBadge, { backgroundColor: RISK_COLORS[data.riskLevel] }]}>
-                <Text style={styles.riskBadgeText}>{data.riskLevel} risk</Text>
+                <Text style={styles.riskBadgeText}>{t('journal.risk_badge', { level: data.riskLevel })}</Text>
               </View>
             ) : null}
             {data.emotionTags?.length > 0 ? (
@@ -68,7 +69,7 @@ const DisplayJournal = ({ route, navigation }) => {
             ) : null}
             {data.sentimentScore != null ? (
               <View style={styles.sentimentRow}>
-                <Text style={styles.sentimentLabel}>Sentiment</Text>
+                <Text style={styles.sentimentLabel}>{t('journal.sentiment')}</Text>
                 <View style={styles.sentimentBar}>
                   <View style={[styles.sentimentFill, {
                     width: `${Math.round(((data.sentimentScore + 1) / 2) * 100)}%`,
@@ -85,7 +86,7 @@ const DisplayJournal = ({ route, navigation }) => {
           <TouchableOpacity
             style={styles.talkBtn}
             onPress={() => navigation.navigate('HomeTab', { screen: 'Chat' })}>
-            <Text style={styles.talkBtnText}>Talk to Tink 💜</Text>
+            <Text style={styles.talkBtnText}>{t('journal.talk_to_tink')}</Text>
           </TouchableOpacity>
         ) : null}
       </ScrollView>

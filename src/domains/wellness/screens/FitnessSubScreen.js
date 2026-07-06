@@ -67,6 +67,7 @@ const FitnessSubScreen = ({route}) => {
       img_uri={content[data].icon}
       subcategory={data}
       category={category}
+      label={content[data].label || data}
     />
   );
   return (

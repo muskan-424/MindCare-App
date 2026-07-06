@@ -367,7 +367,7 @@ const HomeScreen = props => {
             <MaterialCommunityIcons name="alert" size={24} color={colors.white} />
             <View style={styles.burnoutTextCont}>
               <Text style={styles.burnoutTitle}>{t('home.burnout_title')}</Text>
-              <Text style={styles.burnoutText}>{burnoutAlert.description}</Text>
+              <Text style={styles.burnoutText}>{burnoutAlert.message || burnoutAlert.description || burnoutAlert.recommendations?.[0]}</Text>
             </View>
           </View>
         )}

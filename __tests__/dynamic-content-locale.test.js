@@ -68,8 +68,35 @@ describe('Dynamic content fallback recommendations', () => {
     expect(hi).not.toEqual(en);
   });
 
+  test('Spanish fusion fallbacks are localized', () => {
+    const es = getFusionRecommendations('MEDIUM', 'es');
+    const en = getFusionRecommendations('MEDIUM', 'en');
+    expect(es).not.toEqual(en);
+  });
+
   test('unknown language falls back to English recommendations', () => {
-    expect(getFusionRecommendations('MEDIUM', 'es')).toEqual(getFusionRecommendations('MEDIUM', 'en'));
+    expect(getFusionRecommendations('MEDIUM', 'xx')).toEqual(getFusionRecommendations('MEDIUM', 'en'));
+  });
+
+  test('Bengali issue fallbacks are localized', () => {
+    const bn = getIssueFallbackRecommendations('bn');
+    const en = getIssueFallbackRecommendations('en');
+    expect(bn).not.toEqual(en);
+  });
+});
+
+describe('YouTube search query localization', () => {
+  const { getYoutubeSearchQuery } = require('../backend/src/shared/youtubeSearchQueries');
+
+  test('returns localized meditation query for Hindi', () => {
+    const hi = getYoutubeSearchQuery('meditation', 'hi');
+    const en = getYoutubeSearchQuery('meditation', 'en');
+    expect(hi).not.toBe(en);
+    expect(hi).toContain('hindi');
+  });
+
+  test('falls back to English for unknown language', () => {
+    expect(getYoutubeSearchQuery('sleep', 'xx')).toBe(getYoutubeSearchQuery('sleep', 'en'));
   });
 });
 
@@ -82,6 +109,60 @@ describe('API wellness messages', () => {
 
   test('falls back to English for unknown language', () => {
     expect(wellnessMessage('request_submitted', 'xx')).toBe(wellnessMessage('request_submitted', 'en'));
+  });
+});
+
+describe('Burnout alert shape', () => {
+  test('includes description and message fields', () => {
+    const { shapeBurnoutAlertResponse } = require('../backend/src/shared/responseShapers');
+    const result = shapeBurnoutAlertResponse({
+      _id: '1',
+      category: 'burnout_alert',
+      riskLevel: 'HIGH',
+      description: 'High burnout risk detected.',
+      recommendations: ['Take rest immediately.'],
+    });
+    expect(result.active).toBe(true);
+    expect(result.alert.description).toBe('High burnout risk detected.');
+    expect(result.alert.message).toBe('Take rest immediately.');
+  });
+});
+
+describe('Fitness content shape', () => {
+  test('fitness name map includes label field', () => {
+    const { shapeFitnessNameMap } = require('../backend/src/shared/responseShapers');
+    const map = shapeFitnessNameMap([{ name: 'Yoga', icon: 'icon.png' }]);
+    expect(map.Yoga.label).toBe('Yoga');
+  });
+
+  test('fitness content map includes imageUrl and label', () => {
+    const { shapeFitnessContentMap } = require('../backend/src/shared/responseShapers');
+    const map = shapeFitnessContentMap([{ title: 'Morning Yoga', imageUrl: 'img.jpg', videoId: 'abc' }]);
+    expect(map['Morning Yoga'].imageUrl).toBe('img.jpg');
+    expect(map['Morning Yoga'].label).toBe('Morning Yoga');
+  });
+
+  test('fitness label fallback localizes Yoga in Hindi without API', () => {
+    const { getFitnessLabelFallback } = require('../backend/src/shared/fitnessFallbacks');
+    expect(getFitnessLabelFallback('Yoga', 'hi')).toBe('योग');
+    expect(getFitnessLabelFallback('Yoga', 'gu')).toBe('યોગ');
+    expect(getFitnessLabelFallback('Yoga', 'en')).toBe('Yoga');
+  });
+});
+
+describe('Emergency API messages', () => {
+  const { emergencyMessage } = require('../backend/src/shared/apiMessages');
+
+  test('returns Hindi emergency submitted message', () => {
+    expect(emergencyMessage('submitted', 'hi')).toContain('आपातकालीन');
+  });
+});
+
+describe('Profile language preference', () => {
+  test('normalizeLanguage accepts all supported profile codes', () => {
+    SUPPORTED_LANGUAGES.forEach((lang) => {
+      expect(normalizeLanguage(lang)).toBe(lang);
+    });
   });
 });
 

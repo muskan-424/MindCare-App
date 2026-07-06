@@ -35,11 +35,11 @@ const GroupSessionsScreen = ({ navigation }) => {
       setAllGroups(allRes.data || []);
     } catch (err) {
       console.error(err);
-      Alert.alert('Error', 'Failed to load group sessions.');
+      Alert.alert(t('common.error'), t('groups.error_load'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadData();
@@ -50,20 +50,20 @@ const GroupSessionsScreen = ({ navigation }) => {
       if (await Linking.canOpenURL(url)) {
         await Linking.openURL(url);
       } else {
-        Alert.alert('Error', 'Cannot open this meeting link.');
+        Alert.alert(t('common.error'), t('groups.error_link'));
       }
     } catch (e) {
-      Alert.alert('Error', 'An error occurred trying to open the link.');
+      Alert.alert(t('common.error'), t('groups.error_open_link'));
     }
   };
 
   const handleRegister = async (sessionId) => {
     try {
       await api.post(`/api/groups/${sessionId}/join`);
-      Alert.alert('Success', "You've successfully registered for this group session!");
+      Alert.alert(t('common.success'), t('groups.register_success'));
       loadData();
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.error || 'Failed to register for session.');
+      Alert.alert(t('common.error'), err.response?.data?.error || t('groups.error_register'));
     }
   };
 

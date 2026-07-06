@@ -18,6 +18,7 @@ import { useState, useRef, useCallback } from 'react';
 import { PermissionsAndroid, Platform, Alert } from 'react-native';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import { GOOGLE_API_KEY } from '@env';
+import useTranslation from '../../../utils/i18n';
 
 // Record in AAC/MP4 format which is perfectly supported by Gemini natively
 const RECORDER_CONFIG = {
@@ -55,13 +56,14 @@ const readFileAsBase64 = (filePath) => {
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
 const useSpeechToText = () => {
+  const { t } = useTranslation();
   const [isListening, setIsListening]   = useState(false);
   const [sttError,    setSttError]      = useState('');
   const recorderRef = useRef(new AudioRecorderPlayer());
   const recordedPathRef = useRef(null);
 
   // ── Request mic permission ────────────────────────────────────────────────
-  const requestMicPermission = async () => {
+  const requestMicPermission = useCallback(async () => {
     if (Platform.OS !== 'android') return true;
     try {
       const already = await PermissionsAndroid.check(
@@ -71,17 +73,17 @@ const useSpeechToText = () => {
       const result = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
         {
-          title: 'Microphone Permission',
-          message: 'MindCare needs microphone access to transcribe your speech.',
-          buttonPositive: 'Allow',
-          buttonNegative: 'Deny',
+          title: t('assessment.intake_mic_permission_title'),
+          message: t('assessment.stt_mic_message'),
+          buttonPositive: t('common.ok'),
+          buttonNegative: t('common.cancel'),
         },
       );
       return result === PermissionsAndroid.RESULTS.GRANTED;
     } catch {
       return false;
     }
-  };
+  }, [t]);
 
   // ── Start recording ───────────────────────────────────────────────────────
   const startListening = useCallback(async () => {
@@ -90,7 +92,7 @@ const useSpeechToText = () => {
 
     const hasPermission = await requestMicPermission();
     if (!hasPermission) {
-      Alert.alert('Permission Denied', 'Microphone access is required for speech-to-text.');
+      Alert.alert(t('common.error'), t('assessment.stt_permission_denied'));
       return;
     }
 
@@ -104,9 +106,9 @@ const useSpeechToText = () => {
       setIsListening(true);
     } catch (e) {
       console.warn('[STT] startRecorder error:', e.message);
-      setSttError('Could not start microphone: ' + e.message);
+      setSttError(t('assessment.stt_start_failed', { error: e.message }));
     }
-  }, []);
+  }, [t, requestMicPermission]);
 
   // ── Stop recording, then call Google STT, return transcript ──────────────
   const stopListening = useCallback(async () => {
@@ -122,12 +124,12 @@ const useSpeechToText = () => {
       console.log('[STT] Recording saved to:', audioPath);
     } catch (e) {
       console.warn('[STT] stopRecorder error:', e.message);
-      setSttError('Recording failed to stop properly.');
+      setSttError(t('assessment.stt_stop_failed'));
       return null;
     }
 
     if (!audioPath) {
-      setSttError('No audio was captured.');
+      setSttError(t('assessment.stt_no_audio'));
       return null;
     }
 
@@ -179,7 +181,7 @@ const useSpeechToText = () => {
       console.log('[STT] Transcript:', transcript);
 
       if (!transcript) {
-        setSttError('Could not understand speech — please try again or type your answer.');
+        setSttError(t('assessment.stt_unintelligible'));
         return '';
       }
 
@@ -189,7 +191,7 @@ const useSpeechToText = () => {
       setSttError(e.message);
       return null;
     }
-  }, [isListening]);
+  }, [isListening, t]);
 
   // ── Reset state ───────────────────────────────────────────────────────────
   const reset = useCallback(() => {

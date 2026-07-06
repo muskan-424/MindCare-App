@@ -6,6 +6,7 @@ import {
   Image,
 } from 'react-native';
 import api from '../../../utils/apiClient';
+import useTranslation from '../../../utils/i18n';
 import AnimatedLoader from 'react-native-animated-loader';
 import Grid from 'react-native-grid-component';
 import FitnessContentCard from '../components/FitnessContentCard';
@@ -63,6 +64,7 @@ const fallbackContent = {
 
 const FitnessContent = ({route}) => {
   const { category, subcategory } = route.params;
+  const { t } = useTranslation();
   const [content, setContent] = useState({});
   const [title, setTitle] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -97,12 +99,18 @@ const FitnessContent = ({route}) => {
 
     fetchData();
   }, [category, subcategory]);
-  const _renderItem = (data) => (
-    <FitnessContentCard
-      img_uri={content[data]}
-      category={data}
-    />
-  );
+  const _renderItem = (data) => {
+    const entry = content[data];
+    const imageUrl = typeof entry === 'string' ? entry : entry?.imageUrl;
+    const label = typeof entry === 'object' ? entry?.label : null;
+    return (
+      <FitnessContentCard
+        img_uri={imageUrl}
+        category={data}
+        label={label || data}
+      />
+    );
+  };
   return (
     <View style={styles.container}>
       {isLoading ? (
@@ -130,7 +138,7 @@ const FitnessContent = ({route}) => {
             style={{width: 200, height: 200}}
           />
           <Text style={{paddingHorizontal: 5}}>
-            Uh ohh! We are hard at curating the most useful data for you.{' '}
+            {t('wellness.fitness_empty_curating')}
           </Text>
         </View>
       )}

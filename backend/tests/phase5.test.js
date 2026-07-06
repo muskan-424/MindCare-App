@@ -368,7 +368,7 @@ describe('Admin DTO layer', () => {
     const shaped = shapeFitnessNameMap([
       { _id: 'abc', name: 'Yoga', icon: 'http://icon', __v: 0 },
     ]);
-    expect(shaped.Yoga).toEqual({ icon: 'http://icon' });
+    expect(shaped.Yoga).toEqual({ icon: 'http://icon', label: 'Yoga' });
     expect(shaped.Yoga._id).toBeUndefined();
   });
 

@@ -14,12 +14,14 @@ import {
 } from 'react-native-pell-rich-editor';
 import Entypo from 'react-native-vector-icons/Entypo';
 import {colors} from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
 const Heading1Icon = ({tintColor}) => (
   <Text style={[styles.tib, {color: tintColor}]}>H1</Text>
 );
 
 const AddStory = props => {
+  const { t } = useTranslation();
   const strikethrough = require('../../../assets/strikethrough.png'); //icon for strikethrough
   const video = require('../../../assets/video.png'); //icon for Addvideo
   const RichText = useRef(); //reference to the RichEditor component
@@ -42,7 +44,7 @@ const AddStory = props => {
     <View style={styles.container}>
       <View style={{height: 30}}>
         <Text onPress={() => props.navigation.navigate('MainScreen')}>
-          Back
+          {t('common.back')}
         </Text>
       </View>
       <ScrollView>
@@ -51,7 +53,7 @@ const AddStory = props => {
           containerStyle={styles.editor}
           ref={RichText}
           style={styles.rich}
-          placeholder="Start Writing Here!"
+          placeholder={t('blog.write_placeholder')}
           //initialContentHTML={data.content}
           //  onChange={(text) => setArticle(text)}
         />
@@ -93,7 +95,7 @@ const AddStory = props => {
           }}
           onPress={() => console.log('i m pressed')}>
           <Text style={[styles.text]}>
-            <Entypo name="check" size={20} color="black" /> Done
+            <Entypo name="check" size={20} color="black" /> {t('common.done')}
           </Text>
         </TouchableOpacity>
       </ScrollView>
