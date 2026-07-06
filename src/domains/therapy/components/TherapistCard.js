@@ -3,9 +3,20 @@ import {StyleSheet, Text, View, Image} from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import {colors, fonts} from '../../../constants/theme';
 import {useNavigation} from '@react-navigation/native';
+import useTranslation from '../../../utils/i18n';
+
+const ROLE_LABEL_KEYS = {
+  Psychologist: 'auth.roles.psychologist',
+  Psychiatrist: 'auth.roles.psychiatrist',
+  Counsellor: 'auth.roles.counsellor',
+  'Social Worker': 'auth.roles.social_worker',
+};
 
 const TherapistCard = props => {
   const navigation = useNavigation();
+  const { t } = useTranslation();
+  const spec = props.data.specialisation;
+  const specLabel = ROLE_LABEL_KEYS[spec] ? t(ROLE_LABEL_KEYS[spec]) : spec;
   return (
     <View style={styles.container}>
       <View style={styles.infoContainer}>
@@ -14,11 +25,11 @@ const TherapistCard = props => {
         </View>
         <View>
           <Text style={styles.name}>{props.data.name}</Text>
-          <Text style={styles.spec}>{props.data.specialisation}</Text>
+          <Text style={styles.spec}>{specLabel}</Text>
         </View>
       </View>
       <View style={styles.bookContainer}>
-        <Text style={styles.bookText}>Book Appointment</Text>
+        <Text style={styles.bookText}>{t('therapy.book_appointment')}</Text>
         <View>
           <AntDesign
             name="rightcircle"

@@ -17,15 +17,20 @@ import useTranslation from '../../../utils/i18n';
 import api from '../../../utils/apiClient';
 
 const GOALS = [
-  'Reduce stress',
-  'Better sleep',
-  'More energy',
-  'Build strength',
-  'General wellness',
+  { value: 'Reduce stress', labelKey: 'wellness.fitness_goal_reduce_stress' },
+  { value: 'Better sleep', labelKey: 'wellness.fitness_goal_better_sleep' },
+  { value: 'More energy', labelKey: 'wellness.fitness_goal_more_energy' },
+  { value: 'Build strength', labelKey: 'wellness.fitness_goal_build_strength' },
+  { value: 'General wellness', labelKey: 'wellness.fitness_goal_general' },
 ];
 const DURATIONS = [10, 15, 20, 30];
 const DAYS_OPTIONS = [3, 4, 5, 7];
-const PREFERRED_TYPES = ['Yoga', 'Meditation', 'Cardio', 'Stretching'];
+const PREFERRED_TYPES = [
+  { value: 'Yoga', labelKey: 'wellness.fitness_type_yoga' },
+  { value: 'Meditation', labelKey: 'wellness.fitness_type_meditation' },
+  { value: 'Cardio', labelKey: 'wellness.fitness_type_cardio' },
+  { value: 'Stretching', labelKey: 'wellness.fitness_type_stretching' },
+];
 
 const FitnessCoachScreen = ({ navigation, auth }) => {
   const { t } = useTranslation();
@@ -74,7 +79,7 @@ const FitnessCoachScreen = ({ navigation, auth }) => {
       setPlan(data);
       setStep('plan');
     } catch (e) {
-      setError(e.response?.data?.msg || e.message || 'Could not generate your plan. Please try again.');
+      setError(e.response?.data?.msg || e.message || t('wellness.fitness_coach_error_generate'));
     } finally {
       setLoading(false);
     }
@@ -96,9 +101,9 @@ const FitnessCoachScreen = ({ navigation, auth }) => {
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => { setStep('form'); setPlan(null); }} style={styles.backBtn}>
-              <Text style={styles.backText}>← Back</Text>
+              <Text style={styles.backText}>← {t('common.back')}</Text>
             </TouchableOpacity>
-            <Text style={styles.title}>Your routine</Text>
+            <Text style={styles.title}>{t('wellness.fitness_coach_your_routine')}</Text>
           </View>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryText}>{plan.summary}</Text>
@@ -121,14 +126,14 @@ const FitnessCoachScreen = ({ navigation, auth }) => {
                     <View style={styles.exerciseInfo}>
                       <Text style={styles.exerciseName}>{ex.name}</Text>
                       <Text style={styles.exerciseDesc}>{ex.description}</Text>
-                      <Text style={styles.exerciseMeta}>{ex.durationMinutes} min · {ex.type}</Text>
+                      <Text style={styles.exerciseMeta}>{t('wellness.fitness_coach_exercise_min', { min: ex.durationMinutes, type: ex.type })}</Text>
                     </View>
                     {ex.youtubeId ? (
                       <TouchableOpacity
                         style={styles.watchBtn}
                         onPress={() => openVideo(ex.youtubeId, ex.name)}
                       >
-                        <Text style={styles.watchBtnText}>Watch</Text>
+                        <Text style={styles.watchBtnText}>{t('wellness.fitness_coach_watch')}</Text>
                       </TouchableOpacity>
                     ) : null}
                   </View>
@@ -146,26 +151,26 @@ const FitnessCoachScreen = ({ navigation, auth }) => {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backText}>← Back</Text>
+            <Text style={styles.backText}>← {t('common.back')}</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Fitness Coach</Text>
-          <Text style={styles.subtitle}>Get a personalized schedule and routine</Text>
+          <Text style={styles.title}>{t('wellness.fitness_coach_title')}</Text>
+          <Text style={styles.subtitle}>{t('wellness.fitness_coach_form_subtitle')}</Text>
         </View>
 
-        <Text style={styles.label}>What's your main goal?</Text>
+        <Text style={styles.label}>{t('wellness.fitness_coach_goal_label')}</Text>
         <View style={styles.chipRow}>
           {GOALS.map((g) => (
             <TouchableOpacity
-              key={g}
-              style={[styles.chip, goal === g && styles.chipActive]}
-              onPress={() => setGoal(g)}
+              key={g.value}
+              style={[styles.chip, goal === g.value && styles.chipActive]}
+              onPress={() => setGoal(g.value)}
             >
-              <Text style={[styles.chipText, goal === g && styles.chipTextActive]}>{g}</Text>
+              <Text style={[styles.chipText, goal === g.value && styles.chipTextActive]}>{t(g.labelKey)}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.label}>Time per day (minutes)</Text>
+        <Text style={styles.label}>{t('wellness.fitness_coach_time_label')}</Text>
         <View style={styles.chipRow}>
           {DURATIONS.map((d) => (
             <TouchableOpacity
@@ -178,7 +183,7 @@ const FitnessCoachScreen = ({ navigation, auth }) => {
           ))}
         </View>
 
-        <Text style={styles.label}>Days per week</Text>
+        <Text style={styles.label}>{t('wellness.fitness_coach_days_label')}</Text>
         <View style={styles.chipRow}>
           {DAYS_OPTIONS.map((d) => (
             <TouchableOpacity
@@ -191,20 +196,20 @@ const FitnessCoachScreen = ({ navigation, auth }) => {
           ))}
         </View>
 
-        <Text style={styles.label}>Include these (select all you like)</Text>
+        <Text style={styles.label}>{t('wellness.fitness_coach_types_label')}</Text>
         <View style={styles.chipRow}>
-          {PREFERRED_TYPES.map((t) => (
+          {PREFERRED_TYPES.map((typeOpt) => (
             <TouchableOpacity
-              key={t}
-              style={[styles.chip, preferredTypes.includes(t) && styles.chipActive]}
-              onPress={() => toggleType(t)}
+              key={typeOpt.value}
+              style={[styles.chip, preferredTypes.includes(typeOpt.value) && styles.chipActive]}
+              onPress={() => toggleType(typeOpt.value)}
             >
-              <Text style={[styles.chipText, preferredTypes.includes(t) && styles.chipTextActive]}>{t}</Text>
+              <Text style={[styles.chipText, preferredTypes.includes(typeOpt.value) && styles.chipTextActive]}>{t(typeOpt.labelKey)}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.label}>Relevant concerns (optional)</Text>
+        <Text style={styles.label}>{t('wellness.fitness_coach_concerns_label')}</Text>
         <View style={styles.chipRowWrap}>
           {concerns.map((c) => (
             <TouchableOpacity
@@ -219,10 +224,10 @@ const FitnessCoachScreen = ({ navigation, auth }) => {
           ))}
         </View>
 
-        <Text style={styles.label}>Anything else? (e.g. "I prefer morning")</Text>
+        <Text style={styles.label}>{t('wellness.fitness_coach_notes_label')}</Text>
         <TextInput
           style={styles.input}
-          placeholder="Optional notes"
+          placeholder={t('wellness.fitness_coach_notes_placeholder')}
           placeholderTextColor={colors.gray}
           value={freeText}
           onChangeText={setFreeText}
@@ -238,7 +243,7 @@ const FitnessCoachScreen = ({ navigation, auth }) => {
           {loading ? (
             <ActivityIndicator color={colors.white} size="small" />
           ) : (
-            <Text style={styles.submitText}>Generate my routine</Text>
+            <Text style={styles.submitText}>{t('wellness.fitness_coach_generate')}</Text>
           )}
         </TouchableOpacity>
         <View style={{ height: 40 }} />

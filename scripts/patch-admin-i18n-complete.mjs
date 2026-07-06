@@ -5,6 +5,12 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import translations from '../src/localization/translations.js';
+import { ADMIN_BY_LANG } from './admin-locale-patches.mjs';
+import { ADMIN_EXTRA_BY_LANG } from './admin-extra-locale-patches.mjs';
+import { ADMIN_EXTRA_INDIAN } from './admin-extra-indian-patches.mjs';
+import { ADMIN_EXTRA_REMAINING_BY_LANG } from './admin-extra-remaining.mjs';
+import { ADMIN_SHELL_BY_LANG } from './admin-shell-locale-patches.mjs';
+import { WESTERN_META_BY_LANG } from './admin-western-meta.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const outPath = path.join(__dirname, '../src/localization/translations.js');
@@ -256,28 +262,24 @@ const ADMIN_EXTRA = {
   send_broadcast: 'Send Broadcast',
 };
 
-const HI_ADMIN = {
-  dashboard_subtitle: 'एडमिन कंट्रोल पैनल',
-  tab_actions: 'कार्य',
-  tab_analytics: 'विश्लेषण',
-  tab_users: 'उपयोगकर्ता',
-  overview: 'अवलोकन',
-  all_clear: 'सब ठीक',
-  alert_error: 'त्रुटि',
-  alert_saved: 'सहेजा गया',
-  group_sessions_title: 'समूह सत्र',
-  therapist_hub: 'थेरेपिस्ट हब',
-  user_management: 'उपयोगकर्ता प्रबंधन',
-  broadcasts_title: 'प्रसारण सूचनाएँ',
-};
+const INDIAN_EXTRA = ADMIN_EXTRA_INDIAN;
 
-// Merge into all languages
 for (const lang of LANGS) {
   if (!translations[lang]) continue;
-  translations[lang].admin = { ...translations[lang].admin, ...ADMIN_EXTRA };
-  if (lang === 'hi') {
-    translations[lang].admin = { ...translations[lang].admin, ...HI_ADMIN };
-  }
+  const dashboardLocalized = ADMIN_EXTRA_BY_LANG[lang] || INDIAN_EXTRA[lang] || {};
+  const remainingLocalized = ADMIN_EXTRA_REMAINING_BY_LANG[lang] || {};
+  const shellLocalized = ADMIN_SHELL_BY_LANG[lang] || {};
+  const metaLocalized = WESTERN_META_BY_LANG[lang] || {};
+  const byLang = ADMIN_BY_LANG[lang] || {};
+  translations[lang].admin = {
+    ...translations[lang].admin,
+    ...ADMIN_EXTRA,
+    ...dashboardLocalized,
+    ...remainingLocalized,
+    ...shellLocalized,
+    ...metaLocalized,
+    ...byLang,
+  };
 }
 
 function serializeSection(obj, depth) {
@@ -309,3 +311,7 @@ const header = `/**
 const body = LANGS.map((lang) => `  ${lang}: {\n${serializeSection(translations[lang], 2)}\n  },`).join('\n\n');
 fs.writeFileSync(outPath, `${header}const translations = {\n${body}\n};\n\nexport default translations;\n`);
 console.log(`patched admin keys (${Object.keys(ADMIN_EXTRA).length} keys) across ${LANGS.length} languages`);
+
+import { spawnSync } from 'child_process';
+const sync = spawnSync('node', ['admin/scripts/sync-translations.mjs'], { stdio: 'inherit', cwd: path.join(__dirname, '..') });
+if (sync.status !== 0) process.exit(sync.status ?? 1);

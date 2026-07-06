@@ -68,14 +68,35 @@ describe('Dynamic content fallback recommendations', () => {
     expect(hi).not.toEqual(en);
   });
 
+  test('Spanish fusion fallbacks are localized', () => {
+    const es = getFusionRecommendations('MEDIUM', 'es');
+    const en = getFusionRecommendations('MEDIUM', 'en');
+    expect(es).not.toEqual(en);
+  });
+
   test('unknown language falls back to English recommendations', () => {
-    expect(getFusionRecommendations('MEDIUM', 'es')).toEqual(getFusionRecommendations('MEDIUM', 'en'));
+    expect(getFusionRecommendations('MEDIUM', 'xx')).toEqual(getFusionRecommendations('MEDIUM', 'en'));
   });
 
   test('Bengali issue fallbacks are localized', () => {
     const bn = getIssueFallbackRecommendations('bn');
     const en = getIssueFallbackRecommendations('en');
     expect(bn).not.toEqual(en);
+  });
+});
+
+describe('YouTube search query localization', () => {
+  const { getYoutubeSearchQuery } = require('../backend/src/shared/youtubeSearchQueries');
+
+  test('returns localized meditation query for Hindi', () => {
+    const hi = getYoutubeSearchQuery('meditation', 'hi');
+    const en = getYoutubeSearchQuery('meditation', 'en');
+    expect(hi).not.toBe(en);
+    expect(hi).toContain('hindi');
+  });
+
+  test('falls back to English for unknown language', () => {
+    expect(getYoutubeSearchQuery('sleep', 'xx')).toBe(getYoutubeSearchQuery('sleep', 'en'));
   });
 });
 
@@ -119,6 +140,13 @@ describe('Fitness content shape', () => {
     const map = shapeFitnessContentMap([{ title: 'Morning Yoga', imageUrl: 'img.jpg', videoId: 'abc' }]);
     expect(map['Morning Yoga'].imageUrl).toBe('img.jpg');
     expect(map['Morning Yoga'].label).toBe('Morning Yoga');
+  });
+
+  test('fitness label fallback localizes Yoga in Hindi without API', () => {
+    const { getFitnessLabelFallback } = require('../backend/src/shared/fitnessFallbacks');
+    expect(getFitnessLabelFallback('Yoga', 'hi')).toBe('योग');
+    expect(getFitnessLabelFallback('Yoga', 'gu')).toBe('યોગ');
+    expect(getFitnessLabelFallback('Yoga', 'en')).toBe('Yoga');
   });
 });
 

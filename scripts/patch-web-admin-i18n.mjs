@@ -5,6 +5,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import translations from '../src/localization/translations.js';
+import { WEB_BY_LANG } from './web-admin-locale-patches.mjs';
+import { INDIAN_WEB_BY_LANG } from './web-admin-indian-patches.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const outPath = path.join(__dirname, '../src/localization/translations.js');
@@ -143,22 +145,10 @@ const WEB = {
   language: 'Language',
 };
 
-const HI_WEB = {
-  header_title: 'MindCare एडमिन',
-  header_sub: 'प्लेटफ़ॉर्म निरीक्षण और clinical review',
-  save_load: 'सहेजें और लोड करें',
-  tab_pending: 'लंबित समीक्षा',
-  tab_appointments: 'अपॉइंटमेंट',
-  users_sidebar: 'उपयोगकर्ता ({count})',
-  verify_btn: 'सत्यापित करें',
-  pending_verify: 'सत्यापित करें',
-  pending_reject: 'अस्वीकार',
-  language: 'भाषा',
-};
-
 for (const lang of LANGS) {
   if (!translations[lang]) continue;
-  translations[lang].web = { ...WEB, ...(lang === 'hi' ? HI_WEB : {}) };
+  const localized = WEB_BY_LANG[lang] || INDIAN_WEB_BY_LANG[lang] || {};
+  translations[lang].web = { ...WEB, ...localized };
 }
 
 function serializeSection(obj, depth) {
@@ -176,7 +166,11 @@ function serializeSection(obj, depth) {
 const header = fs.readFileSync(outPath, 'utf8').split('const translations')[0];
 const body = LANGS.map((lang) => `  ${lang}: {\n${serializeSection(translations[lang], 2)}\n  },`).join('\n\n');
 fs.writeFileSync(outPath, `${header}const translations = {\n${body}\n};\n\nexport default translations;\n`);
-console.log(`patched web.* keys (${Object.keys(WEB).length}) across ${LANGS.length} languages`);
+console.log(
+  `patched web.* keys (${Object.keys(WEB).length}) across ${LANGS.length} languages`,
+  '| localized:',
+  [...Object.keys(WEB_BY_LANG), ...Object.keys(INDIAN_WEB_BY_LANG)].join(', '),
+);
 
 import { spawnSync } from 'child_process';
 const sync = spawnSync('node', ['admin/scripts/sync-translations.mjs'], { stdio: 'inherit', cwd: path.join(__dirname, '..') });

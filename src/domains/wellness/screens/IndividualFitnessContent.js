@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import ImageZoom from 'react-native-image-pan-zoom';
 import { colors } from '../../../constants/theme';
+import useTranslation from '../../../utils/i18n';
 
 const IndividualFitnessContent = ({ route, navigation }) => {
+  const { t } = useTranslation();
   const image = route.params?.image;
   const title = route.params?.category;
   const videoId = route.params?.videoId;
@@ -40,14 +42,14 @@ const IndividualFitnessContent = ({ route, navigation }) => {
             onPress={() =>
               navigation.navigate('Track', {
                 videoId,
-                title: title || 'Exercise',
+                title: title || t('wellness.fitness_default_title'),
                 thumbnail: image || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
               })
             }>
-            <Text style={styles.watchBtnText}>Watch video</Text>
+            <Text style={styles.watchBtnText}>{t('wellness.fitness_watch_video')}</Text>
           </TouchableOpacity>
         ) : (
-          <Text style={styles.hint}>Follow along with your favourite video for "{title}".</Text>
+          <Text style={styles.hint}>{t('wellness.fitness_follow_hint', { title })}</Text>
         )}
       </ScrollView>
     </View>
