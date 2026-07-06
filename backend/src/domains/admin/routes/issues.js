@@ -5,6 +5,7 @@ const IssueReport = require('../models/IssueReport');
 const { auth } = require('../../../../middleware/auth');
 const { getIssueFallbackRecommendations } = require('../../../shared/dynamicFallbacks');
 const { aiLanguageInstruction } = require('../../../shared/locale');
+const { shapeIssueReportCreated, shapeBurnoutAlertResponse } = require('../../../shared/responseShapers');
 
 const CATEGORIES = [
   'academic_stress',

@@ -5,7 +5,7 @@ function toRiskLevel(score) {
   return 'LOW';
 }
 
-const { getFusionRecommendations } = require('../../../shared/dynamicFallbacks');
+const { getFusionRecommendations } = require('../../../../shared/dynamicFallbacks');
 
 function buildRecommendations(level, language = 'en') {
   return getFusionRecommendations(level, language);

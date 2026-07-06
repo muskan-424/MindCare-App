@@ -1,4 +1,3 @@
-const { translateText } = require('../domains/community/services/tinkChatService');
 const { batchTranslateStrings } = require('./batchTranslate');
 const { normalizeLanguage } = require('./locale');
 

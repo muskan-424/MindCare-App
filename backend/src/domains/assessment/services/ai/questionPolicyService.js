@@ -1,5 +1,5 @@
-const { batchTranslateStrings } = require('../../../shared/batchTranslate');
-const { normalizeLanguage } = require('../../../shared/locale');
+const { batchTranslateStrings } = require('../../../../shared/batchTranslate');
+const { normalizeLanguage } = require('../../../../shared/locale');
 
 const BASE_QUESTIONS = {
   text: [

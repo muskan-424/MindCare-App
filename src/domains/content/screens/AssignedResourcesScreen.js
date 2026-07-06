@@ -32,7 +32,7 @@ const AssignedResourcesScreen = ({ navigation }) => {
       setLoading(false);
     };
     fetchResources();
-  }, []);
+  }, [t]);
 
   const openUrl = (url) => {
     Linking.openURL(url).catch(() => {

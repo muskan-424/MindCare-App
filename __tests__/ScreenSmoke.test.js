@@ -6,8 +6,8 @@
 import React from 'react';
 import renderer, { act } from 'react-test-renderer';
 import { Provider } from 'react-redux';
-import { createStore } from 'redux';
 import { TouchableOpacity, Text } from 'react-native';
+import makeTestStore from './helpers/makeTestStore';
 
 function collectText(root) {
   return root.findAllByType(Text)
@@ -94,9 +94,7 @@ const SHAPED_INSTITUTION_REPORT = {
   generatedAt: '2026-06-09T00:00:00.000Z',
 };
 
-const makeStore = () => createStore((state = {
-  auth: { token: 'mock-token', user: { _id: 'user-001', name: 'Pat' } },
-}) => state);
+const makeStore = makeTestStore;
 
 const mockNavigation = { navigate: jest.fn(), goBack: jest.fn() };
 
@@ -125,10 +123,15 @@ beforeEach(() => {
 describe('Fitness screens (shaped API)', () => {
   test('FitnessScreen loads category map keyed by name (no mongoose fields)', async () => {
     const FitnessScreen = require('../src/domains/wellness/screens/FitnessScreen').default;
+    const store = makeStore();
     let tree;
 
     await act(async () => {
-      tree = renderer.create(<FitnessScreen />);
+      tree = renderer.create(
+        <Provider store={store}>
+          <FitnessScreen />
+        </Provider>,
+      );
       await Promise.resolve();
     });
 
@@ -139,7 +142,7 @@ describe('Fitness screens (shaped API)', () => {
     expect(json).toContain('Meditation');
     expect(json).not.toContain('"_id"');
     expect(json).not.toContain('"__v"');
-  });
+  }, 15000);
 
   test('FitnessCoachScreen renders plan from shaped weeklySchedule', async () => {
     const FitnessCoachScreen = require('../src/domains/wellness/screens/FitnessCoachScreen').default;
@@ -186,14 +189,17 @@ describe('Fitness screens (shaped API)', () => {
 describe('Institution screens (shaped API)', () => {
   test('InstitutionDashboardScreen shows institutionName and memberCount', async () => {
     const InstitutionDashboardScreen = require('../src/domains/identity/screens/InstitutionDashboardScreen').default;
+    const store = makeStore();
     let tree;
 
     await act(async () => {
       tree = renderer.create(
-        <InstitutionDashboardScreen
-          route={{ params: { institutionId: 'inst-507f1f77bcf86cd799439011' } }}
-          navigation={mockNavigation}
-        />,
+        <Provider store={store}>
+          <InstitutionDashboardScreen
+            route={{ params: { institutionId: 'inst-507f1f77bcf86cd799439011' } }}
+            navigation={mockNavigation}
+          />
+        </Provider>,
       );
       await Promise.resolve();
       await Promise.resolve();

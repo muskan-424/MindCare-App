@@ -165,7 +165,7 @@ const HomeScreen = props => {
         // keep fallbacks
       }
     })();
-  }, []);
+  }, [t]);
 
   // Daily check-in: show assessment when user has not logged mood today.
   // Skip if welcomeMessage is set — that effect handles the navigation so we don't race.
@@ -209,7 +209,7 @@ const HomeScreen = props => {
       setLoadingContent(false);
     };
     fetchContent();
-  }, [selectedCategory]);
+  }, [selectedCategory, t]);
 
   // Trigger assessment automatically on login/signup (welcomeMessage set by auth action)
   useEffect(() => {
@@ -220,9 +220,9 @@ const HomeScreen = props => {
       props.navigation.navigate('MultidimensionalIntake');
     }, 600);
 
-    const t = setTimeout(() => clearWelcomeMessage(), 4000);
+    const welcomeTimer = setTimeout(() => clearWelcomeMessage(), 4000);
     return () => {
-      clearTimeout(t);
+      clearTimeout(welcomeTimer);
       clearTimeout(navDelay);
     };
   }, [welcomeMessage, clearWelcomeMessage, props.navigation]);
