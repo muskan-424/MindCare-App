@@ -12,7 +12,6 @@ import { LineChart, ContributionGraph } from 'react-native-chart-kit';
 import useTranslation from '../../../utils/i18n';
 import { formatDate } from '../../../utils/locale';
 
-const RATING_LABELS = { 1: 'Terrible', 2: 'Very Low', 3: 'Low', 4: 'Below Okay', 5: 'Okay', 6: 'Decent', 7: 'Good', 8: 'Great', 9: 'Very Good', 10: 'Excellent' };
 const RATING_COLORS = { low: '#E57373', mid: '#FFB74D', high: '#81C784' };
 
 const ALL_BADGE_KEYS = [
@@ -88,7 +87,7 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
         }
       }
     } catch (e) {
-      Alert.alert('Error', 'Failed to save mood. Please try again.');
+      Alert.alert(t('common.error'), t('mood.error_save'));
     }
     setLoading(false);
   };
@@ -102,7 +101,7 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-        <Text style={styles.backText}>← Back</Text>
+        <Text style={styles.backText}>← {t('common.back')}</Text>
       </TouchableOpacity>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>{t('mood.title')}</Text>
@@ -113,15 +112,15 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{stats.average || '—'}</Text>
-              <Text style={styles.statLabel}>Avg (30d)</Text>
+              <Text style={styles.statLabel}>{t('mood.stat_avg_30d')}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{stats.streak}</Text>
-              <Text style={styles.statLabel}>Streak 🔥</Text>
+              <Text style={styles.statLabel}>{t('mood.stat_streak')}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{stats.totalEntries}</Text>
-              <Text style={styles.statLabel}>Total Logs</Text>
+              <Text style={styles.statLabel}>{t('mood.total_logs')}</Text>
             </View>
           </View>
         )}
@@ -157,7 +156,7 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
 
         {/* Trend header with window toggle */}
         <View style={styles.trendHeader}>
-          <Text style={styles.trendTitle}>Mood trend</Text>
+          <Text style={styles.trendTitle}>{t('mood.trend')}</Text>
           <View style={styles.windowBtns}>
             {[7, 30, 90].map(w => (
               <TouchableOpacity key={w} style={[styles.windowBtn, window === w && styles.windowBtnActive]} onPress={() => setWindow(w)}>
@@ -170,7 +169,7 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
         {loadingTrend ? (
           <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 16 }} />
         ) : trend.filter(d => d.rating != null).length === 0 ? (
-          <Text style={styles.noTrend}>No entries yet. Log your mood above.</Text>
+          <Text style={styles.noTrend}>{t('mood.no_trend')}</Text>
         ) : window === 90 ? (
           <View style={{ marginTop: 10, alignItems: 'center' }}>
             <ContributionGraph
@@ -219,14 +218,14 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
         {stats?.bestDay && (
           <View style={styles.insightRow}>
             <View style={[styles.insightCard, { borderLeftColor: RATING_COLORS.high }]}>
-              <Text style={styles.insightLabel}>Best Day 🌟</Text>
+              <Text style={styles.insightLabel}>{t('mood.best_day')}</Text>
               <Text style={styles.insightValue}>{formatDate(stats.bestDay.date, language)}</Text>
-              <Text style={styles.insightSub}>Rating: {stats.bestDay.rating}</Text>
+              <Text style={styles.insightSub}>{t('mood.insight_rating', { rating: stats.bestDay.rating })}</Text>
             </View>
             <View style={[styles.insightCard, { borderLeftColor: RATING_COLORS.low }]}>
-              <Text style={styles.insightLabel}>Rough Day 💙</Text>
+              <Text style={styles.insightLabel}>{t('mood.rough_day')}</Text>
               <Text style={styles.insightValue}>{formatDate(stats.worstDay.date, language)}</Text>
-              <Text style={styles.insightSub}>Rating: {stats.worstDay.rating}</Text>
+              <Text style={styles.insightSub}>{t('mood.insight_rating', { rating: stats.worstDay.rating })}</Text>
             </View>
           </View>
         )}
@@ -260,7 +259,7 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
                     color={earnedBadgeMeta.color}
                   />
                 </View>
-                <Text style={styles.congratsText}>CONGRATULATIONS!</Text>
+                <Text style={styles.congratsText}>{t('mood.congrats_title')}</Text>
                 <Text style={[styles.earnedLabel, { color: earnedBadgeMeta.color }]}>
                   {earnedBadgeMeta.label}
                 </Text>
@@ -269,7 +268,7 @@ const MoodTrackerScreen = ({ auth, navigation }) => {
                   style={[styles.collectBtn, { backgroundColor: earnedBadgeMeta.color }]}
                   onPress={() => setEarnedBadgeMeta(null)}
                 >
-                  <Text style={styles.collectBtnText}>Awesome!</Text>
+                  <Text style={styles.collectBtnText}>{t('mood.collect_btn')}</Text>
                 </TouchableOpacity>
               </>
             )}

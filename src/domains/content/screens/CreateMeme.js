@@ -15,6 +15,7 @@ import axios from 'axios';
 import { ActivityIndicator } from 'react-native-paper';
 import { colors } from '../../../constants/theme';
 import { TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
+import useTranslation from '../../../utils/i18n';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('screen');
 const MEME_SIZE = SCREEN_WIDTH - 32;
@@ -27,9 +28,9 @@ const TEXT_COLORS = [
   { id: 'blue', value: '#3B82F6' },
 ];
 const OUTLINE_OPTIONS = [
-  { id: 'none', label: 'None' },
-  { id: 'black', label: 'Black' },
-  { id: 'white', label: 'White' },
+  { id: 'none', labelKey: 'meme.outline_none' },
+  { id: 'black', labelKey: 'meme.outline_black' },
+  { id: 'white', labelKey: 'meme.outline_white' },
 ];
 const FONT_SIZES = [
   { id: 'small', label: 'S', size: 18 },
@@ -74,6 +75,7 @@ function MemeOverlayText({ text, textColor, outlineColor, fontSize, align }) {
 }
 
 const CreateMeme = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [memeArray, setMemeArray] = useState([]);
   const [randomIndex, setRandomIndex] = useState(0);
@@ -131,8 +133,8 @@ const CreateMeme = () => {
         ) : (
           <>
             <View style={styles.header}>
-              <Text style={styles.headerText}>Meme Generator</Text>
-              <Text style={styles.headerSubtext}>Design your caption</Text>
+              <Text style={styles.headerText}>{t('meme.title')}</Text>
+              <Text style={styles.headerSubtext}>{t('meme.subtitle')}</Text>
             </View>
 
             <View style={styles.previewCard}>
@@ -170,14 +172,14 @@ const CreateMeme = () => {
                 onPress={generateRandomNumber}
                 activeOpacity={0.8}
               >
-                <Text style={styles.shuffleBtnText}>Another image</Text>
+                <Text style={styles.shuffleBtnText}>{t('meme.another_image')}</Text>
               </GHTouchableOpacity>
             </View>
 
             <View style={styles.designSection}>
-              <Text style={styles.sectionTitle}>Text design</Text>
+              <Text style={styles.sectionTitle}>{t('meme.text_design')}</Text>
 
-              <Text style={styles.label}>Color</Text>
+              <Text style={styles.label}>{t('meme.color')}</Text>
               <View style={styles.chipRow}>
                 {TEXT_COLORS.map((c) => (
                   <TouchableOpacity
@@ -196,7 +198,7 @@ const CreateMeme = () => {
                 ))}
               </View>
 
-              <Text style={styles.label}>Outline</Text>
+              <Text style={styles.label}>{t('meme.outline')}</Text>
               <View style={styles.chipRow}>
                 {OUTLINE_OPTIONS.map((o) => (
                   <TouchableOpacity
@@ -205,13 +207,13 @@ const CreateMeme = () => {
                     style={[styles.optionChip, outline === o.id && styles.optionChipActive]}
                   >
                     <Text style={[styles.optionChipText, outline === o.id && styles.optionChipTextActive]}>
-                      {o.label}
+                      {t(o.labelKey)}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
-              <Text style={styles.label}>Size</Text>
+              <Text style={styles.label}>{t('meme.font_size')}</Text>
               <View style={styles.chipRow}>
                 {FONT_SIZES.map((s) => (
                   <TouchableOpacity
@@ -226,7 +228,7 @@ const CreateMeme = () => {
                 ))}
               </View>
 
-              <Text style={styles.label}>Align</Text>
+              <Text style={styles.label}>{t('meme.alignment')}</Text>
               <View style={styles.chipRow}>
                 {ALIGN_OPTIONS.map((a) => (
                   <TouchableOpacity
@@ -243,18 +245,18 @@ const CreateMeme = () => {
             </View>
 
             <View style={styles.inputSection}>
-              <Text style={styles.label}>Top text</Text>
+              <Text style={styles.label}>{t('meme.top_text')}</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="Add top caption..."
+                placeholder={t('meme.top_placeholder')}
                 placeholderTextColor={colors.gray}
                 value={topText}
                 onChangeText={setTopText}
               />
-              <Text style={[styles.label, { marginTop: 14 }]}>Bottom text</Text>
+              <Text style={[styles.label, { marginTop: 14 }]}>{t('meme.bottom_text')}</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="Add bottom caption..."
+                placeholder={t('meme.bottom_placeholder')}
                 placeholderTextColor={colors.gray}
                 value={bottomText}
                 onChangeText={setBottomText}
@@ -262,7 +264,7 @@ const CreateMeme = () => {
             </View>
 
             <TouchableOpacity style={styles.postButton} activeOpacity={0.85}>
-              <Text style={styles.postButtonText}>Post meme</Text>
+              <Text style={styles.postButtonText}>{t('meme.post')}</Text>
             </TouchableOpacity>
             <View style={{ height: 32 }} />
           </>

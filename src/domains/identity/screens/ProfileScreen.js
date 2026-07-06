@@ -163,8 +163,8 @@ const ProfileScreen = props => {
         activeOpacity={0.8}>
         <MaterialCommunityIcons name="calendar-multiselect" size={24} color="#E65100" />
         <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.historyText}>My Requests & Appointments</Text>
-          <Text style={styles.historySubtext}>View or modify your consultations</Text>
+          <Text style={styles.historyText}>{t('profile.appointments')}</Text>
+          <Text style={styles.historySubtext}>{t('profile.appointments_subtitle')}</Text>
         </View>
         <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
       </TouchableOpacity>
@@ -174,8 +174,8 @@ const ProfileScreen = props => {
         activeOpacity={0.8}>
         <MaterialCommunityIcons name="phone-alert" size={24} color="#C62828" />
         <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.historyText}>Emergency Contact</Text>
-          <Text style={styles.historySubtext}>Add a trusted contact for extreme emergencies</Text>
+          <Text style={styles.historyText}>{t('profile.emergency')}</Text>
+          <Text style={styles.historySubtext}>{t('profile.emergency_subtitle')}</Text>
         </View>
         <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
       </TouchableOpacity>
@@ -185,8 +185,8 @@ const ProfileScreen = props => {
         activeOpacity={0.8}>
         <MaterialCommunityIcons name="star-shooting" size={24} color="#81C784" />
         <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.historyText}>Curated Resources</Text>
-          <Text style={styles.historySubtext}>View resources assigned to you by your care team</Text>
+          <Text style={styles.historyText}>{t('profile.resources')}</Text>
+          <Text style={styles.historySubtext}>{t('profile.resources_subtitle')}</Text>
         </View>
         <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
       </TouchableOpacity>
@@ -196,8 +196,8 @@ const ProfileScreen = props => {
         activeOpacity={0.8}>
         <MaterialCommunityIcons name="account-group" size={24} color="#4FC3F7" />
         <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.historyText}>Group Sessions</Text>
-          <Text style={styles.historySubtext}>Join your upcoming therapeutic group sessions</Text>
+          <Text style={styles.historyText}>{t('profile.group_sessions')}</Text>
+          <Text style={styles.historySubtext}>{t('profile.group_subtitle')}</Text>
         </View>
         <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
       </TouchableOpacity>
@@ -207,8 +207,8 @@ const ProfileScreen = props => {
         activeOpacity={0.8}>
         <MaterialCommunityIcons name="target" size={24} color="#7C4DFF" />
         <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={styles.historyText}>Goal Tracker</Text>
-          <Text style={styles.historySubtext}>Track your personal milestones and progress</Text>
+          <Text style={styles.historyText}>{t('profile.goal_tracker')}</Text>
+          <Text style={styles.historySubtext}>{t('profile.goal_subtitle')}</Text>
         </View>
         <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
       </TouchableOpacity>
@@ -253,8 +253,8 @@ const ProfileScreen = props => {
           activeOpacity={0.8}>
           <MaterialCommunityIcons name="office-building" size={24} color="#455A64" />
           <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={styles.historyText}>My Organization</Text>
-            <Text style={styles.historySubtext}>View aggregate wellness trends (Admins only)</Text>
+            <Text style={styles.historyText}>{t('profile.my_org')}</Text>
+            <Text style={styles.historySubtext}>{t('profile.my_org_subtitle')}</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
         </TouchableOpacity>
@@ -265,8 +265,8 @@ const ProfileScreen = props => {
           activeOpacity={0.8}>
           <MaterialCommunityIcons name="plus-circle-outline" size={24} color="#9E9E9E" />
           <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={styles.historyText}>Join Organization</Text>
-            <Text style={styles.historySubtext}>Connect to your school or workplace</Text>
+            <Text style={styles.historyText}>{t('profile.join_org')}</Text>
+            <Text style={styles.historySubtext}>{t('profile.join_org_subtitle')}</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={22} color={colors.gray} />
         </TouchableOpacity>

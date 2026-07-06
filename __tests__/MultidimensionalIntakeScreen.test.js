@@ -69,6 +69,28 @@ jest.mock('../src/constants/theme', () => ({
   },
 }));
 
+jest.mock('../src/utils/i18n', () => {
+  const translations = require('../src/localization/translations').default;
+  const resolve = (path, obj) => path.split('.').reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);
+  return () => ({
+    language: 'en',
+    t: (key, paramsOrFallback, fallback) => {
+      let params = null;
+      let explicitFallback = fallback;
+      if (paramsOrFallback != null) {
+        if (typeof paramsOrFallback === 'string') explicitFallback = paramsOrFallback;
+        else if (typeof paramsOrFallback === 'object') params = paramsOrFallback;
+      }
+      const raw = resolve(key, translations.en) ?? resolve(key, translations.en);
+      if (raw != null && typeof raw === 'string') {
+        if (!params) return raw;
+        return raw.replace(/\{(\w+)\}/g, (_, name) => (params[name] != null ? String(params[name]) : `{${name}}`));
+      }
+      return explicitFallback !== undefined ? explicitFallback : key;
+    },
+  });
+});
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('MultidimensionalIntakeScreen', () => {

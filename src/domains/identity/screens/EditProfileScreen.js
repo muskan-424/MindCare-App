@@ -85,7 +85,7 @@ const Profile = props => {
           setProfilePic(cloudUrl);
         } catch (error) {
           console.error("Cloudinary upload error: ", error);
-          alert('Failed to upload image. Please try again.');
+          alert(t('profile.error_upload_image'));
         } finally {
           setIsUploading(false);
         }
@@ -125,7 +125,7 @@ const Profile = props => {
             style={{ position: 'absolute', top: 25, left: 20 }}
             onPress={() => props.navigation.navigate('Profile')}
           />
-          <Text style={styles.profileText}>Edit Profile</Text>
+          <Text style={styles.profileText}>{t('profile.edit_title')}</Text>
           <View style={styles.dpCover}>
             {isUploading ? (
               <ActivityIndicator animating={true} color={colors.secondary} size="large" />
@@ -161,7 +161,7 @@ const Profile = props => {
               selectionColor={colors.secondary}
               mode="flat"
               dense={true}
-              label="Fullname"
+              label={t('profile.label_fullname')}
               value={fullname}
               onChangeText={text => setFullname(text)}
             />
@@ -182,7 +182,7 @@ const Profile = props => {
               selectionColor={colors.secondary}
               mode="flat"
               dense={true}
-              label="Email"
+              label={t('profile.label_email')}
               value={email}
               onChangeText={text => setEmail(text)}
             />
@@ -199,11 +199,11 @@ const Profile = props => {
               paddingTop: 5,
               paddingBottom: 5,
             }}>
-            <Text>Male: </Text>
+            <Text>{t('profile.gender_male')}: </Text>
             {renderGenderRadio('male', checked, setChecked)}
-            <Text>Female: </Text>
+            <Text>{t('profile.gender_female')}: </Text>
             {renderGenderRadio('female', checked, setChecked)}
-            <Text>Other: </Text>
+            <Text>{t('profile.gender_other')}: </Text>
             {renderGenderRadio('other', checked, setChecked)}
           </View>
           <View style={styles.inputBox2}>
@@ -225,7 +225,7 @@ const Profile = props => {
               selectionColor={colors.secondary}
               mode="flat"
               dense={true}
-              label="Phone no."
+              label={t('profile.label_phone')}
               value={phone}
               onChangeText={text => setPhone(text)}
               keyboardType="numeric"
@@ -247,14 +247,14 @@ const Profile = props => {
               selectionColor={colors.secondary}
               mode="flat"
               dense={true}
-              label="Age"
+              label={t('profile.label_age')}
               value={age}
               onChangeText={text => setAge(text)}
               keyboardType="numeric"
             />
           </View>
           <View>
-            <Text style={styles.problemText}>My Concerns: </Text>
+            <Text style={styles.problemText}>{t('profile.my_concerns_title')}</Text>
             <View style={styles.problemsBox}>
               {concerns.map(prob => {
                 return (
@@ -276,7 +276,7 @@ const Profile = props => {
               color="#face4b"
               style={{ width: '60%', borderRadius: 20, marginTop: 20 }}
               onPress={submitHandler}>
-              <Text style={{ color: colors.white }}>Save Changes</Text>
+              <Text style={{ color: colors.white }}>{t('profile.save_changes')}</Text>
             </Button>
           </View>
         </View>

@@ -7,11 +7,13 @@ import { connect } from 'react-redux';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { colors } from '../../../constants/theme';
 import api from '../../../utils/apiClient';
+import useTranslation from '../../../utils/i18n';
 
 const RISK_COLORS = { LOW: '#81C784', MEDIUM: '#FFB74D', HIGH: '#E57373', CRITICAL: '#C62828' };
 const EMOTION_ICONS = { joy: '😊', sadness: '😔', anxiety: '😰', anger: '😠', hope: '🌟', confusion: '😕', loneliness: '🥺', gratitude: '💚', stress: '😤', calm: '😌' };
 
 const AddJournal = ({ navigation }) => {
+  const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -20,7 +22,7 @@ const AddJournal = ({ navigation }) => {
   const save = async () => {
     const trimmed = content.trim();
     if (!trimmed) {
-      Alert.alert('Empty Entry', 'Please write something before saving.');
+      Alert.alert(t('journal.empty_entry_title'), t('journal.empty_entry_msg'));
       return;
     }
     setLoading(true);
@@ -29,7 +31,7 @@ const AddJournal = ({ navigation }) => {
       setAiResult(res.data);
       setSaved(true);
     } catch (e) {
-      Alert.alert('Error', 'Could not save your journal. Please try again.');
+      Alert.alert(t('common.error'), t('journal.error_save'));
     }
     setLoading(false);
   };
@@ -37,18 +39,18 @@ const AddJournal = ({ navigation }) => {
   if (saved && aiResult) {
     return (
       <ScrollView contentContainerStyle={styles.resultContainer}>
-        <Text style={styles.resultTitle}>Journal saved ✓</Text>
+        <Text style={styles.resultTitle}>{t('journal.saved_title')}</Text>
         <Text style={styles.resultPreview} numberOfLines={4}>{aiResult.content}</Text>
 
         {/* AI analysis card */}
         <View style={styles.aiCard}>
-          <Text style={styles.aiCardTitle}>🤖 Tink's Analysis</Text>
+          <Text style={styles.aiCardTitle}>{t('journal.ai_analysis')}</Text>
           {aiResult.aiInsight ? (
             <Text style={styles.aiInsight}>"{aiResult.aiInsight}"</Text>
           ) : null}
           {aiResult.riskLevel ? (
             <View style={[styles.riskBadge, { backgroundColor: RISK_COLORS[aiResult.riskLevel] }]}>
-              <Text style={styles.riskBadgeText}>{aiResult.riskLevel} risk</Text>
+              <Text style={styles.riskBadgeText}>{t('journal.risk_badge', { level: aiResult.riskLevel })}</Text>
             </View>
           ) : null}
           {aiResult.emotionTags?.length > 0 ? (
@@ -62,7 +64,7 @@ const AddJournal = ({ navigation }) => {
           ) : null}
           {aiResult.sentimentScore != null ? (
             <View style={styles.sentimentRow}>
-              <Text style={styles.sentimentLabel}>Sentiment</Text>
+              <Text style={styles.sentimentLabel}>{t('journal.sentiment')}</Text>
               <View style={styles.sentimentBar}>
                 <View style={[styles.sentimentFill, {
                   width: `${Math.round(((aiResult.sentimentScore + 1) / 2) * 100)}%`,
@@ -75,13 +77,13 @@ const AddJournal = ({ navigation }) => {
         </View>
 
         <TouchableOpacity style={styles.doneBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.doneBtnText}>Back to Journal</Text>
+          <Text style={styles.doneBtnText}>{t('journal.back_to_journal')}</Text>
         </TouchableOpacity>
         {aiResult.riskLevel === 'HIGH' || aiResult.riskLevel === 'CRITICAL' ? (
           <TouchableOpacity
             style={styles.talkToTinkBtn}
             onPress={() => navigation.navigate('HomeTab', { screen: 'Chat' })}>
-            <Text style={styles.doneBtnText}>Talk to Tink 💜</Text>
+            <Text style={styles.doneBtnText}>{t('journal.talk_to_tink')}</Text>
           </TouchableOpacity>
         ) : null}
       </ScrollView>
@@ -98,19 +100,19 @@ const AddJournal = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.toolBtn}>
           <Icon name="arrow-back" size={22} color={colors.secondary} />
         </TouchableOpacity>
-        <Text style={styles.toolTitle}>New Entry</Text>
+        <Text style={styles.toolTitle}>{t('journal.new_entry')}</Text>
         <TouchableOpacity style={[styles.saveBtn, loading && styles.saveBtnDisabled]} onPress={save} disabled={loading}>
           {loading ? (
             <ActivityIndicator size="small" color={colors.white} />
           ) : (
-            <Text style={styles.saveBtnText}>Save & Analyze</Text>
+            <Text style={styles.saveBtnText}>{t('journal.save_analyze')}</Text>
           )}
         </TouchableOpacity>
       </View>
 
       <TextInput
         style={styles.editor}
-        placeholder="Start writing here... Tink will privately analyze your entry for insights."
+        placeholder={t('journal.add_placeholder')}
         placeholderTextColor={colors.gray}
         value={content}
         onChangeText={setContent}
@@ -118,7 +120,7 @@ const AddJournal = ({ navigation }) => {
         autoFocus
         textAlignVertical="top"
       />
-      <Text style={styles.charCount}>{content.length} chars</Text>
+      <Text style={styles.charCount}>{t('journal.char_count', { count: content.length })}</Text>
     </KeyboardAvoidingView>
   );
 };

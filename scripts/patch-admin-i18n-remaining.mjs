@@ -5,6 +5,11 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import translations from '../src/localization/translations.js';
+import { ADMIN_BY_LANG } from './admin-locale-patches.mjs';
+import { ADMIN_SHELL_BY_LANG } from './admin-shell-locale-patches.mjs';
+import { ADMIN_REMAINING_FULL_BY_LANG } from './admin-remaining-full.mjs';
+import { WESTERN_LOCALE_EXPAND } from './admin-locale-western-expand.mjs';
+import { WESTERN_META_BY_LANG } from './admin-western-meta.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const outPath = path.join(__dirname, '../src/localization/translations.js');
@@ -124,33 +129,22 @@ const ADMIN_REMAINING = {
   recipients_count: '{count} recipients',
 };
 
-const HI_REMAINING = {
-  goals_label: 'लक्ष्य',
-  pace_label: 'गति',
-  reason_label: 'कारण',
-  action_contacted: 'संपर्क किया',
-  action_referred: 'रेफर किया',
-  action_resolved: 'हल किया',
-  deactivate: 'निष्क्रिय करें',
-  activate: 'सक्रिय करें',
-  live_system: 'लाइव सिस्टम',
-  change_role: 'भूमिका बदलें',
-  suspend: 'निलंबित',
-  reinstate: 'पुनर्स्थापित',
-  mood_history: 'मूड इतिहास',
-  ai_assessments: 'AI मूल्यांकन',
-  risk_reports_section: 'जोखिम रिपोर्ट',
-  recent_moods: 'हाल के मूड',
-  users_count: 'उपयोगकर्ता ({count})',
-  back_to_users: 'उपयोगकर्ता सूची पर वापस',
-};
-
 for (const lang of LANGS) {
   if (!translations[lang]) continue;
-  translations[lang].admin = { ...translations[lang].admin, ...ADMIN_REMAINING };
-  if (lang === 'hi') {
-    translations[lang].admin = { ...translations[lang].admin, ...HI_REMAINING };
-  }
+  const localized = ADMIN_BY_LANG[lang] || {};
+  const shell = ADMIN_SHELL_BY_LANG[lang] || {};
+  const remainingFull = ADMIN_REMAINING_FULL_BY_LANG[lang] || {};
+  const westernExpand = WESTERN_LOCALE_EXPAND[lang] || {};
+  const meta = WESTERN_META_BY_LANG[lang] || {};
+  translations[lang].admin = {
+    ...ADMIN_REMAINING,
+    ...translations[lang].admin,
+    ...remainingFull,
+    ...shell,
+    ...localized,
+    ...westernExpand,
+    ...meta,
+  };
 }
 
 function serializeSection(obj, depth) {
@@ -181,4 +175,8 @@ const header = `/**
 
 const body = LANGS.map((lang) => `  ${lang}: {\n${serializeSection(translations[lang], 2)}\n  },`).join('\n\n');
 fs.writeFileSync(outPath, `${header}const translations = {\n${body}\n};\n\nexport default translations;\n`);
-console.log(`patched ${Object.keys(ADMIN_REMAINING).length} remaining admin keys`);
+console.log(`patched ${Object.keys(ADMIN_REMAINING).length} remaining admin keys across ${LANGS.length} languages`);
+
+import { spawnSync } from 'child_process';
+const sync = spawnSync('node', ['admin/scripts/sync-translations.mjs'], { stdio: 'inherit', cwd: path.join(__dirname, '..') });
+if (sync.status !== 0) process.exit(sync.status ?? 1);

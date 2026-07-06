@@ -326,7 +326,7 @@ describe('Portal 2 — Therapist Portal (TherapistHomeScreen)', () => {
     });
     const json = JSON.stringify(tree.toJSON());
     // Greeting: "Good morning/afternoon/evening, Dr. Smith"
-    expect(json).toMatch(/Good (morning|afternoon|evening)/);
+    expect(json).toMatch(/Good (Morning|Afternoon|Evening)/i);
   });
 
   it('shows Operations Hub section', async () => {

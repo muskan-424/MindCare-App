@@ -5,6 +5,7 @@
  * Falls back to English if a key is missing in the selected language.
  */
 
+import { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import translations from '../localization/translations';
 
@@ -31,16 +32,7 @@ export default function useTranslation() {
   const langDict = translations[language] || translations['en'];
   const fallbackDict = translations['en'];
 
-  /**
-   * t(key, paramsOrFallback)
-   * @param {string} key - dot-separated key e.g. 'home.greeting_morning'
-   * @param {string|Record<string, string|number>} [paramsOrFallback]
-   *   - optional interpolation map, e.g. { name: 'Rahul' } replaces {name}
-   *   - or a fallback string if key not found
-   * @param {string} [fallback] - explicit fallback when second arg is params
-   * @returns {string}
-   */
-  function t(key, paramsOrFallback, fallback) {
+  const t = useCallback((key, paramsOrFallback, fallback) => {
     let params = null;
     let explicitFallback = fallback;
 
@@ -61,7 +53,7 @@ export default function useTranslation() {
       });
     }
     return explicitFallback !== undefined ? explicitFallback : key;
-  }
+  }, [language]);
 
   return { t, language };
 }

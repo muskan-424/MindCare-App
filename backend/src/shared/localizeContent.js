@@ -1,4 +1,4 @@
-const { translateText } = require('../domains/community/services/tinkChatService');
+const { getFitnessLabelFallback } = require('./fitnessFallbacks');
 const { batchTranslateStrings } = require('./batchTranslate');
 const { normalizeLanguage } = require('./locale');
 
@@ -116,10 +116,14 @@ async function localizeFitnessNameMap(map, language) {
 
   const keys = Object.keys(map);
   const labels = keys.map((k) => map[k]?.label || k);
-  const translated = await batchTranslateStrings(labels, lang);
+  const staticLabels = labels.map((label) => getFitnessLabelFallback(label, lang));
+  const needsApi = staticLabels.some((label, i) => label === labels[i]);
+  const translated = needsApi
+    ? await batchTranslateStrings(staticLabels, lang)
+    : staticLabels;
   const out = { ...map };
   keys.forEach((k, i) => {
-    out[k] = { ...out[k], label: translated[i] || k };
+    out[k] = { ...out[k], label: translated[i] || staticLabels[i] || k };
   });
   return out;
 }
@@ -134,12 +138,16 @@ async function localizeFitnessContentMap(map, language) {
     if (entry && typeof entry === 'object') return entry.label || k;
     return k;
   });
-  const translated = await batchTranslateStrings(labels, lang);
+  const staticLabels = labels.map((label) => getFitnessLabelFallback(label, lang));
+  const needsApi = staticLabels.some((label, i) => label === labels[i]);
+  const translated = needsApi
+    ? await batchTranslateStrings(staticLabels, lang)
+    : staticLabels;
   const out = { ...map };
   keys.forEach((k, i) => {
     const entry = out[k];
     if (entry && typeof entry === 'object') {
-      out[k] = { ...entry, label: translated[i] || k };
+      out[k] = { ...entry, label: translated[i] || staticLabels[i] || k };
     }
   });
   return out;
