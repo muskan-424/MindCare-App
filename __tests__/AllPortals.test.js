@@ -112,6 +112,7 @@ const makeStore = ({ role = 'user', name = 'Test User' } = {}) => {
   const initialState = {
     auth: {
       token: 'mock-token-abc',
+      language: 'en',
       user: { _id: 'user-001', name, role, specialisation: 'Anxiety' },
       profile: { name, gender: 'female', profilePic: null },
       welcomeMessage: null,
