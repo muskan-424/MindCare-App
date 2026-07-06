@@ -63,7 +63,7 @@ const useSpeechToText = () => {
   const recordedPathRef = useRef(null);
 
   // ── Request mic permission ────────────────────────────────────────────────
-  const requestMicPermission = async () => {
+  const requestMicPermission = useCallback(async () => {
     if (Platform.OS !== 'android') return true;
     try {
       const already = await PermissionsAndroid.check(
@@ -83,7 +83,7 @@ const useSpeechToText = () => {
     } catch {
       return false;
     }
-  };
+  }, [t]);
 
   // ── Start recording ───────────────────────────────────────────────────────
   const startListening = useCallback(async () => {
@@ -108,7 +108,7 @@ const useSpeechToText = () => {
       console.warn('[STT] startRecorder error:', e.message);
       setSttError(t('assessment.stt_start_failed', { error: e.message }));
     }
-  }, [t]);
+  }, [t, requestMicPermission]);
 
   // ── Stop recording, then call Google STT, return transcript ──────────────
   const stopListening = useCallback(async () => {

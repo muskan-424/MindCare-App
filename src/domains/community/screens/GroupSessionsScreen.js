@@ -39,7 +39,7 @@ const GroupSessionsScreen = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadData();
