@@ -132,7 +132,6 @@ const mockNav = () => ({
 // ─── Shared setup ─────────────────────────────────────────────────────────────
 beforeEach(() => {
   jest.clearAllMocks();
-  jest.useFakeTimers();
 
   // Default API responses used across all portals
   mockApiGet.mockImplementation((url) => {
