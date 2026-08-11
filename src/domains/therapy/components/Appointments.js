@@ -4,9 +4,11 @@ import {StyleSheet, Text, View, Image, FlatList} from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import {colors, fonts} from '../../../constants/theme';
 import {useNavigation} from '@react-navigation/native';
+import useTranslation from '../../../utils/i18n';
 
 const Appointments = props => {
   const navigation = useNavigation();
+  const {t} = useTranslation();
   const renderItem = ({item}) => {
     return (
       <View style={styles.appointment}>
@@ -50,7 +52,9 @@ const Appointments = props => {
 
   return (
     <View style={styles.appoinmentsContainer}>
-      <Text style={styles.heading}>{props.type} Appointments</Text>
+      <Text style={styles.heading}>
+        {t('appointments.section_heading', {type: props.type}, `${props.type} Appointments`)}
+      </Text>
       <View
         style={{
           padding: 5,
