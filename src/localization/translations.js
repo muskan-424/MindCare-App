@@ -711,6 +711,7 @@ const translations = {
     },
     appointments: {
       title: "My Appointments",
+      section_heading: "{type} Appointments",
       status_awaiting_admin_label: "Under Admin Review",
       status_awaiting_admin_hint: "Admin is checking therapist availability for you.",
       status_pending_label: "Pending Confirmation",
