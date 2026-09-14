@@ -9,11 +9,60 @@ const { config } = require('../../../../config/env');
 const audit = require('../../admin/services/auditService');
 const { shapeAuthResponse } = require('../../../shared/responseShapers');
 const { normalizeLanguage } = require('../../../shared/locale');
+const { sendLoginOtpEmail } = require('../../../shared/services/emailService');
 
 const ADMIN_EMAILS = config.adminEmails;
+const LOGIN_OTP_TTL_MS = 10 * 60 * 1000;
+
+// Builds the full auth response (token + user + profile) once login is fully verified.
+async function issueLoginSession(user, req) {
+  let profile = await Profile.findOne({ userId: user._id });
+  if (!profile) {
+    // Create profile if it doesn't exist (backward compatibility)
+    profile = new Profile({
+      userId: user._id,
+      name: user.name,
+      email: user.email,
+      age: user.age,
+      gender: user.gender,
+      phone_no: '',
+      bio: '',
+      concerns: [],
+    });
+    await profile.save();
+  }
+
+  const isAdmin =
+    ADMIN_EMAILS.length > 0 &&
+    ADMIN_EMAILS.includes((user.email || '').toLowerCase());
+  const role = isAdmin ? 'admin' : (user.role || 'user');
+
+  let therapistListing = null;
+  if (role === 'clinician') {
+    const Therapist = require('../../therapy/models/Therapist');
+    therapistListing = await Therapist.findOne({ userId: user._id }).lean();
+  }
+
+  const payload = {
+    user: {
+      id: user._id,
+      role,
+    },
+  };
+  const token = jwt.sign(payload, config.jwtSecret, {
+    expiresIn: config.jwtExpiresIn,
+  });
+
+  audit.record({ action: 'auth.login', actorId: user._id, targetType: 'User', targetId: user._id, meta: { role } }, req);
+
+  const response = shapeAuthResponse({ token, user, profile });
+  response.user.role = role;
+  if (therapistListing) response.user.specialisation = therapistListing.specialisation;
+  return response;
+}
 
 // @route   POST /api/auth
-// @desc    Login user
+// @desc    Verify credentials, then email a login OTP instead of issuing a token directly
 // @access  Public
 router.post(
   '/',
@@ -43,56 +92,76 @@ router.post(
         return res.status(400).json({ errors: [{ msg: 'Invalid credentials' }] });
       }
 
-      // Get profile
-      let profile = await Profile.findOne({ userId: user._id });
-      if (!profile) {
-        // Create profile if it doesn't exist (backward compatibility)
-        profile = new Profile({
-          userId: user._id,
-          name: user.name,
-          email: user.email,
-          age: user.age,
-          gender: user.gender,
-          phone_no: '',
-          bio: '',
-          concerns: [],
-        });
-        await profile.save();
-      }
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      user.loginOtpToken = otp;
+      user.loginOtpExpires = Date.now() + LOGIN_OTP_TTL_MS;
+      await user.save();
 
-      const isAdmin =
-        ADMIN_EMAILS.length > 0 &&
-        ADMIN_EMAILS.includes((user.email || '').toLowerCase());
-      const role = isAdmin ? 'admin' : (user.role || 'user');
+      await sendLoginOtpEmail(user.email, otp);
 
-      let therapistListing = null;
-      if (role === 'clinician') {
-        const Therapist = require('../../therapy/models/Therapist');
-        therapistListing = await Therapist.findOne({ userId: user._id }).lean();
-      }
-
-      const payload = {
-        user: {
-          id: user._id,
-          role,
-        },
-      };
-      const token = jwt.sign(payload, config.jwtSecret, {
-        expiresIn: config.jwtExpiresIn,
-      });
-
-      audit.record({ action: 'auth.login', actorId: user._id, targetType: 'User', targetId: user._id, meta: { role } }, req);
-
-      const response = shapeAuthResponse({ token, user, profile });
-      response.user.role = role;
-      if (therapistListing) response.user.specialisation = therapistListing.specialisation;
-      res.json(response);
+      res.json({ otpRequired: true, email: user.email });
     } catch (err) {
       console.error('Login error:', err.message);
       res.status(500).json({ errors: [{ msg: 'Server error' }] });
     }
   }
 );
+
+// @route   POST /api/auth/verify-login-otp
+// @desc    Complete login by verifying the emailed OTP, then issue the auth token
+// @access  Public
+router.post('/verify-login-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ errors: [{ msg: 'Email and code are required' }] });
+    }
+
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+      loginOtpToken: otp,
+      loginOtpExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ errors: [{ msg: 'Invalid or expired code' }] });
+    }
+
+    user.loginOtpToken = undefined;
+    user.loginOtpExpires = undefined;
+    await user.save();
+
+    const response = await issueLoginSession(user, req);
+    res.json(response);
+  } catch (err) {
+    console.error('Verify login OTP error:', err.message);
+    res.status(500).json({ errors: [{ msg: 'Server error' }] });
+  }
+});
+
+// @route   POST /api/auth/resend-login-otp
+// @desc    Re-send a fresh login OTP to an email already mid-login
+// @access  Public
+router.post('/resend-login-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email: (email || '').toLowerCase() });
+    if (!user) {
+      return res.status(200).json({ success: true });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.loginOtpToken = otp;
+    user.loginOtpExpires = Date.now() + LOGIN_OTP_TTL_MS;
+    await user.save();
+
+    await sendLoginOtpEmail(user.email, otp);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('Resend login OTP error:', err.message);
+    res.status(500).json({ errors: [{ msg: 'Server error' }] });
+  }
+});
 
 // @route   POST /api/auth/forgot-password
 // @desc    Generate password reset OTP

@@ -12,6 +12,17 @@
 
 const translations = {
   en: {
+    onboarding: {
+      slide1_title: "Welcome to MindCare",
+      slide1_body: "Your companion for everyday mental wellness, wherever you are.",
+      slide2_title: "Build Healthy Habits",
+      slide2_body: "Track your mood, try guided self-help tools, and grow a daily wellness streak.",
+      slide3_title: "Support When You Need It",
+      slide3_body: "Connect with counsellors and therapists, or reach out for help in a crisis.",
+      skip: "Skip",
+      next: "Next",
+      get_started: "Get Started",
+    },
     language: {
       select: "Select Language",
       label: "Language",
@@ -620,6 +631,12 @@ const translations = {
       forgot_subtext: "Enter your registered email address below. We will generate a reset code for you.",
       reset_subtext: "Enter the 6-digit code sent to you and your new password.",
       otp_placeholder: "6-digit OTP Code",
+      login_otp_title: "Verify Your Email",
+      login_otp_subtext: "Enter the 6-digit code we emailed to {email}.",
+      login_otp_verify: "Verify & Continue",
+      login_otp_resend: "Resend Code",
+      login_otp_resent: "Code resent — check your email.",
+      login_otp_failed: "Verification failed. Please check the code and try again.",
       new_password: "New Password",
       register_clinician: "Register as a Professional Clinician",
       select_role: "Select your role:",
@@ -1002,6 +1019,7 @@ const translations = {
       intake_mic_error: "Microphone Error",
       intake_stop_failed: "Failed to stop recording / analyze: {error}",
       intake_lens_failed: "Lens capture failed: {error}",
+      intake_camera_not_ready: "Camera isn't ready yet. Please wait a moment and try again.",
       intake_vision_failed: "Vision analysis failed to upload.",
       intake_fusion_failed: "Advanced fusion engine failed to process inputs.",
       intake_skip_failed: "Failed to skip/simulate vocal analysis.",

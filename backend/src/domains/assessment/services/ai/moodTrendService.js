@@ -1,7 +1,7 @@
 const axios = require('axios');
 const MoodEntry = require('../../../wellness/models/MoodEntry');
 
-const ML_SERVER = 'http://127.0.0.1:8000';
+const ML_SERVER = require('../../../../shared/mlServerUrl');
 
 /**
  * Calculates a rolling slope (simple linear regression) for mood scores.

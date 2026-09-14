@@ -2,6 +2,7 @@ const axios = require('axios');
 const Profile = require('../../identity/models/Profile');
 const IssueReport = require('../../admin/models/IssueReport');
 const { getBurnoutRecommendations } = require('../../../shared/dynamicFallbacks');
+const ML_SERVER = require('../../../shared/mlServerUrl');
 
 /**
  * Service to predict short-term burnout likelihood using the custom Python ML pipeline.
@@ -27,7 +28,7 @@ async function evaluateBurnoutRisk(userId) {
     };
 
     // 2. Query Python ML Server
-    const mlResponse = await axios.post('http://127.0.0.1:8000/predict/burnout', payload, { timeout: 5000 }).catch(() => null);
+    const mlResponse = await axios.post(`${ML_SERVER}/predict/burnout`, payload, { timeout: 5000 }).catch(() => null);
     
     if (!mlResponse || !mlResponse.data) {
         console.log('Python ML Server unreachable or model not trained.');
