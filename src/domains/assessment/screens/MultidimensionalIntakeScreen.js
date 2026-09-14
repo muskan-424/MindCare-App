@@ -306,51 +306,31 @@ const MultidimensionalIntakeScreen = ({ navigation }) => {
 
   // Live Camera Logic
   const capturePhoto = async () => {
-    if (cameraRef.current) {
-      setIsScanning(true);
-      try {
-        let uri = null;
-        if (typeof cameraRef.current.takePhoto === 'function') {
-          const photo = await cameraRef.current.takePhoto();
-          uri = 'file://' + photo.path;
-        } else {
-          // Fallback to high quality image if camera hasn't fully initialized or mounted its method
-          uri = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80';
-        }
-        setPhotoUri(uri);
+    if (!cameraRef.current || typeof cameraRef.current.takePhoto !== 'function') {
+      setError(t('assessment.intake_camera_not_ready'));
+      return;
+    }
 
-        // Run on-device ML Kit face emotion detection on the captured still
-        const emotionData = await detectFaceEmotion(uri);
-        setFaceEmotion(emotionData);
+    setIsScanning(true);
+    try {
+      const photo = await cameraRef.current.takePhoto();
+      const uri = 'file://' + photo.path;
+      setPhotoUri(uri);
 
-        setIsScanning(false);
-        
-        // Auto-submit sequence (timer)
-        const timer = setTimeout(() => {
-          submitPhoto(uri, emotionData);
-        }, 4000); 
-        setAutoSubmitTimeout(timer);
-        
-      } catch (e) {
-        setIsScanning(false);
-        setError(t('assessment.intake_lens_failed', { error: e.message || 'Unknown error' }));
-      }
-    } else {
-      setIsScanning(true);
-      try {
-        const uri = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80';
-        setPhotoUri(uri);
-        const emotionData = await detectFaceEmotion(uri);
-        setFaceEmotion(emotionData);
-        setIsScanning(false);
-        const timer = setTimeout(() => {
-          submitPhoto(uri, emotionData);
-        }, 4000); 
-        setAutoSubmitTimeout(timer);
-      } catch (err) {
-        setIsScanning(false);
-        setError(t('assessment.intake_lens_failed', { error: err.message || 'Unknown error' }));
-      }
+      // Run on-device ML Kit face emotion detection on the captured still
+      const emotionData = await detectFaceEmotion(uri);
+      setFaceEmotion(emotionData);
+
+      setIsScanning(false);
+
+      // Auto-submit sequence (timer)
+      const timer = setTimeout(() => {
+        submitPhoto(uri, emotionData);
+      }, 4000);
+      setAutoSubmitTimeout(timer);
+    } catch (e) {
+      setIsScanning(false);
+      setError(t('assessment.intake_lens_failed', { error: e.message || 'Unknown error' }));
     }
   };
 

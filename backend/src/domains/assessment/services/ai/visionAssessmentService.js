@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const ML_SERVER = 'http://127.0.0.1:8000';
+const ML_SERVER = require('../../../../shared/mlServerUrl');
 
 function toRiskLevel(score) {
   if (score >= 0.8) return 'CRITICAL';
@@ -9,26 +9,35 @@ function toRiskLevel(score) {
   return 'LOW';
 }
 
+// Baseline risk contribution per ML Kit emotion label (higher = more distress signal).
+const EMOTION_RISK = {
+  Happy: 0.10,
+  Neutral: 0.25,
+  Sad: 0.60,
+  Fear: 0.65,
+  Angry: 0.75,
+};
+
 /**
  * Heuristic fallback — used when the Python ML server is unreachable.
+ * Scores off the on-device ML Kit emotion label + confidence the app actually sends
+ * (emotion, confidence, faceDetectedRatio) rather than the legacy simulated-frame fields.
  */
 function assessVisionHeuristic(payload) {
-  const faceDetectedRatio      = Number(payload?.faceDetectedRatio      || 0);
-  const lowLightRatio          = Number(payload?.lowLightRatio          || 0);
-  const stressExpressionRatio  = Number(payload?.stressExpressionRatio  || 0);
-  const negativeValenceRatio   = Number(payload?.negativeValenceRatio   || 0);
-  const frameCount             = Number(payload?.frameCount             || 0);
+  const emotion            = payload?.emotion || 'Neutral';
+  const emotionConfidence  = Math.max(0, Math.min(1, Number(payload?.confidence || 0.5)));
+  const faceDetectedRatio  = Math.max(0, Math.min(1, Number(payload?.faceDetectedRatio || 0)));
 
-  const riskScore     = Math.max(0, Math.min(1, stressExpressionRatio * 0.55 + negativeValenceRatio * 0.45));
-  const trackQuality  = Math.max(0, Math.min(1, faceDetectedRatio * (1 - lowLightRatio)));
-  const frameQuality  = Math.max(0.2, Math.min(0.95, frameCount / 150));
-  const confidence    = Math.min(trackQuality, frameQuality);
+  const baseRisk   = EMOTION_RISK[emotion] ?? EMOTION_RISK.Neutral;
+  // Weight the emotion's risk contribution by how confident the detector was in it.
+  const riskScore  = Math.max(0, Math.min(1, baseRisk * emotionConfidence));
+  const confidence = Math.max(0.2, Math.min(0.95, emotionConfidence * faceDetectedRatio));
 
   return {
     confidence,
     riskScore,
     riskLevel: toRiskLevel(riskScore),
-    features: { faceDetectedRatio, lowLightRatio, stressExpressionRatio, negativeValenceRatio, frameCount },
+    features: { emotion, emotionConfidence, faceDetectedRatio },
     modelVersion: 'vision-v1-heuristic-fallback',
   };
 }
