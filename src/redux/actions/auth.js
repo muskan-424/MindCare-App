@@ -95,12 +95,18 @@ export const logout = () => dispatch => {
   dispatch({ type: LOGOUT });
 };
 
+// Set when the user picks a language while logged out, so the next login
+// pushes that choice to the account instead of overwriting it with the saved one.
+const PENDING_LANGUAGE_KEY = 'MindCare_language_pending_sync';
+
 /**
  * setLanguage — persists the selected language code and updates Redux state.
- * Syncs to server when the user is logged in.
  * @param {string} lang - ISO 639-1 language code, e.g. 'hi', 'pa', 'mr'
+ * @param {{ source?: 'user' | 'system' }} [options] - 'system' applies the language
+ *   locally only (device detection, restoring storage, server sync) without
+ *   treating it as a new user choice.
  */
-export const setLanguage = (lang) => async (dispatch, getState) => {
+export const setLanguage = (lang, { source = 'user' } = {}) => async (dispatch, getState) => {
   try {
     await AsyncStorage.setItem('MindCare_language', lang);
   } catch (_) {
@@ -108,26 +114,52 @@ export const setLanguage = (lang) => async (dispatch, getState) => {
   }
   dispatch({ type: SET_LANGUAGE, payload: lang });
 
+  if (source !== 'user') return;
+
   const token = getState().auth?.token;
-  if (token) {
+  if (!token) {
     try {
-      await api.patch('/api/profile/language', { language: lang });
+      await AsyncStorage.setItem(PENDING_LANGUAGE_KEY, '1');
     } catch (_) {
-      // Offline or unauthenticated — local preference still applies
+      // Ignore — worst case the account's saved language wins at login
     }
+    return;
+  }
+  try {
+    await api.patch('/api/profile/language', { language: lang });
+  } catch (_) {
+    // Offline or unauthenticated — local preference still applies
   }
 };
 
 async function syncLanguageFromAuthResponse(dispatch, getState, profile) {
   const serverLang = profile?.language;
   const clientLang = getState().auth.language || 'en';
-  if (serverLang) {
-    await dispatch(setLanguage(serverLang));
-  } else if (clientLang) {
+
+  let pendingChoice = false;
+  try {
+    pendingChoice = (await AsyncStorage.getItem(PENDING_LANGUAGE_KEY)) === '1';
+  } catch (_) {
+    // Treat as no pending choice
+  }
+
+  if (serverLang && !pendingChoice) {
+    if (serverLang !== clientLang) {
+      await dispatch(setLanguage(serverLang, { source: 'system' }));
+    }
+    return;
+  }
+
+  if (serverLang !== clientLang) {
     try {
       await api.patch('/api/profile/language', { language: clientLang });
     } catch (_) {
-      // Ignore — preference remains local
+      return; // Keep the pending flag so the next login retries the push
     }
+  }
+  try {
+    await AsyncStorage.removeItem(PENDING_LANGUAGE_KEY);
+  } catch (_) {
+    // Ignore
   }
 }

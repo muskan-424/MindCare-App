@@ -40,14 +40,14 @@ const AuthFlow = () => {
         const savedLang = await AsyncStorage.getItem('MindCare_language');
         if (savedLang) {
           if (savedLang !== auth.language) {
-            dispatch(setLanguage(savedLang));
+            dispatch(setLanguage(savedLang, { source: 'system' }));
           }
           return;
         }
 
         const detected = detectDeviceLanguage();
         await AsyncStorage.setItem('MindCare_language', detected);
-        dispatch(setLanguage(detected));
+        dispatch(setLanguage(detected, { source: 'system' }));
       } catch (_) {
         // Ignore read errors; default 'en' will be used
       }
@@ -62,7 +62,7 @@ const AuthFlow = () => {
       try {
         const savedLang = await AsyncStorage.getItem('MindCare_language');
         if (savedLang && savedLang !== auth.language) {
-          dispatch(setLanguage(savedLang));
+          dispatch(setLanguage(savedLang, { source: 'system' }));
         }
       } catch (_) {
         // Ignore read errors
