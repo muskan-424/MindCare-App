@@ -70,7 +70,7 @@ async function logAdminAction(action, adminId, targetUserId = null, metadata = {
 // GET /api/admin/users - basic user + profile info for dashboard lists
 router.get('/users', adminAuth, async (_req, res) => {
   try {
-    const users = await User.find({}).sort({ createdAt: -1 }).lean();
+    const users = await User.find({ email: { $ne: 'test@mindcare.com' } }).sort({ createdAt: -1 }).lean();
     const profiles = await Profile.find({}).lean();
     const profileByUser = {};
     profiles.forEach((p) => {
