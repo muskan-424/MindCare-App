@@ -50,8 +50,12 @@ export const login = ({ email, password }) => async (dispatch, getState) => {
   const body = JSON.stringify({ email, password });
   try {
     const res = await api.post('/api/auth', body, config);
+    if (res.data.otpRequired) {
+      return { otpRequired: true, email: res.data.email };
+    }
     dispatch({ type: REGISTER_SUCCESS, payload: res.data, meta: { from: 'login' } });
     await syncLanguageFromAuthResponse(dispatch, getState, res.data.profile);
+    return { otpRequired: false };
   } catch (err) {
     const lang = getState().auth.language || 'en';
     const raw = err.response?.data?.errors?.[0]?.msg || err.message || 'Login failed. Server may be unreachable.';
@@ -59,6 +63,32 @@ export const login = ({ email, password }) => async (dispatch, getState) => {
     showToast(message);
     throw new Error(message);
   }
+};
+
+export const verifyLoginOtp = ({ email, otp }) => async (dispatch, getState) => {
+  const config = {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+  const body = JSON.stringify({ email, otp });
+  try {
+    const res = await api.post('/api/auth/verify-login-otp', body, config);
+    dispatch({ type: REGISTER_SUCCESS, payload: res.data, meta: { from: 'login' } });
+    await syncLanguageFromAuthResponse(dispatch, getState, res.data.profile);
+  } catch (err) {
+    const lang = getState().auth.language || 'en';
+    const raw = err.response?.data?.errors?.[0]?.msg || err.message || 'Verification failed.';
+    const message = mapAuthApiError(raw, lang);
+    showToast(message);
+    throw new Error(message);
+  }
+};
+
+export const resendLoginOtp = ({ email }) => async () => {
+  await api.post('/api/auth/resend-login-otp', JSON.stringify({ email }), {
+    headers: { 'Content-Type': 'application/json' },
+  });
 };
 
 export const logout = () => dispatch => {

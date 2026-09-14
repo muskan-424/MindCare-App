@@ -159,7 +159,15 @@ describe('Auth flow', () => {
     const { body } = await registerUser();
     const res = await request(app).post('/api/auth').send({ email: body.email, password: body.password });
     expect(res.status).toBe(200);
-    expect(res.body.token).toBeTruthy();
+    expect(res.body.otpRequired).toBe(true);
+
+    const User = require('../src/domains/identity/models/User');
+    const user = await User.findOne({ email: body.email });
+    const otpRes = await request(app)
+      .post('/api/auth/verify-login-otp')
+      .send({ email: body.email, otp: user.loginOtpToken });
+    expect(otpRes.status).toBe(200);
+    expect(otpRes.body.token).toBeTruthy();
 
     const AuditLog = require('mongoose').model('AuditLog');
     const logged = await AuditLog.findOne({ action: 'auth.login' });

@@ -4,6 +4,7 @@ import LoginScreen from '../domains/identity/screens/Login';
 import SignupScreen from '../domains/identity/screens/Signup';
 import ForgotPasswordScreen from '../domains/identity/screens/ForgotPasswordScreen';
 import ResetPasswordScreen from '../domains/identity/screens/ResetPasswordScreen';
+import LoginOtpScreen from '../domains/identity/screens/LoginOtpScreen';
 
 const Stack = createStackNavigator();
 
@@ -18,6 +19,7 @@ const LoginStackNavigation = () => {
       <Stack.Screen name='Login' component={LoginScreen} />
       <Stack.Screen name='ForgotPassword' component={ForgotPasswordScreen} />
       <Stack.Screen name='ResetPassword' component={ResetPasswordScreen} />
+      <Stack.Screen name='LoginOtp' component={LoginOtpScreen} />
     </Stack.Navigator>
   );
 };

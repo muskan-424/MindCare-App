@@ -34,6 +34,7 @@
     "jsonwebtoken": "^9.0.2",
     "langchain": "^1.2.30",
     "mongoose": "^8.13.1",
+    "nodemailer": "^9.0.5",
     "redis": "^5.11.0",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",

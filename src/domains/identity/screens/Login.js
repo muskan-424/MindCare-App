@@ -61,7 +61,10 @@ const Login = props => {
 
     setLoading(true);
     try {
-      await props.login({ email: state.email.trim(), password: state.password });
+      const result = await props.login({ email: state.email.trim(), password: state.password });
+      if (result?.otpRequired) {
+        props.navigation.navigate('LoginOtp', { email: result.email });
+      }
     } catch (err) {
       setError(err.message || t('auth.login_failed'));
     }
