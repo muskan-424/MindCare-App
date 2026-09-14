@@ -211,6 +211,118 @@ const FALLBACK_STRINGS = {
     card_crisis_resources: 'അടിയന്തര വിഭവങ്ങൾ കാണുക',
     card_crisis_emergency: 'അടിയന്തര ബന്ധം',
   },
+  es: {
+    mock_reply: 'Estoy aquí contigo. (Mi conexión de IA no está configurada en este momento, pero sigo escuchando — ¿cómo te sientes?)',
+    error_reply: 'Lo siento mucho — estoy teniendo problemas para pensar con claridad ahora mismo. Pero sigo aquí. ¿Podrías contarme un poco más sobre lo que está pasando?',
+    verification_note: 'No estoy completamente seguro de haber entendido — esto es lo que encontré. No dudes en reformular si no es lo que buscabas.',
+    rule_draft: 'Claro — he preparado esto para ti: {summary}. Revisa la tarjeta de abajo y confirma cuando estés listo/a.',
+    rule_more_info: 'Estoy aquí para ayudar. ¿Podrías contarme un poco más sobre lo que buscas?',
+    login_required: 'Me encantaría ayudarte con eso, pero no puedo acceder a tu información personal hasta que inicies sesión. Por favor, inicia sesión y pregúntame de nuevo.',
+    mock_suggestions: ['Me siento ansioso/a', 'Me siento triste', 'Solo necesito hablar'],
+    error_suggestions: ['Intentar de nuevo', 'Me siento abrumado/a', 'Solo desahogándome'],
+    card_crisis_title: 'No estás solo/a',
+    card_crisis_subtitle: 'Ayuda gratuita y confidencial disponible 24/7 en India',
+    card_crisis_resources: 'Ver recursos de crisis',
+    card_crisis_emergency: 'Contacto de emergencia',
+  },
+  fr: {
+    mock_reply: "Je suis là avec toi. (Ma connexion IA n'est pas configurée pour le moment, mais je t'écoute toujours — comment te sens-tu ?)",
+    error_reply: "Je suis vraiment désolé — j'ai du mal à réfléchir clairement en ce moment. Mais je suis toujours là. Peux-tu m'en dire un peu plus sur ce qui se passe ?",
+    verification_note: "Je ne suis pas totalement sûr d'avoir compris — voici ce que j'ai trouvé. N'hésite pas à reformuler si ce n'est pas tout à fait ça.",
+    rule_draft: "D'accord — j'ai préparé ceci pour toi : {summary}. Consulte la carte ci-dessous et confirme quand tu es prêt(e).",
+    rule_more_info: "Je suis là pour t'aider. Peux-tu m'en dire un peu plus sur ce que tu cherches ?",
+    login_required: "J'aimerais t'aider avec ça, mais je ne peux pas accéder à tes informations personnelles tant que tu n'es pas connecté(e). Connecte-toi et redemande-moi.",
+    mock_suggestions: ['Je me sens anxieux/anxieuse', 'Je me sens triste', "J'ai juste besoin de parler"],
+    error_suggestions: ['Réessayer', 'Je me sens dépassé(e)', 'Je me confie juste'],
+    card_crisis_title: "Tu n'es pas seul(e)",
+    card_crisis_subtitle: "Aide gratuite et confidentielle disponible 24h/24 et 7j/7 en Inde",
+    card_crisis_resources: 'Voir les ressources de crise',
+    card_crisis_emergency: "Contact d'urgence",
+  },
+  de: {
+    mock_reply: 'Ich bin hier bei dir. (Meine KI-Verbindung ist gerade nicht konfiguriert, aber ich höre trotzdem zu — wie fühlst du dich?)',
+    error_reply: 'Es tut mir wirklich leid — ich habe gerade Schwierigkeiten, klar zu denken. Aber ich bin trotzdem hier. Kannst du mir ein bisschen mehr darüber erzählen, was los ist?',
+    verification_note: 'Ich bin mir nicht ganz sicher, ob ich das richtig verstanden habe — das habe ich gefunden. Formuliere es gerne um, falls es nicht passt.',
+    rule_draft: 'Klar — ich habe das für dich vorbereitet: {summary}. Schau dir die Karte unten an und bestätige, wenn du bereit bist.',
+    rule_more_info: 'Ich bin hier, um zu helfen. Kannst du mir etwas mehr darüber erzählen, wonach du suchst?',
+    login_required: 'Ich würde dir dabei gerne helfen, aber ich kann nicht auf deine persönlichen Daten zugreifen, solange du nicht angemeldet bist. Bitte melde dich an und frag mich erneut.',
+    mock_suggestions: ['Ich fühle mich ängstlich', 'Mir geht es schlecht', 'Ich möchte einfach reden'],
+    error_suggestions: ['Erneut versuchen', 'Ich fühle mich überfordert', 'Ich rede mir nur was von der Seele'],
+    card_crisis_title: 'Du bist nicht allein',
+    card_crisis_subtitle: 'Kostenlose, vertrauliche Hilfe ist in Indien rund um die Uhr verfügbar',
+    card_crisis_resources: 'Krisenressourcen ansehen',
+    card_crisis_emergency: 'Notfallkontakt',
+  },
+  pt: {
+    mock_reply: 'Estou aqui com você. (Minha conexão de IA não está configurada agora, mas ainda estou ouvindo — como você está se sentindo?)',
+    error_reply: 'Sinto muito — estou tendo dificuldade para pensar com clareza agora. Mas ainda estou aqui. Você poderia me contar um pouco mais sobre o que está acontecendo?',
+    verification_note: 'Não tenho certeza total de que entendi — foi isso que encontrei. Fique à vontade para reformular se não for bem isso.',
+    rule_draft: 'Claro — preparei isto para você: {summary}. Veja o cartão abaixo e confirme quando estiver pronto(a).',
+    rule_more_info: 'Estou aqui para ajudar. Você poderia me contar um pouco mais sobre o que está procurando?',
+    login_required: 'Eu adoraria ajudar com isso, mas não posso acessar suas informações pessoais até que você faça login. Por favor, faça login e pergunte novamente.',
+    mock_suggestions: ['Estou ansioso(a)', 'Estou triste', 'Só preciso conversar'],
+    error_suggestions: ['Tentar novamente', 'Estou sobrecarregado(a)', 'Só desabafando'],
+    card_crisis_title: 'Você não está sozinho(a)',
+    card_crisis_subtitle: 'Ajuda gratuita e confidencial disponível 24 horas por dia, 7 dias por semana, na Índia',
+    card_crisis_resources: 'Ver recursos de crise',
+    card_crisis_emergency: 'Contato de emergência',
+  },
+  ar: {
+    mock_reply: 'أنا هنا معك. (اتصال الذكاء الاصطناعي غير مُهيأ الآن، لكنني ما زلت أستمع — كيف تشعر؟)',
+    error_reply: 'أنا آسف جدًا — أواجه صعوبة في التفكير بوضوح الآن. لكنني ما زلت هنا. هل يمكنك إخباري بمزيد من التفاصيل عما يحدث؟',
+    verification_note: 'لست متأكدًا تمامًا من أنني فهمت — هذا ما وجدته. لا تتردد في إعادة الصياغة إذا لم يكن هذا ما تقصده.',
+    rule_draft: 'بالتأكيد — لقد أعددت هذا من أجلك: {summary}. راجع البطاقة أدناه واضغط على تأكيد عندما تكون جاهزًا.',
+    rule_more_info: 'أنا هنا للمساعدة. هل يمكنك إخباري بمزيد من التفاصيل عما تبحث عنه؟',
+    login_required: 'أود مساعدتك في ذلك، لكن لا يمكنني الوصول إلى معلوماتك الشخصية حتى تسجل الدخول. يرجى تسجيل الدخول والسؤال مرة أخرى.',
+    mock_suggestions: ['أشعر بالقلق', 'أشعر بالحزن', 'أحتاج فقط للتحدث'],
+    error_suggestions: ['حاول مرة أخرى', 'أشعر بالإرهاق', 'أفرّغ ما بداخلي فقط'],
+    card_crisis_title: 'أنت لست وحدك',
+    card_crisis_subtitle: 'مساعدة مجانية وسرية متاحة على مدار الساعة طوال أيام الأسبوع في الهند',
+    card_crisis_resources: 'عرض موارد الأزمات',
+    card_crisis_emergency: 'جهة اتصال الطوارئ',
+  },
+  zh: {
+    mock_reply: '我在这里陪着你。(我的AI连接目前尚未配置，但我仍在倾听——你现在感觉怎么样？)',
+    error_reply: '非常抱歉——我现在有点思路不清晰，但我依然在这里。你能再多告诉我一些正在发生的事情吗？',
+    verification_note: '我不太确定自己是否完全理解——这是我找到的信息。如果不太对，欢迎换个说法再问我。',
+    rule_draft: '好的——我已经为你准备好了：{summary}。请查看下面的卡片，准备好后点击确认。',
+    rule_more_info: '我在这里帮助你。你能再多告诉我一些你在寻找什么吗？',
+    login_required: '我很想帮你，但在你登录之前我无法访问你的个人信息。请登录后再问我一次。',
+    mock_suggestions: ['我感到焦虑', '我心情低落', '我只是想聊聊'],
+    error_suggestions: ['重试', '我感到不知所措', '只是想倾诉一下'],
+    card_crisis_title: '你并不孤单',
+    card_crisis_subtitle: '印度提供每周7天、每天24小时的免费保密帮助',
+    card_crisis_resources: '查看危机资源',
+    card_crisis_emergency: '紧急联系人',
+  },
+  ja: {
+    mock_reply: '私はあなたと一緒にいます。(今はAI接続が設定されていませんが、それでも耳を傾けています——今どんな気持ちですか？)',
+    error_reply: '本当に申し訳ありません——今、うまく考えがまとまりません。それでも私はここにいます。もう少し詳しく教えていただけますか？',
+    verification_note: '完全に理解できたか自信がありませんが、見つけたのはこちらです。違っていたら、別の言い方で教えてください。',
+    rule_draft: '了解しました——こちらを準備しました：{summary}。下のカードを確認し、準備ができたら確定を押してください。',
+    rule_more_info: 'お手伝いするためにここにいます。何をお探しか、もう少し詳しく教えていただけますか？',
+    login_required: 'お手伝いしたいのですが、ログインするまで個人情報にアクセスできません。ログインしてから、もう一度お尋ねください。',
+    mock_suggestions: ['不安を感じています', '気分が落ち込んでいます', 'ただ話したいだけです'],
+    error_suggestions: ['もう一度試す', '圧倒されている感じがします', 'ただ気持ちを吐き出しています'],
+    card_crisis_title: 'あなたは一人ではありません',
+    card_crisis_subtitle: 'インドでは24時間365日、無料で秘密厳守のサポートが利用できます',
+    card_crisis_resources: '危機対応リソースを見る',
+    card_crisis_emergency: '緊急連絡先',
+  },
+  ru: {
+    mock_reply: 'Я рядом с тобой. (Моё подключение к ИИ сейчас не настроено, но я всё равно слушаю — как ты себя чувствуешь?)',
+    error_reply: 'Мне очень жаль — сейчас мне трудно ясно мыслить. Но я всё ещё здесь. Можешь рассказать немного подробнее, что происходит?',
+    verification_note: 'Я не совсем уверен, что правильно понял — вот что я нашёл. Не стесняйся переформулировать, если это не то, что нужно.',
+    rule_draft: 'Хорошо — я подготовил это для тебя: {summary}. Посмотри карточку ниже и подтверди, когда будешь готов(а).',
+    rule_more_info: 'Я здесь, чтобы помочь. Можешь рассказать немного подробнее, что ты ищешь?',
+    login_required: 'Я бы с радостью помог с этим, но не могу получить доступ к твоей личной информации, пока ты не войдёшь в систему. Пожалуйста, войди и спроси меня снова.',
+    mock_suggestions: ['Я чувствую тревогу', 'Мне грустно', 'Мне просто нужно поговорить'],
+    error_suggestions: ['Попробовать снова', 'Я чувствую себя подавленным(ой)', 'Просто хочу выговориться'],
+    card_crisis_title: 'Ты не одинок(а)',
+    card_crisis_subtitle: 'В Индии круглосуточно доступна бесплатная конфиденциальная помощь',
+    card_crisis_resources: 'Посмотреть ресурсы для кризисных ситуаций',
+    card_crisis_emergency: 'Экстренный контакт',
+  },
 };
 
 function fallbackString(language, key, vars = {}) {
@@ -582,43 +694,126 @@ function ruleClassify(message) {
   if (detectCrisis(message)) return { intent: 'support', entities: { crisis: true }, confidence: 0.9 };
 
   // Actions (check before lookups; "log my mood" vs "show my mood")
-  if (has('log my mood', 'log mood', 'record my mood', 'set my mood', 'mood ', 'rate my mood', 'mood dikha de', 'mood log')) {
+  if (has(
+    'log my mood', 'log mood', 'record my mood', 'set my mood', 'mood ', 'rate my mood', 'mood dikha de', 'mood log',
+    'registrar mi estado de ánimo', 'registrar mi ánimo',
+    'enregistrer mon humeur',
+    'meine stimmung protokollieren', 'stimmung eintragen',
+    'registrar meu humor',
+    'سجل مزاجي',
+    '记录我的心情', '记录心情',
+    '気分を記録',
+    'записать моё настроение',
+  )) {
     const num = m.match(/\b([1-9]|10)\b/);
     if (has('log', 'record', 'set', 'add') && num) {
       entities.rating = Number(num[1]);
       return { intent: 'action_log_mood', entities, confidence: 0.7 };
     }
   }
-  if (has('add a journal', 'write a journal', 'new journal', 'journal entry', 'journal likh', 'write journal')) {
+  if (has(
+    'add a journal', 'write a journal', 'new journal', 'journal entry', 'journal likh', 'write journal',
+    'escribir en mi diario', 'nueva entrada de diario',
+    'écrire dans mon journal', 'nouvelle entrée de journal',
+    'tagebuch schreiben', 'neuer tagebucheintrag',
+    'escrever no diário', 'novo diário',
+    'كتابة يومية جديدة',
+    '写日记', '新日记',
+    '日記を書く',
+    'написать в дневник',
+  )) {
     return { intent: 'action_add_journal', entities, confidence: 0.7 };
   }
-  if (has('set a goal', 'create a goal', 'new goal', 'add a goal', 'goal banao', 'goal set')) {
+  if (has(
+    'set a goal', 'create a goal', 'new goal', 'add a goal', 'goal banao', 'goal set',
+    'crear una meta', 'nueva meta',
+    'créer un objectif', 'nouvel objectif',
+    'ziel setzen', 'neues ziel',
+    'criar uma meta', 'nova meta',
+    'إنشاء هدف جديد',
+    '设定目标', '新目标',
+    '目標を設定',
+    'поставить цель',
+  )) {
     entities.title = '';
     return { intent: 'action_set_goal', entities, confidence: 0.7 };
   }
-  if (has('book', 'appointment', 'therapist session', 'see a therapist', 'consultation', 'counsel', 'session book')) {
+  if (has(
+    'book', 'appointment', 'therapist session', 'see a therapist', 'consultation', 'counsel', 'session book',
+    'reservar cita', 'ver a un terapeuta',
+    'prendre rendez-vous', 'voir un thérapeute',
+    'termin buchen', 'therapeuten sehen',
+    'marcar consulta', 'ver um terapeuta',
+    'حجز موعد', 'استشارة معالج',
+    '预约', '看治疗师',
+    '予約する', 'セラピストに会う',
+    'записаться на приём', 'увидеть терапевта',
+  )) {
     return { intent: 'action_book_session', entities, confidence: 0.6 };
   }
 
   // Lookups
-  if (has('my mood', 'mood history', 'mood trend', 'how have i been', 'last 7', 'mera mood', 'mood dikha')) {
+  if (has(
+    'my mood', 'mood history', 'mood trend', 'how have i been', 'last 7', 'mera mood', 'mood dikha',
+    'mi estado de ánimo', 'historial de ánimo',
+    'mon humeur', "historique d'humeur",
+    'meine stimmung', 'stimmungsverlauf',
+    'meu humor', 'histórico de humor',
+    'مزاجي', 'سجل المزاج',
+    '我的心情', '心情历史',
+    '私の気分', '気分の履歴',
+    'моё настроение', 'история настроения',
+  )) {
     return { intent: 'lookup_mood', entities, confidence: 0.7 };
   }
-  if (has('my journal', 'recent journal', 'journals', 'journal dikha')) {
+  if (has(
+    'my journal', 'recent journal', 'journals', 'journal dikha',
+    'mi diario', 'mon journal', 'mein tagebuch', 'meu diário',
+    'يومياتي', '我的日记', '私の日記', 'мой дневник',
+  )) {
     return { intent: 'lookup_journal', entities, confidence: 0.7 };
   }
-  if (has('my goal', 'goals', 'goal progress', 'goal dikha')) {
+  if (has(
+    'my goal', 'goals', 'goal progress', 'goal dikha',
+    'mis metas', 'mi meta', 'mes objectifs', 'meine ziele', 'minhas metas',
+    'أهدافي', '我的目标', '私の目標', 'мои цели',
+  )) {
     return { intent: 'lookup_goals', entities, confidence: 0.7 };
   }
-  if (has('my appointment', 'appointments', 'my session', 'my booking', 'appointment dikha')) {
+  if (has(
+    'my appointment', 'appointments', 'my session', 'my booking', 'appointment dikha',
+    'mi cita', 'mis citas', 'mon rendez-vous', 'mes rendez-vous',
+    'mein termin', 'meine termine', 'minha consulta', 'minhas consultas',
+    'موعدي', 'مواعيدي', '我的预约', '私の予約', 'моя запись', 'мои записи',
+  )) {
     return { intent: 'lookup_appointments', entities, confidence: 0.7 };
   }
-  if (has('group session', 'group therapy', 'upcoming session', 'join a group')) {
+  if (has(
+    'group session', 'group therapy', 'upcoming session', 'join a group',
+    'sesión grupal', 'terapia de grupo',
+    'séance de groupe', 'thérapie de groupe',
+    'gruppensitzung', 'gruppentherapie',
+    'sessão em grupo', 'terapia em grupo',
+    'جلسة جماعية',
+    '小组会议', '团体治疗',
+    'グループセッション',
+    'групповая сессия', 'групповая терапия',
+  )) {
     return { intent: 'discovery_groups', entities, confidence: 0.7 };
   }
 
   // Help / FAQ
-  if (has('how do', 'how does', 'what is', 'what are', 'privacy', 'data', 'escrow', 'crisis', 'how to', 'explain', 'help me understand', 'kaise')) {
+  if (has(
+    'how do', 'how does', 'what is', 'what are', 'privacy', 'data', 'escrow', 'crisis', 'how to', 'explain', 'help me understand', 'kaise',
+    'privacidad', 'ayúdame a entender', 'cómo funciona',
+    'confidentialité', 'aide-moi à comprendre', 'comment ça marche',
+    'datenschutz', 'hilf mir zu verstehen', 'wie funktioniert',
+    'privacidade', 'me ajude a entender', 'como funciona',
+    'الخصوصية', 'ساعدني على الفهم', 'كيف يعمل',
+    '隐私', '帮我理解', '怎么用',
+    'プライバシー', '理解を助けて', '使い方',
+    'конфиденциальность', 'помоги мне понять', 'как это работает',
+  )) {
     return { intent: 'help', entities, confidence: 0.55 };
   }
 
