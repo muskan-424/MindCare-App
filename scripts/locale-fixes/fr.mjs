@@ -96,6 +96,7 @@ export default {
   'gratitude.placeholder': 'ex. Une boisson chaude, le message d’un ami, la météo...',
   'gratitude.done_text': 'C’est noté. Les petits moments comptent.',
 
+  'grounding.done_title': 'Vous êtes là.',
   'grounding.subtitle': 'Vous ramène au moment présent quand vous vous sentez submergé(e).',
   'grounding.done_text': 'Respirez. Vous pouvez recommencer quand vous voulez.',
   'grounding.step_see': 'choses que vous pouvez voir',
@@ -111,4 +112,5 @@ export default {
 
   'streak.subtitle_active': 'Vous faites du super travail ! Continuez à noter chaque jour.',
   'streak.subtitle_inactive': 'Notez votre humeur pour créer une habitude quotidienne.',
+  'streak.days_progress': '{progress} / {target} jours',
 };

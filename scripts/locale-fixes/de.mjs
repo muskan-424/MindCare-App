@@ -189,6 +189,10 @@ export default {
 
   'breathing.subtitle': 'Beruhigt das Nervensystem. Wiederhole 3–4 Durchgänge.',
 
+  'affirmations.category_calm': 'Ruhe',
+  'affirmations.category_confidence': 'Selbstvertrauen',
+  'affirmations.category_sleep': 'Schlaf',
+  'affirmations.category_stress': 'Stress',
   'affirmations.calm_1': 'Ich erlaube mir, zu atmen und mich zu entspannen.',
   'affirmations.calm_2': 'Ich wähle Ruhe statt Sorge.',
   'affirmations.calm_3': 'Mein Geist kommt zur Ruhe.',
@@ -214,6 +218,7 @@ export default {
   'gratitude.done_text': 'Notiert. Kleine Momente zählen.',
 
   'grounding.subtitle': 'Holt dich zurück ins Hier und Jetzt, wenn du dich überfordert fühlst.',
+  'grounding.done_title': 'Du bist hier.',
   'grounding.done_text': 'Atme durch. Du kannst das jederzeit wiederholen.',
   'grounding.start_again': 'Noch einmal',
   'grounding.step_see': 'Dinge, die du sehen kannst',
@@ -229,4 +234,6 @@ export default {
 
   'streak.subtitle_active': 'Du machst das großartig! Trag weiter täglich ein.',
   'streak.subtitle_inactive': 'Trag deine Stimmung ein, um eine tägliche Gewohnheit aufzubauen.',
+  'streak.next_label': 'Nächstes: {label}',
+  'streak.days_progress': '{progress} / {target} Tage',
 };

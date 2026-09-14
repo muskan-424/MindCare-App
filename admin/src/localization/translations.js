@@ -18850,7 +18850,7 @@ const translations = {
     grounding: {
       title: "Ancrage 5-4-3-2-1",
       subtitle: "Vous ramène au moment présent quand vous vous sentez submergé(e).",
-      done_title: "Estás aquí.",
+      done_title: "Vous êtes là.",
       done_text: "Respirez. Vous pouvez recommencer quand vous voulez.",
       start_again: "Recommencer",
       next: "Suivant",
@@ -18880,7 +18880,7 @@ const translations = {
       subtitle_active: "Vous faites du super travail ! Continuez à noter chaque jour.",
       subtitle_inactive: "Notez votre humeur pour créer une habitude quotidienne.",
       next_label: "Suivant : {label}",
-      days_progress: "{progress} / {target} días",
+      days_progress: "{progress} / {target} jours",
     },
     appointments: {
       title: "Mes rendez-vous",
@@ -20464,10 +20464,10 @@ const translations = {
     },
     affirmations: {
       title: "Affirmationen",
-      category_calm: "calma",
-      category_confidence: "confianza",
-      category_sleep: "sueño",
-      category_stress: "estrés",
+      category_calm: "Ruhe",
+      category_confidence: "Selbstvertrauen",
+      category_sleep: "Schlaf",
+      category_stress: "Stress",
       next: "Weiter",
       calm_0: "In diesem Moment bin ich sicher.",
       calm_1: "Ich erlaube mir, zu atmen und mich zu entspannen.",
@@ -20500,7 +20500,7 @@ const translations = {
     grounding: {
       title: "5-4-3-2-1 Erdung",
       subtitle: "Holt dich zurück ins Hier und Jetzt, wenn du dich überfordert fühlst.",
-      done_title: "Estás aquí.",
+      done_title: "Du bist hier.",
       done_text: "Atme durch. Du kannst das jederzeit wiederholen.",
       start_again: "Noch einmal",
       next: "Weiter",
@@ -20529,8 +20529,8 @@ const translations = {
       start_today: "Starten Sie heute Ihre Serie!",
       subtitle_active: "Du machst das großartig! Trag weiter täglich ein.",
       subtitle_inactive: "Trag deine Stimmung ein, um eine tägliche Gewohnheit aufzubauen.",
-      next_label: "Siguiente: {label}",
-      days_progress: "{progress} / {target} días",
+      next_label: "Nächstes: {label}",
+      days_progress: "{progress} / {target} Tage",
     },
     appointments: {
       title: "Meine Termine",
