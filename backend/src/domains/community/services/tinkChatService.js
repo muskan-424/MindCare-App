@@ -386,6 +386,37 @@ function safeParseJson(text) {
 }
 
 /**
+ * Detects degenerate LLM output: a known failure mode where the model gets
+ * stuck repeating the same short phrase over and over instead of a normal
+ * reply. Chat replies should be short and non-repetitive, so both an
+ * excessive length and a chunk repeating several times are red flags.
+ */
+function looksDegenerate(text) {
+  if (!text) return false;
+  if (text.length > 900) return true;
+  const chunk = text.slice(0, 24);
+  if (chunk.length >= 8 && text.split(chunk).length - 1 >= 4) return true;
+  return false;
+}
+
+/**
+ * Best-effort salvage of the "reply" string from JSON truncated mid-generation
+ * (e.g. hitting maxOutputTokens on a token-heavy script). Returns null if the
+ * text doesn't look like a JSON object at all, so plain prose is handled
+ * separately rather than mistaken for a salvage target.
+ */
+function salvageReplyFromTruncatedJson(text) {
+  if (!text || !text.trim().startsWith('{')) return null;
+  const match = text.match(/"reply"\s*:\s*"((?:[^"\\]|\\.)*)/);
+  if (!match) return null;
+  try {
+    return JSON.parse(`"${match[1]}"`);
+  } catch (_) {
+    return match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+  }
+}
+
+/**
  * Generate Tink's response.
  * @param {Object} params
  * @param {string} params.message      - the user's new message
@@ -421,7 +452,7 @@ async function generateTinkResponse({ message, history = [], language = 'en', su
     contents,
     generationConfig: {
       temperature: 0.6,
-      maxOutputTokens: 700,
+      maxOutputTokens: 1200,
       responseMimeType: 'application/json',
       responseSchema: RESPONSE_SCHEMA,
     },
@@ -442,9 +473,22 @@ async function generateTinkResponse({ message, history = [], language = 'en', su
       }
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       parsed = safeParseJson(text);
-      if (parsed && parsed.reply) break;
-      // Model returned but unparsable — keep raw text as reply
-      if (text) { parsed = { reply: text.trim() }; break; }
+      if (parsed && parsed.reply && !looksDegenerate(parsed.reply)) break;
+      if (parsed && parsed.reply) {
+        // Well-formed JSON, but the model got stuck in a repetition loop —
+        // a known LLM failure mode, seen more often on some scripts/prompts.
+        // Discard and try the next model rather than showing garbage.
+        parsed = null;
+        lastErr = lastErr || 'Model produced a degenerate/repetitive reply';
+        continue;
+      }
+      // JSON was truncated (common for token-heavy scripts) — salvage the reply
+      // string directly rather than leaking raw/broken JSON syntax to the user.
+      const salvaged = salvageReplyFromTruncatedJson(text);
+      if (salvaged && !looksDegenerate(salvaged)) { parsed = { reply: salvaged }; break; }
+      // Plain prose with no JSON structure at all — safe to use verbatim.
+      if (text && !text.trim().startsWith('{') && !looksDegenerate(text)) { parsed = { reply: text.trim() }; break; }
+      lastErr = lastErr || 'Model returned unparsable/truncated JSON';
     } catch (err) {
       lastErr = err.message;
     }
