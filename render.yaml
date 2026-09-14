@@ -42,3 +42,21 @@ services:
         sync: false
       - key: REDIS_URL
         sync: false
+      # Set this to the mindcare-ml service's public URL (see below) once it's deployed.
+      - key: ML_SERVER_URL
+        sync: false
+
+  # Python ML server (ml/server.py) — serves the trained burnout/vision/text/voice/mood-trend
+  # models over FastAPI. Deploy this alongside mindcare-api, then copy its public URL into
+  # mindcare-api's ML_SERVER_URL env var above.
+  - type: web
+    name: mindcare-ml
+    runtime: python
+    rootDir: ml
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"

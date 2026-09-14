@@ -1,5 +1,7 @@
 const axios = require('axios');
 
+const ML_SERVER = require('../../../../shared/mlServerUrl');
+
 const NEGATIVE_TERMS = [
   'hopeless', 'worthless', 'overwhelmed', 'panic',
   'anxious', 'sad', 'stressed', 'tired', 'lonely',
@@ -57,7 +59,7 @@ async function assessTextPayload(payload) {
 
   try {
     // Ping the local Python FastAPI ML Pipeline (.pkl Logistic Regression Text Classifier)
-    const res = await axios.post('http://127.0.0.1:8000/analyze/text-local', {
+    const res = await axios.post(`${ML_SERVER}/analyze/text-local`, {
       statement: combined
     }, { timeout: 8000 });
 

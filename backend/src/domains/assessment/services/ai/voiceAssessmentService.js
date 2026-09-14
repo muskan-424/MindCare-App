@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const ML_SERVER = 'http://127.0.0.1:8000';
+const ML_SERVER = require('../../../../shared/mlServerUrl');
 
 function toRiskLevel(score) {
   if (score >= 0.8) return 'CRITICAL';
