@@ -3,6 +3,9 @@
  * src/localization/translations.js, then sync the admin copy.
  *
  * Each fix module default-exports { 'namespace.key': 'translated text', ... }.
+ * Optional _source.mjs default-exports { set: { key: englishText }, remove: [key] }
+ * for changes to the English source; `remove` deletes the key from every locale.
+ * It is always applied first.
  * Usage: node scripts/apply-locale-fixes.mjs [lang ...]   (default: all fix files)
  */
 import fs from 'fs';
@@ -18,7 +21,7 @@ const LANGS = Object.keys(translations);
 
 const requested = process.argv.slice(2);
 const fixFiles = fs.existsSync(fixesDir)
-  ? fs.readdirSync(fixesDir).filter(f => f.endsWith('.mjs')).map(f => f.replace(/\.mjs$/, ''))
+  ? fs.readdirSync(fixesDir).filter(f => f.endsWith('.mjs') && !f.startsWith('_')).map(f => f.replace(/\.mjs$/, ''))
   : [];
 const toApply = requested.length ? requested : fixFiles;
 
@@ -38,6 +41,21 @@ function setPath(obj, key, value) {
     node = node[part];
   }
   node[parts[parts.length - 1]] = value;
+}
+
+function deletePath(obj, key) {
+  const parts = key.split('.');
+  const parent = getPath(obj, parts.slice(0, -1).join('.'));
+  if (parent && typeof parent === 'object') delete parent[parts[parts.length - 1]];
+}
+
+const sourcePath = path.join(fixesDir, '_source.mjs');
+if (fs.existsSync(sourcePath)) {
+  const { default: source } = await import(pathToFileURL(sourcePath).href);
+  for (const key of source.remove || []) {
+    for (const lang of LANGS) deletePath(translations[lang], key);
+  }
+  for (const [key, value] of Object.entries(source.set || {})) setPath(translations.en, key, value);
 }
 
 let applied = 0;

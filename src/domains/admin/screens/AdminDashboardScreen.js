@@ -424,7 +424,7 @@ const PendingTab = () => {
           <View style={ss.slaBannerLeft}>
             <MaterialIcons name="warning" size={20} color="#fff" />
             <View style={{ marginLeft: 10, flex: 1 }}>
-              <Text style={ss.slaBannerTitle}>{t('admin.sla_breach_title', { count: data.escalatedCount, suffix: data.escalatedCount !== 1 ? 'S' : '' })}</Text>
+              <Text style={ss.slaBannerTitle}>{data.escalatedCount === 1 ? t('admin.sla_breach_title_one', { count: 1 }) : t('admin.sla_breach_title_other', { count: data.escalatedCount })}</Text>
               <Text style={ss.slaBannerSub}>{t('admin.sla_breach_sub')}</Text>
             </View>
           </View>
