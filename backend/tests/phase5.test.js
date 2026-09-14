@@ -102,11 +102,9 @@ describe('Auth DTO layer', () => {
     expect(login.status).toBe(200);
     expect(login.body.otpRequired).toBe(true);
 
-    const User = require('../src/domains/identity/models/User');
-    const user = await User.findOne({ email: body.email });
     const otpLogin = await request(app)
       .post('/api/auth/verify-login-otp')
-      .send({ email: body.email, otp: user.loginOtpToken });
+      .send({ email: body.email, otp: login.body.otp });
     expect(otpLogin.status).toBe(200);
     expect(otpLogin.body.user.password).toBeUndefined();
     expect(otpLogin.body.user.__v).toBeUndefined();

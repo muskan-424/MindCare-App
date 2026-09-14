@@ -99,7 +99,11 @@ router.post(
 
       await sendLoginOtpEmail(user.email, otp);
 
-      res.json({ otpRequired: true, email: user.email });
+      const response = { otpRequired: true, email: user.email };
+      // Test-only convenience: expose the OTP directly so automated tests don't need
+      // a second live DB round-trip to complete the flow. Never set outside NODE_ENV=test.
+      if (process.env.NODE_ENV === 'test') response.otp = otp;
+      res.json(response);
     } catch (err) {
       console.error('Login error:', err.message);
       res.status(500).json({ errors: [{ msg: 'Server error' }] });

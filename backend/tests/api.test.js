@@ -161,11 +161,9 @@ describe('Auth flow', () => {
     expect(res.status).toBe(200);
     expect(res.body.otpRequired).toBe(true);
 
-    const User = require('../src/domains/identity/models/User');
-    const user = await User.findOne({ email: body.email });
     const otpRes = await request(app)
       .post('/api/auth/verify-login-otp')
-      .send({ email: body.email, otp: user.loginOtpToken });
+      .send({ email: body.email, otp: res.body.otp });
     expect(otpRes.status).toBe(200);
     expect(otpRes.body.token).toBeTruthy();
 
