@@ -33,4 +33,9 @@ export default {
 
   'appointments.section_heading': '{type} अपॉइंटमेंट',
   'assessment.intake_camera_not_ready': 'कैमरा अभी तैयार नहीं है। कृपया थोड़ा रुकें और फिर से प्रयास करें।',
+
+  // Admin dashboard
+  'admin.plan_note_template': 'नमस्ते {name}, मैंने आपके लक्ष्य देखे और आपके लिए यह दिनचर्या बनाई है।',
+  'admin.sla_breach_title_one': 'SLA उल्लंघन — 1 रिपोर्ट लंबित',
+  'admin.sla_breach_title_other': 'SLA उल्लंघन — {count} रिपोर्ट लंबित',
 };

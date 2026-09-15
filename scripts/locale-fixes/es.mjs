@@ -64,4 +64,9 @@ export default {
   'common.today': 'Hoy',
   'common.success': 'Listo',
   'common.required': 'Obligatorio',
+
+  // Admin dashboard
+  'admin.plan_note_template': 'Hola {name}, revisé tus objetivos y creé esta rutina para ti.',
+  'admin.sla_breach_title_one': 'INCUMPLIMIENTO DE SLA — 1 INFORME VENCIDO',
+  'admin.sla_breach_title_other': 'INCUMPLIMIENTO DE SLA — {count} INFORMES VENCIDOS',
 };

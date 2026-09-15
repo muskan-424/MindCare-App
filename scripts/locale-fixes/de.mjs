@@ -237,6 +237,9 @@ export default {
   'streak.next_label': 'Nächstes: {label}',
   'streak.days_progress': '{progress} / {target} Tage',
 
+  'goals.filter_all': 'Alle',
+  'breathing.seconds': '{count} Sekunden',
+  'auth.other': 'Andere',
   // Admin dashboard
   'admin.placeholder_photo_url': 'z. B. https://domain.com/photo.png',
   'admin.placeholder_display_name': 'Ihr Name',

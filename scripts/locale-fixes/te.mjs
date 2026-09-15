@@ -165,4 +165,9 @@ export default {
   'emergency.remove_title': 'అత్యవసర సంప్రదింపును తొలగించండి',
   'emergency.remove_message': 'ఇది మీ అత్యవసర సంప్రదింపును శాశ్వతంగా తొలగించి, అనుమతిని ఉపసంహరిస్తుంది. మీకు ఖచ్చితంగా తెలుసా?',
   'emergency.remove_error': 'సంప్రదింపును తొలగించలేకపోయాము.',
+
+  // Admin dashboard
+  'admin.plan_note_template': 'నమస్తే {name}, మీ లక్ష్యాలను పరిశీలించి మీ కోసం ఈ దినచర్యను రూపొందించాను.',
+  'admin.sla_breach_title_one': 'SLA ఉల్లంఘన — 1 నివేదిక గడువు దాటింది',
+  'admin.sla_breach_title_other': 'SLA ఉల్లంఘన — {count} నివేదికలు గడువు దాటాయి',
 };

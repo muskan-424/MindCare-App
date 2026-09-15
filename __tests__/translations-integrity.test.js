@@ -11,10 +11,8 @@ function placeholders(text) {
   return (String(text).match(/\{\w+\}/g) || []).sort().join(',');
 }
 
-// admin.* holds the web admin dashboard's strings, which are not yet cleaned up.
-const isAppKey = key => !key.startsWith('admin.');
-
-const english = Object.fromEntries(flatten(translations.en).filter(([key]) => isAppKey(key)));
+const english = Object.fromEntries(flatten(translations.en));
+const spanish = Object.fromEntries(flatten(translations.es));
 const locales = Object.keys(translations).filter(lang => lang !== 'en');
 
 // Danda (।॥) is shared punctuation across Indic scripts but lives in the Devanagari block.
@@ -36,7 +34,7 @@ const NATIVE_SCRIPT = {
 };
 
 describe.each(locales)('%s translations', lang => {
-  const entries = flatten(translations[lang]).filter(([key]) => isAppKey(key));
+  const entries = flatten(translations[lang]);
   const values = Object.fromEntries(entries);
 
   test('has every English key', () => {
@@ -71,6 +69,18 @@ describe.each(locales)('%s translations', lang => {
         .filter(([, value]) => typeof value === 'string' && spanishMarkers.test(value))
         .map(([key, value]) => `${key}: ${value}`);
       expect(spanish).toEqual([]);
+    });
+  }
+
+  if (['fr', 'de'].includes(lang)) {
+    // Catches Spanish copies without accents ("Error al cargar grupos"). Words spelled the same in French are allowed.
+    const sharedWithSpanish = ['home.mood_sad', 'mood_check.mood_good', 'therapy.home_chart_mon', 'therapy.home_chart_tue'];
+    test('contains no strings copied from Spanish', () => {
+      const copied = entries
+        .filter(([key, value]) => typeof value === 'string' && value === spanish[key] && value !== english[key])
+        .filter(([key]) => !sharedWithSpanish.includes(key))
+        .map(([key, value]) => `${key}: ${value}`);
+      expect(copied).toEqual([]);
     });
   }
 });

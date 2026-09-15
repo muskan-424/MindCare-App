@@ -114,6 +114,9 @@ export default {
   'streak.subtitle_inactive': 'Notez votre humeur pour créer une habitude quotidienne.',
   'streak.days_progress': '{progress} / {target} jours',
 
+  'goals.filter_all': 'Tous',
+  'goals.required_title': 'Champ obligatoire',
+  'breathing.seconds': '{count} secondes',
   // Admin dashboard
   'admin.placeholder_photo_url': 'ex. https://domain.com/photo.png',
   'admin.placeholder_display_name': 'Votre nom',
