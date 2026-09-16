@@ -3,6 +3,7 @@
 Payloads mirror what the backend sends (backend/src/domains/assessment/services/ai
 and backend/src/domains/therapy/services/burnoutPredictionService.js).
 Standard library only; run from anywhere: python ml/smoke_test.py
+To check an already-running deployment instead: python ml/smoke_test.py https://your-ml-server.onrender.com
 """
 import json
 import os
@@ -12,7 +13,7 @@ import time
 import urllib.request
 
 PORT = int(os.environ.get("SMOKE_PORT", "8765"))
-BASE = f"http://127.0.0.1:{PORT}"
+BASE = sys.argv[1].rstrip("/") if len(sys.argv) > 1 else f"http://127.0.0.1:{PORT}"
 LEVELS = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
 failures = []
 
@@ -20,7 +21,7 @@ failures = []
 def call(path, body=None):
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(BASE + path, data=data, headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=30) as res:
+    with urllib.request.urlopen(req, timeout=120) as res:  # free Render instances take ~1 min to wake
         return json.loads(res.read())
 
 
@@ -73,7 +74,17 @@ def run_checks():
     check("mood trend: falling week scores higher than steady", down > up, f"{up} -> {down}")
 
 
+def summary():
+    print()
+    print(f"{len(failures)} failure(s)" if failures else "All ML smoke checks passed")
+    return 1 if failures else 0
+
+
 def main():
+    if len(sys.argv) > 1:
+        run_checks()
+        return summary()
+
     here = os.path.dirname(os.path.abspath(__file__))
     server = subprocess.Popen([sys.executable, "-m", "uvicorn", "server:app", "--host", "127.0.0.1", "--port", str(PORT)], cwd=here)
     try:
@@ -91,8 +102,7 @@ def main():
     finally:
         server.terminate()
         server.wait(timeout=30)
-    print(f"\n{len(failures)} failure(s)" if failures else "\nAll ML smoke checks passed")
-    return 1 if failures else 0
+    return summary()
 
 
 if __name__ == "__main__":
