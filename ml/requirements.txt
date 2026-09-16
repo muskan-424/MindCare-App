@@ -1,5 +1,11 @@
-fastapi>=0.110.0
-uvicorn>=0.29.0
-scikit-learn>=1.5.0
-pandas>=2.2.0
-numpy>=1.26.0
+# Pinned to the versions the .pkl models were trained with (scikit-learn 1.8.0).
+# Pickled estimators can fail to load or predict differently under other versions,
+# so bump these only together with retraining the models.
+fastapi==0.135.2
+uvicorn==0.42.0
+pydantic==2.12.5
+scikit-learn==1.8.0
+scipy==1.17.1
+joblib==1.5.3
+pandas==3.0.2
+numpy==2.4.4
