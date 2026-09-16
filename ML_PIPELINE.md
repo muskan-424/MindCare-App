@@ -72,7 +72,6 @@ Every daily login triggers a full **Multidimensional Intake Session** that gathe
 │                                                                 │
 │  /analyze/text-local  →  [text_classifier.pkl]   TF-IDF + LR   │
 │  /analyze/voice       →  [Heuristic prosodic engine]            │
-│  /analyze/vision      →  [vision_model.pkl]      RF Classifier  │
 │  /predict/burnout     →  [burnout_model_v2.pkl]  GBC            │
 │  /analyze/mood-trend  →  [mood_trend_model.pkl]  GBC            │
 └─────────────────────────────────────────────────────────────────┘
@@ -106,6 +105,24 @@ FEATURE_COLS = [
 ]
 ```
 
+### Where the inputs come from
+
+The app's **Wellbeing check-in** screen (`src/domains/wellness/screens/WellbeingCheckInScreen.js`) asks the 4 PHQ-4 questions and five 1–5 self-ratings. `POST /api/profile/wellbeing-checkin` (`backend/src/domains/identity/services/wellbeingCheckInService.js`) stores them on the Profile and re-runs the prediction; mood logs also re-run it. Users who have never checked in are skipped, because their profile only holds defaults.
+
+The ML server rescales the check-in answers onto the EPAT training ranges and rejects out-of-range values (HTTP 422):
+
+| Request field | Check-in source | Scale sent | Training feature (range) |
+|---|---|---|---|
+| `anxiety` | GAD-2 (PHQ-4 items 1–2) | 0–6 | `Anxiety_Score` (0–40) |
+| `depression` | PHQ-2 (PHQ-4 items 3–4) | 0–6 | `Depression_Score` (0–40) |
+| `general_stress` | Stress level | 1–5 | `Stress_Score` (0–40) |
+| `academic_stress` | Study/work pressure | 1–5 | `Academic_Stress_Score` (0–40) |
+| `sleep_quality` | Sleep quality | 1–5 | `Sleep_Quality_Index` (1–10) |
+| `behavioral_activity` | Physical activity | 1–5 | `Behavioral_Activity_Level` (3–99) |
+| `social_interaction` | Time with others | 1–5 | `Social_Interaction_Frequency` (0–20) |
+
+Before this mapping existed, 1–5 values were fed straight into 0–40 features and the profile lookup used a non-existent field, so every user received nearly the same score.
+
 ### Model Hyperparameters
 
 ```python
@@ -131,23 +148,25 @@ risk_score = (proba[Mild]*0.33) + (proba[Moderate]*0.66) + (proba[High]*1.0)
 {
   "age": 21,
   "gender": "Female",
-  "academic_stress": 4,
-  "anxiety": 3,
-  "depression": 2,
+  "anxiety": 5,
+  "depression": 4,
   "general_stress": 4,
-  "sleep_quality": 1.5,
-  "behavioral_activity": 1.0,
-  "social_interaction": 1.5
+  "academic_stress": 5,
+  "sleep_quality": 2,
+  "behavioral_activity": 1,
+  "social_interaction": 2
 }
 
-// Response
+// Response (illustrative values; CI measured 32.6% for an all-calm check-in and 100% for an all-strained one)
 {
-  "burnoutRiskScore": 67.4,
-  "riskLevel": "HIGH",
-  "confidence": 0.7812,
-  "modelVersion": "burnout-v2-gb"
+  "burnoutRiskScore": 91.2,
+  "riskLevel": "CRITICAL",
+  "confidence": 0.93,
+  "modelVersion": "burnout-v2-gb-checkin"
 }
 ```
+
+A score of 70% or more files a `burnout_alert` issue report for admins (at most once every two days per user).
 
 ---
 
@@ -212,54 +231,43 @@ const CRITICAL_TERMS = [
 
 ---
 
-## 5. Model 3 — Vision / Micro-expression
+## 5. Vision — Facial Emotion (Transparent Rule)
 
 | Property | Value |
 |---|---|
-| **File** | `ml/vision_model.pkl` (trained artifact shipped in repo) |
-| **Dataset** | `dataset/EPAT_mental_health_dataset.csv` (Facial_Emotion_Label column) |
-| **Algorithm** | Random Forest Classifier |
+| **Implementation** | `backend/src/domains/assessment/services/ai/visionAssessmentService.js` (no ML server call) |
 | **On-Device** | `@react-native-ml-kit/face-detection` (emotion extraction from still photo) |
-| **API Endpoint** | `POST /analyze/vision` |
+| **Model version** | `vision-rules-v2` |
+
+The earlier Random Forest (`vision_model.pkl`, trained on the EPAT `Facial_Emotion_Label` column) was removed. In that data facial emotion barely predicts mental-health status: every emotion averages 1.4–1.8 on the 0–3 status scale across 125 rows, so the model scored happy and sad faces almost identically (0.46 vs 0.49). Vision now uses a transparent rule and carries the lowest fusion weight.
 
 ### How Vision Works End-to-End
 
 ```
 1. react-native-vision-camera   →  Captures live photo from front camera
 2. @react-native-ml-kit/face-detection → Runs on-device face analysis on still image
-3. Emotion mapping logic:
-      smilingProbability > 0.65        → "Happy"
-      eyeOpenProbability < 0.25        → "Sad"  (fatigue/low energy)
-      smiling < 0.20 && eyes open > 0.6 → "Neutral"
-      smiling < 0.10                   → "Fear"
+3. App maps smile / eye-open probabilities to an emotion label + confidence
 4. Sends { emotion, confidence, faceDetectedRatio } to Node.js backend
-5. Node.js visionAssessmentService → POST /analyze/vision on FastAPI
-6. FastAPI RF model → maps emotion label + confidence to risk score
+5. visionAssessmentService scores it locally with the rule below
 ```
 
-### FastAPI Model Features
+### Scoring Rule
 
-```python
-# Input to the sklearn pipeline
-X = df[['Facial_Emotion_Label', 'Facial_Emotion_Confidence']]
-# OHE for emotion label, passthrough for confidence float
+```javascript
+EMOTION_RISK = { Happy: 0.10, Neutral: 0.25, Sad: 0.60, Fear: 0.65, Angry: 0.75 }
+
+// Detector confidence pulls the score toward neutral, not toward zero,
+// so an uncertain "Sad" reads as mildly elevated rather than calm.
+riskScore  = 0.25 + (EMOTION_RISK[emotion] - 0.25) * emotionConfidence
+confidence = clamp(emotionConfidence * faceDetectedRatio, 0.2, 0.95)
 ```
 
-### Sample API Request / Response
-
-```json
-// POST /analyze/vision
-{ "emotion": "Sad", "confidence": 0.82, "faceDetectedRatio": 1.0 }
-
-// Response
-{
-  "riskScore": 0.62,
-  "riskLevel": "HIGH",
-  "confidence": 0.7048,
-  "emotion": "Sad",
-  "modelVersion": "vision-rf-v1"
-}
-```
+| Input | riskScore |
+|---|---|
+| Happy, confidence 0.9 | 0.115 (LOW) |
+| Sad, confidence 0.9 | 0.565 (MEDIUM) |
+| Angry, confidence 0.95 | 0.725 (HIGH) |
+| Unknown / missing label | 0.25 (LOW) |
 
 ---
 
@@ -370,21 +378,21 @@ The fusion engine lives entirely in **Node.js** (`backend/src/domains/assessment
 ### Weights
 
 ```javascript
-const wText   = 0.45;  // Richest semantic signal
-const wVoice  = 0.30;  // Prosodic / acoustic signal
-const wVision = 0.25;  // Micro-expression signal
+const wText   = 0.45;  // Real-time semantic signal (most reliable)
+const wMood   = 0.25;  // Historical trend from logged moods
+const wVoice  = 0.20;  // Prosodic / acoustic signal
+const wVision = 0.10;  // Facial emotion (weak predictor, see section 5)
 ```
 
 ### Fusion Formula
 
 ```javascript
-riskScore  = (text.riskScore  * 0.45)
-           + (voice.riskScore * 0.30)
-           + (vision.riskScore * 0.25)
+riskScore  = (text.riskScore   * 0.45)
+           + (mood.riskScore   * 0.25)
+           + (voice.riskScore  * 0.20)
+           + (vision.riskScore * 0.10)
 
-confidence = (text.confidence  * 0.45)
-           + (voice.confidence * 0.30)
-           + (vision.confidence * 0.25)
+confidence = same weights applied to each modality's confidence
 ```
 
 ### Contradiction Detection
@@ -470,10 +478,9 @@ STEP 4 — Fusion & Report
 
 | Method | Endpoint | Model | Description |
 |---|---|---|---|
-| GET | `/health` | — | Returns status of all 4 loaded models |
-| POST | `/predict/burnout` | `burnout_model_v2.pkl` | Burnout risk from 9 psychometric features |
+| GET | `/health` | — | Returns status of the 4 loaded models |
+| POST | `/predict/burnout` | `burnout_model_v2.pkl` | Burnout risk from wellbeing check-in answers (rescaled to training ranges) |
 | POST | `/analyze/text-local` | `text_classifier.pkl` | NLP risk classification from free text |
-| POST | `/analyze/vision` | `vision_model.pkl` | Risk level from facial emotion label + confidence |
 | POST | `/analyze/voice` | Heuristic | Risk from speech prosody features |
 | POST | `/analyze/mood-trend` | `mood_trend_model.pkl` | Tomorrow's burnout risk from 7-day mood history |
 
@@ -485,9 +492,9 @@ GET /health
   "status": "ok",
   "models_loaded": {
     "burnout": true,
-    "vision": true,
     "text": true,
-    "mood": true
+    "mood": true,
+    "voice": true
   },
   "version": "3.0.0"
 }
@@ -555,7 +562,6 @@ MentalHealthApp/
 │   ├── burnout_v2_features.pkl         ← Feature column name list
 │   ├── text_classifier.pkl             ← TF-IDF + LR Pipeline
 │   ├── text_risk_labels.pkl            ← {0:'LOW', 1:'MEDIUM', ...}
-│   ├── vision_model.pkl                ← Random Forest (vision)
 │   ├── mood_trend_model.pkl            ← Gradient Boosting (mood)
 │   ├── mood_trend_features.pkl         ← Feature column name list
 │   └── requirements.txt
@@ -622,6 +628,8 @@ npx react-native start
 ### Retraining
 
 The repository ships the **pre-trained `.pkl` model artifacts** (loaded by `ml/server.py` at startup) along with the source datasets under `dataset/`. The offline training scripts that produced these artifacts are **not included in the repo**.
+
+`ml/requirements.txt` pins the exact library versions the artifacts were trained with (scikit-learn 1.8.0); keep them in sync when retraining. `python ml/smoke_test.py` starts the server and checks every model and endpoint (CI runs it on Python 3.11, the version Render uses), and `python ml/smoke_test.py <url>` checks a deployed server. The live API reports the ML connection at `GET /api/health/ml`.
 
 To regenerate a model, retrain it offline against the corresponding dataset (see each model's section above for algorithm + hyperparameters), drop the resulting `.pkl` into `ml/`, and restart `python server.py` to hot-reload it. No backend code changes are needed.
 

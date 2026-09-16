@@ -413,6 +413,14 @@ const HomeScreen = props => {
           </View>
         </View>
 
+        <TouchableOpacity onPress={() => props.navigation.navigate('WellbeingCheckIn')} style={styles.wellnessPlanCard}>
+          <View style={styles.wellnessPlanContent}>
+            <Text style={styles.wellnessPlanTitle}>{t('home.checkin_title')}</Text>
+            <Text style={styles.wellnessPlanSubtitle}>{t('home.checkin_sub')}</Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={28} color={colors.white} />
+        </TouchableOpacity>
+
         <TouchableOpacity onPress={() => props.navigation.navigate('WellnessPlan')} style={styles.wellnessPlanCard}>
           <View style={styles.wellnessPlanContent}>
             <Text style={styles.wellnessPlanTitle}>{t('home.wellness_plan_title')}</Text>

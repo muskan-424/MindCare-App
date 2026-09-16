@@ -62,6 +62,10 @@ def run_checks():
                 "sleep_quality": 1, "behavioral_activity": 1, "social_interaction": 1}
     low = check_result("burnout (calm)", call("/predict/burnout", calm), "burnoutRiskScore", "burnout-v2", 100)
     high = check_result("burnout (strained)", call("/predict/burnout", strained), "burnoutRiskScore", "burnout-v2", 100)
+    middling = {**calm, "anxiety": 3, "depression": 3, "general_stress": 3, "academic_stress": 3,
+                "sleep_quality": 3, "behavioral_activity": 3, "social_interaction": 3}
+    mid = check_result("burnout (middling)", call("/predict/burnout", middling), "burnoutRiskScore", "burnout-v2", 100)
+    check("burnout: scores rise from calm to middling to strained", low <= mid <= high, f"{low} -> {mid} -> {high}")
     # The old inputs moved the score by ~3 points; a working model should separate these clearly.
     check("burnout: strained check-in scores at least 25 points above calm", high >= low + 25, f"{low} -> {high}")
     check("burnout: rejects values outside the check-in scales", status_of("/predict/burnout", {**calm, "anxiety": 30}) == 422)

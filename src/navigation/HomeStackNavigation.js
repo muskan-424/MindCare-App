@@ -15,6 +15,7 @@ import BreathingScreen from '../domains/content/screens/BreathingScreen';
 import AffirmationsScreen from '../domains/content/screens/AffirmationsScreen';
 import CrisisResourcesScreen from '../domains/admin/screens/CrisisResourcesScreen';
 import MoodCheckScreen from '../domains/wellness/screens/MoodCheckScreen';
+import WellbeingCheckInScreen from '../domains/wellness/screens/WellbeingCheckInScreen';
 import GratitudeScreen from '../domains/content/screens/GratitudeScreen';
 import GroundingScreen from '../domains/content/screens/GroundingScreen';
 import ReportIssueScreen from '../domains/admin/screens/ReportIssueScreen';
@@ -61,6 +62,7 @@ const HomeStackNavigator = () => {
       <Stack.Screen name="Affirmations" component={AffirmationsScreen} />
       <Stack.Screen name="CrisisResources" component={CrisisResourcesScreen} />
       <Stack.Screen name="MoodCheck" component={MoodCheckScreen} />
+      <Stack.Screen name="WellbeingCheckIn" component={WellbeingCheckInScreen} />
       <Stack.Screen name="Gratitude" component={GratitudeScreen} />
       <Stack.Screen name="Grounding" component={GroundingScreen} />
       <Stack.Screen name="ReportIssue" component={ReportIssueScreen} />
