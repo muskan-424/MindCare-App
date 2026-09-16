@@ -5,6 +5,8 @@ const DeletionRequest = require('../models/DeletionRequest');
 const { auth } = require('../../../../middleware/auth');
 const { shapeProfile, shapeDeletionRequest } = require('../../../shared/responseShapers');
 const { normalizeLanguage, SUPPORTED_LANGUAGES } = require('../../../shared/locale');
+const { validateCheckIn, scoreCheckIn, toProfileFields } = require('../services/wellbeingCheckInService');
+const { evaluateBurnoutRisk } = require('../../therapy/services/burnoutPredictionService');
 
 // @route   POST /api/profile/add-concerns
 // @desc    Update user concerns
@@ -162,6 +164,39 @@ router.patch('/update', auth, async (req, res) => {
     res.json(shapeProfile(profile));
   } catch (err) {
     console.error('Update profile error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// @route   POST /api/profile/wellbeing-checkin
+// @desc    Save PHQ-4 + lifestyle check-in answers and re-run the burnout prediction
+// @access  Private
+router.post('/wellbeing-checkin', auth, async (req, res) => {
+  try {
+    const { answers, errors } = validateCheckIn(req.body);
+    if (errors) return res.status(400).json({ error: 'Invalid check-in answers', details: errors });
+
+    const score = scoreCheckIn(answers);
+    const profile = await Profile.findOneAndUpdate(
+      { userId: req.user.id },
+      { $set: toProfileFields(answers, score) },
+      { new: true },
+    );
+    if (!profile) return res.status(404).json({ error: 'Profile not found' });
+
+    // Runs in the background like the mood-log trigger; the user sees their PHQ-4 band, not the model score.
+    evaluateBurnoutRisk(req.user.id).catch(e => console.error('Burnout Trigger Error:', e.message));
+
+    res.json({
+      success: true,
+      severity: score.severity,
+      total: score.total,
+      anxietyFlag: score.anxietyFlag,
+      depressionFlag: score.depressionFlag,
+      checkedInAt: profile.wellbeingCheckInAt,
+    });
+  } catch (err) {
+    console.error('Wellbeing check-in error:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 });

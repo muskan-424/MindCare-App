@@ -10,6 +10,7 @@ import os
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 
 PORT = int(os.environ.get("SMOKE_PORT", "8765"))
@@ -23,6 +24,14 @@ def call(path, body=None):
     req = urllib.request.Request(BASE + path, data=data, headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=120) as res:  # free Render instances take ~1 min to wake
         return json.loads(res.read())
+
+
+def status_of(path, body):
+    try:
+        call(path, body)
+        return 200
+    except urllib.error.HTTPError as err:
+        return err.code
 
 
 def check(name, condition, detail=""):
@@ -44,19 +53,18 @@ def check_result(name, result, score_key="riskScore", model_prefix=None, score_m
 def run_checks():
     health = call("/health")
     loaded = health.get("models_loaded", {})
-    check("health: all 5 models loaded", len(loaded) == 5 and all(loaded.values()), loaded)
+    check("health: all 4 models loaded", len(loaded) == 4 and all(loaded.values()), loaded)
 
-    calm = {"age": 22, "gender": "Female", "academic_stress": 1, "anxiety": 1, "depression": 1,
-            "general_stress": 1, "sleep_quality": 4.0, "behavioral_activity": 4.0, "social_interaction": 4.0}
-    strained = {**calm, "academic_stress": 5, "anxiety": 5, "depression": 5, "general_stress": 5,
-                "sleep_quality": 1.0, "behavioral_activity": 1.0, "social_interaction": 1.0}
+    # Check-in answers: anxiety/depression are GAD-2/PHQ-2 (0-6), the rest 1-5 self-ratings.
+    calm = {"age": 22, "gender": "Female", "anxiety": 0, "depression": 0, "general_stress": 1, "academic_stress": 1,
+            "sleep_quality": 5, "behavioral_activity": 4, "social_interaction": 4}
+    strained = {**calm, "anxiety": 6, "depression": 6, "general_stress": 5, "academic_stress": 5,
+                "sleep_quality": 1, "behavioral_activity": 1, "social_interaction": 1}
     low = check_result("burnout (calm)", call("/predict/burnout", calm), "burnoutRiskScore", "burnout-v2", 100)
     high = check_result("burnout (strained)", call("/predict/burnout", strained), "burnoutRiskScore", "burnout-v2", 100)
-    check("burnout: strained profile scores higher than calm", high > low, f"{low} -> {high}")
-
-    happy = check_result("vision (happy)", call("/analyze/vision", {"emotion": "happy", "confidence": 0.9, "faceDetectedRatio": 0.9}), model_prefix="vision-rf")
-    sad = check_result("vision (sad)", call("/analyze/vision", {"emotion": "sad", "confidence": 0.9, "faceDetectedRatio": 0.9}), model_prefix="vision-rf")
-    check("vision: sad scores higher than happy", sad > happy, f"{happy} -> {sad}")
+    # The old inputs moved the score by ~3 points; a working model should separate these clearly.
+    check("burnout: strained check-in scores at least 25 points above calm", high >= low + 25, f"{low} -> {high}")
+    check("burnout: rejects values outside the check-in scales", status_of("/predict/burnout", {**calm, "anxiety": 30}) == 422)
 
     fine = check_result("text (positive)", call("/analyze/text-local", {"statement": "I had a great day with friends and feel relaxed and happy."}), model_prefix="text-tfidf")
     crisis = check_result("text (crisis)", call("/analyze/text-local", {"statement": "I feel hopeless and worthless, I want to end my life and can't go on."}), model_prefix="text-tfidf")

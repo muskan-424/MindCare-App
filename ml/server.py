@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 import joblib
 import os
@@ -35,10 +35,6 @@ def load_all_models():
     models['burnout'] = load_pkl('burnout_model_v2.pkl')
     meta['burnout_features'] = load_pkl('burnout_v2_features.pkl')
     if models['burnout']: print("[OK] Loaded Burnout V2 Model")
-
-    # 2. Vision
-    models['vision'] = load_pkl('vision_model.pkl')
-    if models['vision']: print("[OK] Loaded Vision Model")
 
     # 3. Text Sentiment
     models['text'] = load_pkl('text_classifier.pkl')
@@ -79,15 +75,26 @@ def _risk_level(score: float) -> str:
 # ENDPOINT 1: Burnout Prediction (V2)
 # ---------------------------------------------------------------------------
 class BurnoutRequest(BaseModel):
-    age: int = 20
+    """Answers from the app's wellbeing check-in (backend wellbeingCheckInService).
+
+    anxiety = GAD-2 and depression = PHQ-2 (0-6 each); the rest are 1-5 self-ratings.
+    Out-of-range values are rejected: the model was silently fed 1-5 values for
+    features trained on 0-40 ranges before, which made every prediction look alike.
+    """
+    age: int = Field(20, ge=10, le=100)
     gender: str = "Female"
-    academic_stress: int = 3
-    anxiety: int = 2
-    depression: int = 2
-    general_stress: int = 3
-    sleep_quality: float = 2.0
-    behavioral_activity: float = 2.0
-    social_interaction: float = 2.0
+    anxiety: int = Field(2, ge=0, le=6)
+    depression: int = Field(2, ge=0, le=6)
+    general_stress: int = Field(3, ge=1, le=5)
+    academic_stress: int = Field(3, ge=1, le=5)
+    sleep_quality: float = Field(3, ge=1, le=5)
+    behavioral_activity: float = Field(3, ge=1, le=5)
+    social_interaction: float = Field(3, ge=1, le=5)
+
+
+def _rescale(value, from_min, from_max, to_min, to_max):
+    return to_min + (value - from_min) * (to_max - to_min) / (from_max - from_min)
+
 
 @app.post("/predict/burnout")
 def predict_burnout(req: BurnoutRequest):
@@ -96,18 +103,18 @@ def predict_burnout(req: BurnoutRequest):
 
     g_enc = 1 if req.gender.lower() == 'male' else 0 if req.gender.lower() == 'female' else 2
 
-    # Match exact features trained: 'Age', 'Gender_enc', 'Academic_Stress_Score', 'Anxiety_Score', 
-    # 'Depression_Score', 'Stress_Score', 'Sleep_Quality_Index', 'Behavioral_Activity_Level', 'Social_Interaction_Frequency'
+    # Map check-in scales onto the EPAT training ranges: symptom/stress scores 0-40,
+    # sleep quality index 1-10, activity level 3-99, social interaction frequency 0-20.
     df = pd.DataFrame([{
         'Age': req.age,
         'Gender_enc': g_enc,
-        'Academic_Stress_Score': req.academic_stress,
-        'Anxiety_Score': req.anxiety,
-        'Depression_Score': req.depression,
-        'Stress_Score': req.general_stress,
-        'Sleep_Quality_Index': req.sleep_quality,
-        'Behavioral_Activity_Level': req.behavioral_activity,
-        'Social_Interaction_Frequency': req.social_interaction
+        'Academic_Stress_Score': _rescale(req.academic_stress, 1, 5, 0, 40),
+        'Anxiety_Score': _rescale(req.anxiety, 0, 6, 0, 40),
+        'Depression_Score': _rescale(req.depression, 0, 6, 0, 40),
+        'Stress_Score': _rescale(req.general_stress, 1, 5, 0, 40),
+        'Sleep_Quality_Index': _rescale(req.sleep_quality, 1, 5, 1, 10),
+        'Behavioral_Activity_Level': _rescale(req.behavioral_activity, 1, 5, 3, 99),
+        'Social_Interaction_Frequency': _rescale(req.social_interaction, 1, 5, 0, 20),
     }], columns=meta['burnout_features'])
 
     proba = models['burnout'].predict_proba(df)[0]
@@ -120,40 +127,7 @@ def predict_burnout(req: BurnoutRequest):
         "burnoutRiskScore": risk_percentage,
         "riskLevel": _risk_level(risk_score),
         "confidence": round(float(max(proba)), 4),
-        "modelVersion": "burnout-v2-gb"
-    }
-
-# ---------------------------------------------------------------------------
-# ENDPOINT 2: Vision Analysis
-# ---------------------------------------------------------------------------
-class VisionRequest(BaseModel):
-    emotion: str = "Neutral"  # Happy, Sad, Fear, Angry, Neutral
-    confidence: float = 0.8
-    faceDetectedRatio: float = 0.9
-
-@app.post("/analyze/vision")
-def analyze_vision(req: VisionRequest):
-    """Real ML-based vision analysis mapping facial emotion to risk state"""
-    if not models['vision']:
-        raise HTTPException(status_code=503, detail="Vision model not loaded.")
-
-    df = pd.DataFrame([{
-        'Facial_Emotion_Label': req.emotion.capitalize(),
-        'Facial_Emotion_Confidence': req.confidence
-    }])
-
-    proba = models['vision'].predict_proba(df)[0]
-    risk_score = (proba[1]*0.33 + proba[2]*0.66 + proba[3]*1.0)
-    
-    # Penalize confidence if face tracking was poor
-    overall_confidence = round(float(max(proba)) * req.faceDetectedRatio, 4)
-
-    return {
-        "riskScore": round(risk_score, 4),
-        "riskLevel": _risk_level(risk_score),
-        "confidence": overall_confidence,
-        "emotion": req.emotion.capitalize(),
-        "modelVersion": "vision-rf-v1"
+        "modelVersion": "burnout-v2-gb-checkin"
     }
 
 # ---------------------------------------------------------------------------

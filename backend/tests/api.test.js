@@ -496,6 +496,47 @@ describe('Wellness plans (auth + DTO)', () => {
   });
 });
 
+describe('Wellbeing check-in (PHQ-4 + lifestyle scales)', () => {
+  const answers = { nervous: 2, worrying: 3, interest: 1, down: 2, stress: 4, pressure: 5, sleep: 2, activity: 1, social: 3 };
+
+  test('rejects out-of-range and missing answers', async () => {
+    const { res: reg } = await registerUser();
+    const auth = { Authorization: `Bearer ${reg.body.token}` };
+    const res = await request(app).post('/api/profile/wellbeing-checkin').set(auth).send({ ...answers, nervous: 4, social: undefined });
+    expect(res.status).toBe(400);
+    expect(res.body.details).toEqual(expect.arrayContaining([
+      expect.stringContaining('nervous'),
+      expect.stringContaining('social'),
+    ]));
+  });
+
+  test('requires authentication', async () => {
+    const res = await request(app).post('/api/profile/wellbeing-checkin').send(answers);
+    expect(res.status).toBe(401);
+  });
+
+  test('scores PHQ-4 and saves the burnout inputs to the caller\'s profile', async () => {
+    const { res: reg } = await registerUser();
+    const auth = { Authorization: `Bearer ${reg.body.token}` };
+    const res = await request(app).post('/api/profile/wellbeing-checkin').set(auth).send(answers);
+    expect(res.status).toBe(200);
+    // GAD-2 = 2 + 3 = 5, PHQ-2 = 1 + 2 = 3, total 8 → moderate.
+    expect(res.body).toMatchObject({ severity: 'moderate', total: 8, anxietyFlag: true, depressionFlag: true });
+
+    const me = await request(app).get('/api/profile/me').set(auth);
+    expect(me.body).toMatchObject({
+      anxietyLevel: 5,
+      depressionLevel: 3,
+      stressLevel: 4,
+      academicStress: 5,
+      sleepQuality: 2,
+      activityLevel: 1,
+      socialInteraction: 3,
+    });
+    expect(me.body.wellbeingCheckInAt).toBeTruthy();
+  });
+});
+
 describe('WebSocket chat', () => {
   test('sends ready on connect (anonymous)', async () => {
     const { ws, inbox } = await connectChatWs();

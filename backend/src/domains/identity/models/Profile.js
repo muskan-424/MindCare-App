@@ -47,7 +47,8 @@ const ProfileSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
-    // Psychometric / Analytics fields
+    // Psychometric fields, set by the wellbeing check-in (wellbeingCheckInService).
+    // anxietyLevel = GAD-2 (0–6), depressionLevel = PHQ-2 (0–6), the rest are 1–5 scales.
     sleepQuality: { type: Number, default: 3 },
     academicStress: { type: Number, default: 3 },
     anxietyLevel: { type: Number, default: 2 },
@@ -55,6 +56,8 @@ const ProfileSchema = new mongoose.Schema(
     stressLevel: { type: Number, default: 3 },
     activityLevel: { type: Number, default: 3 },
     socialInteraction: { type: Number, default: 3 },
+    // Null until the user completes a check-in; the fields above are only defaults before then.
+    wellbeingCheckInAt: { type: Date, default: null },
     profilePic: { type: String, default: '' },
     language: {
       type: String,

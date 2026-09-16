@@ -17,11 +17,12 @@ function fuseAssessment(featureVector, language = 'en') {
   const vision = featureVector?.vision || {};
   const mood = featureVector?.mood || {}; // New: Historical Mood Trend
 
-  // New Weights (Total = 1.00)
-  const wText = 0.35;   // Real-time Semantic (Text)
+  // Weights (Total = 1.00). Vision is weighted lowest: facial emotion is a weak
+  // predictor of mental-health status (see visionAssessmentService).
+  const wText = 0.45;   // Real-time Semantic (Text)
   const wMood = 0.25;   // Historical Trend (Logged Moods)
   const wVoice = 0.20;  // Real-time Prosodic (Voice)
-  const wVision = 0.20; // Real-time Visual (Face)
+  const wVision = 0.10; // Real-time Visual (Face)
 
   const riskScore = Math.max(
     0,
