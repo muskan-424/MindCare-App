@@ -1,10 +1,10 @@
 /**
- * Set test env defaults and pre-download the in-memory MongoDB binary.
- * globalSetup runs in a separate process; env vars here do not carry into test
- * workers (testDb.js sets them again). Warming the binary cache avoids CI
- * timeouts on the first MongoMemoryServer.create() call.
+ * Start one in-memory MongoDB for the whole run and set test env defaults.
+ * globalSetup and globalTeardown share a context, so the server handle kept on
+ * globalThis here is the one teardown stops. Test files get their own globals,
+ * so they read the URI from process.env instead (inherited by test workers).
  */
-const { MongoBinary } = require('mongodb-memory-server');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 
 module.exports = async () => {
   process.env.NODE_ENV = 'test';
@@ -14,5 +14,8 @@ module.exports = async () => {
   process.env.GEMINI_API_KEY = '';
   process.env.GOOGLE_API_KEY = '';
 
-  await MongoBinary.getPath();
+  globalThis.__MONGOD__ = await MongoMemoryServer.create({
+    instance: { launchTimeout: 120000 },
+  });
+  process.env.TEST_MONGODB_URI = globalThis.__MONGOD__.getUri();
 };

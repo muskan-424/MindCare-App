@@ -1,8 +1,9 @@
 /**
- * Stop the shared in-memory MongoDB and background jobs after all suites finish.
+ * Stop the in-memory MongoDB started in globalSetup.
  */
-const { stopGlobalMongo } = require('./helpers/testDb');
-
 module.exports = async () => {
-  await stopGlobalMongo();
+  if (globalThis.__MONGOD__) {
+    await globalThis.__MONGOD__.stop();
+    globalThis.__MONGOD__ = null;
+  }
 };

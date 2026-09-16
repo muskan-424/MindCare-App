@@ -1,6 +1,6 @@
 /**
  * testDb.js
- * Spins up an in-memory MongoDB for tests and wires the env BEFORE the app
+ * Points the app at the in-memory MongoDB from globalSetup and wires the env BEFORE the app
  * (and its config) are required. The order matters: config/env.js reads
  * process.env at module-load time, so env must be set first.
  *
@@ -11,17 +11,6 @@
  *   afterEach(async () => { await clearDb(); });
  *   afterAll(async () => { await stopMemoryDb(); });
  */
-
-const { MongoMemoryServer } = require('mongodb-memory-server');
-
-async function getSharedMongod() {
-  if (!global.__MONGOD__) {
-    global.__MONGOD__ = await MongoMemoryServer.create({
-      instance: { launchTimeout: 120000 },
-    });
-  }
-  return global.__MONGOD__;
-}
 
 async function waitForConnection(mongoose, timeoutMs = 30000) {
   const start = Date.now();
@@ -37,11 +26,14 @@ async function waitForConnection(mongoose, timeoutMs = 30000) {
  * @returns {Promise<import('express').Express>}
  */
 let appInstance = null;
+// The mongoose instance the app connected with. A test that calls jest.resetModules()
+// makes require('mongoose') return a fresh, unconnected copy, so keep this one.
+let appMongoose = null;
 
 async function startMemoryDb() {
-  const mongod = await getSharedMongod();
+  if (!process.env.TEST_MONGODB_URI) throw new Error('TEST_MONGODB_URI is not set; tests/globalSetup.js starts the in-memory MongoDB');
   process.env.NODE_ENV = 'test';
-  process.env.MONGODB_URI = mongod.getUri();
+  process.env.MONGODB_URI = process.env.TEST_MONGODB_URI;
   process.env.JWT_SECRET = 'test_jwt_secret';
   process.env.ADMIN_TOKEN = 'test_admin_token';
   process.env.USE_MOCK_CHATBOT = 'true'; // keep AI calls offline / rule-based
@@ -58,41 +50,23 @@ async function startMemoryDb() {
   }
 
   appInstance = require('../../server');
+  appMongoose = mongoose;
   await waitForConnection(mongoose);
   return appInstance;
 }
 
 async function clearDb() {
-  const mongoose = require('mongoose');
-  const { collections } = mongoose.connection;
+  const { collections } = appMongoose.connection;
   await Promise.all(Object.values(collections).map(c => c.deleteMany({})));
 }
 
 async function stopMemoryDb() {
-  const mongoose = require('mongoose');
-  if (mongoose.connection.readyState !== 0) {
-    await mongoose.disconnect();
+  if (appMongoose && appMongoose.connection.readyState !== 0) {
+    await appMongoose.disconnect();
   }
+  appMongoose = null;
   appInstance = null;
   jest.resetModules();
 }
 
-/** Tear down the shared in-memory MongoDB (call once from globalTeardown). */
-async function stopGlobalMongo() {
-  try {
-    const { stopBackgroundJobs } = require('../../jobs');
-    stopBackgroundJobs();
-  } catch (_) { /* jobs module may not be loaded */ }
-
-  const mongoose = require('mongoose');
-  if (mongoose.connection.readyState !== 0) {
-    await mongoose.disconnect();
-  }
-  if (global.__MONGOD__) {
-    await global.__MONGOD__.stop();
-    global.__MONGOD__ = null;
-  }
-  appInstance = null;
-}
-
-module.exports = { startMemoryDb, clearDb, stopMemoryDb, stopGlobalMongo };
+module.exports = { startMemoryDb, clearDb, stopMemoryDb };

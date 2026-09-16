@@ -65,6 +65,8 @@ jobs:
         run: npm run lint
 
       - name: Run Backend Tests
+        # Tests exit on their own; the timeout fails fast on a leaked handle instead of hanging the job.
+        timeout-minutes: 10
         run: npm test
 
   admin-ci:
