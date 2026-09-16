@@ -41,6 +41,8 @@ async function startMemoryDb() {
   // never overrides an existing env var) cannot inject real keys from .env.
   process.env.GEMINI_API_KEY = '';
   process.env.GOOGLE_API_KEY = '';
+  // Same for the ML server: keep assessments on fallback scoring, never a real server.
+  process.env.ML_SERVER_URL = '';
 
   // Fresh module graph so config/env reads the test MONGODB_URI (not a stale cache).
   jest.resetModules();

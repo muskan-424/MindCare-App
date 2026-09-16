@@ -193,6 +193,13 @@ const options = {
           responses: { 200: { description: 'Ready' }, 503: { description: 'Not ready' } },
         },
       },
+      '/health/ml': {
+        get: {
+          tags: ['Observability'],
+          summary: 'ML server status (reachability + loaded models)',
+          responses: { 200: { description: 'ML server up, or ML_SERVER_URL not configured' }, 503: { description: 'ML server down or models missing' } },
+        },
+      },
       '/metrics': {
         get: {
           tags: ['Observability'],

@@ -1,8 +1,10 @@
 const express = require('express');
+const axios = require('axios');
 const router = express.Router();
 const mongoose = require('mongoose');
 const { config, getEnvStatus } = require('../../../../config/env');
 const { client: redisClient } = require('../../../../config/redis');
+const ML_SERVER = require('../../../shared/mlServerUrl');
 
 let aiCapabilities = () => ({ geminiLive: false, mode: 'rule', ragMode: 'local' });
 try {
@@ -49,6 +51,30 @@ router.get('/ready', (_req, res) => {
       rag: ai.ragMode || 'local',
     },
   });
+});
+
+// ── GET /api/health/ml ────────────────────────────────────────────────────────
+// Whether the Python ML server is reachable and its models loaded. Separate from
+// liveness/readiness because a sleeping free-tier ML server can take ~1 min to wake,
+// and assessments fall back to heuristics without it rather than failing.
+router.get('/ml', async (_req, res) => {
+  if (!process.env.ML_SERVER_URL) {
+    return res.json({ mlServer: 'not-configured', detail: 'ML_SERVER_URL is not set; assessments use fallback scoring' });
+  }
+  const started = Date.now();
+  try {
+    const { data } = await axios.get(`${ML_SERVER}/health`, { timeout: 90000 });
+    const modelsLoaded = data.models_loaded || {};
+    const allLoaded = Object.keys(modelsLoaded).length > 0 && Object.values(modelsLoaded).every(Boolean);
+    res.status(allLoaded ? 200 : 503).json({
+      mlServer: allLoaded ? 'up' : 'degraded',
+      modelsLoaded,
+      version: data.version,
+      latencyMs: Date.now() - started,
+    });
+  } catch (err) {
+    res.status(503).json({ mlServer: 'down', error: err.code || err.message, latencyMs: Date.now() - started });
+  }
 });
 
 module.exports = router;

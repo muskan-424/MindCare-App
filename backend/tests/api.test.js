@@ -121,6 +121,12 @@ describe('Observability', () => {
     expect(res.body.checks.database).toBe('up');
   });
 
+  test('ML status reports not-configured without ML_SERVER_URL', async () => {
+    const res = await request(app).get('/api/health/ml');
+    expect(res.status).toBe(200);
+    expect(res.body.mlServer).toBe('not-configured');
+  });
+
   test('metrics endpoint returns request counters', async () => {
     await request(app).get('/api/health'); // generate some traffic
     const res = await request(app).get('/api/metrics');
