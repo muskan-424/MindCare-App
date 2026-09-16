@@ -22,8 +22,8 @@ Not yet verified live (no emulator was available in-session):
 ## 4. Admin account
 Already done, no action needed — noted for reference: `muskanmittal151@gmail.com` is set as `ADMIN_EMAIL_1` with the password you provided. If you ever forget it, use "Forgot Password" in the app or re-run `npm run reset-admin <email> <newPassword>` in `backend/`.
 
-## 5. Backend test suite doesn't exit cleanly (low priority)
-`npx jest` in `backend/` passes all tests but the process doesn't exit afterward — it warns "Jest did not exit one second after the test run has completed," implying an unclosed handle (likely a DB connection or socket) somewhere in test teardown. Harmless for now since results are still correct and Jest force-exits, but worth running with `--detectOpenHandles` at some point to track down and fix.
+## 5. Backend test suite doesn't exit cleanly — DONE
+Fixed: tests now start one in-memory MongoDB in `globalSetup`, stop it in `globalTeardown`, and disconnect the app's own mongoose instance. `npm test` exits on its own without `--forceExit`, and CI has a 10-minute timeout on the backend test step so a future leak fails fast.
 
 ## 6. Low disk space on C: is breaking Docker (root cause found, not yet fixed)
 `docker compose up` was failing with "the paging file is too small" — traced this to your C: drive having only ~9.2GB free out of 266GB. Windows can't grow the page file under memory pressure with that little headroom, which is what actually breaks Docker's CLI plugins (compose, buildx, etc.) — it's a disk-space problem, not a Docker or app bug. Also relevant: your `backend/docker-compose.yml` spins up its own MongoDB + Redis containers, but you already have a native MongoDB Windows service running locally, and Redis is fully optional in the app (every usage already checks `client.isOpen` and no-ops gracefully) — so Docker Compose may not even be necessary for day-to-day local dev.
